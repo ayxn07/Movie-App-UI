@@ -18,10 +18,9 @@ import Animated, {
 } from "react-native-reanimated";
 
 import {
-    FeaturedCard,
     GenreButton,
     MovieCard,
-    SearchModal,
+    NowPlayingCarousel,
     SectionHeader,
     TopRatedCard,
 } from "@/components";
@@ -82,7 +81,7 @@ export default function HomeScreen() {
   // Handle genre navigation
   const handleGenrePress = (genreName: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    router.push(`/category/movies?genre=${genreName}`);
+    router.push(`/genre/${genreName}`);
   };
 
   // Search result card component
@@ -230,8 +229,8 @@ export default function HomeScreen() {
           ))}
         </Animated.View>
 
-        {/* Featured Movie */}
-        <FeaturedCard movie={FEATURED_MOVIE} />
+        {/* Now Playing Carousel */}
+        <NowPlayingCarousel movies={[FEATURED_MOVIE, ...MOVIES.slice(0, 4)]} />
 
         {/* Popular This Week */}
         <View style={{ marginBottom: 32 }}>
@@ -241,7 +240,7 @@ export default function HomeScreen() {
             delay={300} 
             onSeeAllPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              router.push("/category/movies");
+              router.push("/seeall/popular");
             }}
           />
           <ScrollView
@@ -264,7 +263,7 @@ export default function HomeScreen() {
             delay={350}
             onSeeAllPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              router.push("/category/movies");
+              router.push("/seeall/top10");
             }}
           />
           <ScrollView
@@ -287,7 +286,7 @@ export default function HomeScreen() {
             delay={400}
             onSeeAllPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              router.push("/category/movies");
+              router.push("/seeall/trending");
             }}
           />
           <ScrollView
@@ -321,10 +320,82 @@ export default function HomeScreen() {
             <Ionicons name="play-circle" size={22} color={theme.primary} />
             <Text style={{ color: theme.text, fontSize: 20, fontWeight: "900" }}>Continue Watching</Text>
           </View>
+          
+          {/* First Continue Watching Item */}
           <TouchableOpacity 
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
               router.push("/movie/1");
+            }}
+            style={{ 
+              backgroundColor: isDark ? "rgba(30, 41, 59, 0.6)" : theme.card,
+              borderRadius: 24, overflow: "hidden",
+              borderWidth: isDark ? 0 : 1, borderColor: theme.border,
+              marginBottom: 12,
+            }}
+          >
+            <View style={{ flexDirection: "row", alignItems: "center", padding: 16 }}>
+              <View style={{ width: 112, height: 64, borderRadius: 12, overflow: "hidden" }}>
+                <Image
+                  source={{ uri: MOVIES[0].image }}
+                  style={{ width: "100%", height: "100%" }}
+                  contentFit="cover"
+                />
+                <View style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(0,0,0,0.3)" }}>
+                  <Ionicons name="play-circle" size={32} color="white" />
+                </View>
+              </View>
+              <View style={{ flex: 1, marginLeft: 16 }}>
+                <Text style={{ color: theme.text, fontWeight: "700", fontSize: 16 }}>{MOVIES[0].title}</Text>
+                <Text style={{ color: theme.textSecondary, fontSize: 14, marginTop: 4 }}>1h 20m remaining</Text>
+                <View style={{ height: 6, backgroundColor: isDark ? "#334155" : "#e2e8f0", borderRadius: 3, marginTop: 8, overflow: "hidden" }}>
+                  <View style={{ height: "100%", width: "60%", backgroundColor: theme.primary, borderRadius: 3 }} />
+                </View>
+              </View>
+              <Ionicons name="chevron-forward" size={24} color={theme.textMuted} />
+            </View>
+          </TouchableOpacity>
+
+          {/* Second Continue Watching Item */}
+          <TouchableOpacity 
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.push("/movie/2");
+            }}
+            style={{ 
+              backgroundColor: isDark ? "rgba(30, 41, 59, 0.6)" : theme.card,
+              borderRadius: 24, overflow: "hidden",
+              borderWidth: isDark ? 0 : 1, borderColor: theme.border,
+              marginBottom: 12,
+            }}
+          >
+            <View style={{ flexDirection: "row", alignItems: "center", padding: 16 }}>
+              <View style={{ width: 112, height: 64, borderRadius: 12, overflow: "hidden" }}>
+                <Image
+                  source={{ uri: MOVIES[1].image }}
+                  style={{ width: "100%", height: "100%" }}
+                  contentFit="cover"
+                />
+                <View style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(0,0,0,0.3)" }}>
+                  <Ionicons name="play-circle" size={32} color="white" />
+                </View>
+              </View>
+              <View style={{ flex: 1, marginLeft: 16 }}>
+                <Text style={{ color: theme.text, fontWeight: "700", fontSize: 16 }}>{MOVIES[1].title}</Text>
+                <Text style={{ color: theme.textSecondary, fontSize: 14, marginTop: 4 }}>45m remaining</Text>
+                <View style={{ height: 6, backgroundColor: isDark ? "#334155" : "#e2e8f0", borderRadius: 3, marginTop: 8, overflow: "hidden" }}>
+                  <View style={{ height: "100%", width: "75%", backgroundColor: theme.primary, borderRadius: 3 }} />
+                </View>
+              </View>
+              <Ionicons name="chevron-forward" size={24} color={theme.textMuted} />
+            </View>
+          </TouchableOpacity>
+
+          {/* Third Continue Watching Item */}
+          <TouchableOpacity 
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.push("/movie/6");
             }}
             style={{ 
               backgroundColor: isDark ? "rgba(30, 41, 59, 0.6)" : theme.card,
@@ -335,7 +406,7 @@ export default function HomeScreen() {
             <View style={{ flexDirection: "row", alignItems: "center", padding: 16 }}>
               <View style={{ width: 112, height: 64, borderRadius: 12, overflow: "hidden" }}>
                 <Image
-                  source={{ uri: "https://m.media-amazon.com/images/M/MV5BN2QyZGU4ZDctOWMzMy00NTc5LThlOGQtODhmNDI1NmY5YzAwXkEyXkFqcGdeQXVyMDM2NDM2MQ@@._V1_.jpg" }}
+                  source={{ uri: TRENDING[0].image }}
                   style={{ width: "100%", height: "100%" }}
                   contentFit="cover"
                 />
@@ -344,10 +415,10 @@ export default function HomeScreen() {
                 </View>
               </View>
               <View style={{ flex: 1, marginLeft: 16 }}>
-                <Text style={{ color: theme.text, fontWeight: "700", fontSize: 16 }}>Dune: Part Two</Text>
-                <Text style={{ color: theme.textSecondary, fontSize: 14, marginTop: 4 }}>1h 20m remaining</Text>
+                <Text style={{ color: theme.text, fontWeight: "700", fontSize: 16 }}>{TRENDING[0].title}</Text>
+                <Text style={{ color: theme.textSecondary, fontSize: 14, marginTop: 4 }}>30m remaining</Text>
                 <View style={{ height: 6, backgroundColor: isDark ? "#334155" : "#e2e8f0", borderRadius: 3, marginTop: 8, overflow: "hidden" }}>
-                  <View style={{ height: "100%", width: "60%", backgroundColor: theme.primary, borderRadius: 3 }} />
+                  <View style={{ height: "100%", width: "85%", backgroundColor: theme.primary, borderRadius: 3 }} />
                 </View>
               </View>
               <Ionicons name="chevron-forward" size={24} color={theme.textMuted} />
