@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
+import { useRouter } from "expo-router";
 import React, { useEffect } from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 import Animated, {
@@ -22,6 +23,7 @@ interface FeaturedCardProps {
 }
 
 export const FeaturedCard: React.FC<FeaturedCardProps> = ({ movie, onPress, onPlayPress }) => {
+  const router = useRouter();
   const pulseScale = useSharedValue(1);
 
   useEffect(() => {
@@ -39,9 +41,25 @@ export const FeaturedCard: React.FC<FeaturedCardProps> = ({ movie, onPress, onPl
     transform: [{ scale: pulseScale.value }],
   }));
 
+  const handlePress = () => {
+    if (onPress) {
+      onPress();
+    } else {
+      router.push(`/movie/${movie.id}`);
+    }
+  };
+
+  const handlePlayPress = () => {
+    if (onPlayPress) {
+      onPlayPress();
+    } else {
+      router.push(`/movie/${movie.id}`);
+    }
+  };
+
   return (
     <Animated.View entering={FadeInDown.delay(200).springify().damping(15)} className="px-5 mb-8">
-      <TouchableOpacity activeOpacity={0.95} onPress={onPress}>
+      <TouchableOpacity activeOpacity={0.95} onPress={handlePress}>
         <View className="w-full h-[420px] rounded-[32px] overflow-hidden">
           <View className="w-full h-full relative">
             <Image
@@ -99,7 +117,7 @@ export const FeaturedCard: React.FC<FeaturedCardProps> = ({ movie, onPress, onPl
               </Text>
 
               <View className="flex-row gap-3">
-                <TouchableOpacity className="flex-1" activeOpacity={0.8} onPress={onPlayPress}>
+                <TouchableOpacity className="flex-1" activeOpacity={0.8} onPress={handlePlayPress}>
                   <LinearGradient
                     colors={[Colors.primary, Colors.primaryDark]}
                     start={{ x: 0, y: 0 }}

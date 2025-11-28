@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
+import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 import Animated, {
@@ -23,6 +24,7 @@ interface MovieCardProps {
 
 export const MovieCard: React.FC<MovieCardProps> = ({ movie, index, onPress }) => {
   const { theme, isDark } = useTheme();
+  const router = useRouter();
   const scale = useSharedValue(1);
   const [liked, setLiked] = useState(false);
 
@@ -38,13 +40,21 @@ export const MovieCard: React.FC<MovieCardProps> = ({ movie, index, onPress }) =
     scale.value = withSpring(1, { damping: 15, stiffness: 400 });
   };
 
+  const handlePress = () => {
+    if (onPress) {
+      onPress();
+    } else {
+      router.push(`/movie/${movie.id}`);
+    }
+  };
+
   return (
     <Animated.View entering={FadeInRight.delay(index * 100).springify().damping(15)}>
       <AnimatedTouchable
         style={[animatedStyle, { marginRight: 16 }]}
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
-        onPress={onPress}
+        onPress={handlePress}
         activeOpacity={1}
       >
         <View style={{ 
