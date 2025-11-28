@@ -23,12 +23,39 @@ import Animated, {
 } from "react-native-reanimated";
 
 import { ALL_MOVIES, Colors } from "@/constants/data";
-import { useTheme } from "@/context";
+import { ThemeColors, useTheme } from "@/context";
 
 const { height } = Dimensions.get("window");
 
+// Type definitions for selection options
+interface LanguageOption {
+  code: string;
+  name: string;
+  flag: string;
+}
+
+interface SubtitleOption {
+  code: string;
+  name: string;
+}
+
+interface QualityOption {
+  value: string;
+  label: string;
+  badge: string | null;
+}
+
+type SelectionOption = LanguageOption | SubtitleOption | QualityOption;
+
+// Cast member type
+interface CastMember {
+  name: string;
+  role: string;
+  image: string;
+}
+
 // Language options
-const LANGUAGES = [
+const LANGUAGES: LanguageOption[] = [
   { code: "en", name: "English", flag: "🇺🇸" },
   { code: "es", name: "Spanish", flag: "🇪🇸" },
   { code: "fr", name: "French", flag: "🇫🇷" },
@@ -42,7 +69,7 @@ const LANGUAGES = [
 ];
 
 // Subtitle options
-const SUBTITLES = [
+const SUBTITLES: SubtitleOption[] = [
   { code: "off", name: "Off" },
   { code: "en", name: "English" },
   { code: "es", name: "Spanish" },
@@ -56,20 +83,20 @@ const SUBTITLES = [
 ];
 
 // Quality options
-const QUALITY_OPTIONS = [
+const QUALITY_OPTIONS: QualityOption[] = [
   { value: "4k", label: "4K Ultra HD", badge: "BEST" },
   { value: "1080p", label: "Full HD 1080p", badge: null },
   { value: "720p", label: "HD 720p", badge: null },
   { value: "480p", label: "SD 480p", badge: null },
 ];
 
-// Mock cast data
-const CAST = [
-  { name: "Timothée Chalamet", role: "Paul Atreides", image: "https://randomuser.me/api/portraits/men/1.jpg" },
-  { name: "Zendaya", role: "Chani", image: "https://randomuser.me/api/portraits/women/1.jpg" },
-  { name: "Rebecca Ferguson", role: "Lady Jessica", image: "https://randomuser.me/api/portraits/women/2.jpg" },
-  { name: "Josh Brolin", role: "Gurney Halleck", image: "https://randomuser.me/api/portraits/men/2.jpg" },
-  { name: "Austin Butler", role: "Feyd-Rautha", image: "https://randomuser.me/api/portraits/men/3.jpg" },
+// Generic placeholder cast data
+const DEFAULT_CAST: CastMember[] = [
+  { name: "Lead Actor", role: "Main Character", image: "https://randomuser.me/api/portraits/men/1.jpg" },
+  { name: "Supporting Actor", role: "Supporting Role", image: "https://randomuser.me/api/portraits/women/1.jpg" },
+  { name: "Actor 3", role: "Character 3", image: "https://randomuser.me/api/portraits/women/2.jpg" },
+  { name: "Actor 4", role: "Character 4", image: "https://randomuser.me/api/portraits/men/2.jpg" },
+  { name: "Actor 5", role: "Character 5", image: "https://randomuser.me/api/portraits/men/3.jpg" },
 ];
 
 // Selection Modal Component
@@ -86,10 +113,10 @@ const SelectionModal = ({
   visible: boolean;
   onClose: () => void;
   title: string;
-  options: { code?: string; value?: string; name?: string; label?: string; flag?: string; badge?: string | null }[];
+  options: SelectionOption[];
   selectedValue: string;
   onSelect: (value: string) => void;
-  theme: any;
+  theme: ThemeColors;
   isDark: boolean;
 }) => (
   <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
@@ -124,8 +151,11 @@ const SelectionModal = ({
         </View>
         <ScrollView style={{ maxHeight: height * 0.5 }}>
           {options.map((option) => {
-            const value = option.code || option.value || "";
-            const label = option.name || option.label || "";
+            // Handle different option types
+            const value = "code" in option ? option.code : "value" in option ? option.value : "";
+            const label = "name" in option ? option.name : "label" in option ? option.label : "";
+            const flag = "flag" in option ? option.flag : undefined;
+            const badge = "badge" in option ? option.badge : undefined;
             const isSelected = selectedValue === value;
 
             return (
@@ -145,8 +175,8 @@ const SelectionModal = ({
                     : "transparent",
                 }}
               >
-                {option.flag && (
-                  <Text style={{ fontSize: 24, marginRight: 12 }}>{option.flag}</Text>
+                {flag && (
+                  <Text style={{ fontSize: 24, marginRight: 12 }}>{flag}</Text>
                 )}
                 <Text style={{
                   flex: 1,
@@ -156,7 +186,7 @@ const SelectionModal = ({
                 }}>
                   {label}
                 </Text>
-                {option.badge && (
+                {badge && (
                   <View style={{
                     backgroundColor: theme.primary,
                     paddingHorizontal: 8,
@@ -164,7 +194,7 @@ const SelectionModal = ({
                     borderRadius: 6,
                     marginRight: 12,
                   }}>
-                    <Text style={{ color: "white", fontSize: 10, fontWeight: "800" }}>{option.badge}</Text>
+                    <Text style={{ color: "white", fontSize: 10, fontWeight: "800" }}>{badge}</Text>
                   </View>
                 )}
                 {isSelected && (
@@ -180,7 +210,7 @@ const SelectionModal = ({
 );
 
 // Cast Card Component
-const CastCard = ({ cast, index, theme, isDark }: { cast: typeof CAST[0]; index: number; theme: any; isDark: boolean }) => (
+const CastCard = ({ cast, index, theme }: { cast: CastMember; index: number; theme: ThemeColors }) => (
   <Animated.View
     entering={SlideInRight.delay(index * 80).springify()}
     style={{ marginRight: 16, alignItems: "center" }}
@@ -220,7 +250,7 @@ const ActionButton = ({
   icon: string;
   label: string;
   onPress: () => void;
-  theme: any;
+  theme: ThemeColors;
   isDark: boolean;
 }) => {
   const scale = useSharedValue(1);
@@ -264,7 +294,7 @@ export default function MovieDetailScreen() {
   const movieId = Number(params.id);
 
   // Find the movie from our data
-  const movie = ALL_MOVIES.find((m) => m.id === movieId) || ALL_MOVIES[0];
+  const movie = ALL_MOVIES.find((m) => m.id === movieId);
 
   // State for selections
   const [selectedLanguage, setSelectedLanguage] = useState("en");
@@ -278,6 +308,30 @@ export default function MovieDetailScreen() {
   const selectedLanguageData = LANGUAGES.find((l) => l.code === selectedLanguage);
   const selectedSubtitleData = SUBTITLES.find((s) => s.code === selectedSubtitle);
   const selectedQualityData = QUALITY_OPTIONS.find((q) => q.value === selectedQuality);
+
+  // Handle movie not found
+  if (!movie) {
+    return (
+      <View style={{ flex: 1, backgroundColor: theme.background, alignItems: "center", justifyContent: "center" }}>
+        <StatusBar style={isDark ? "light" : "dark"} />
+        <Ionicons name="film-outline" size={64} color={theme.textMuted} />
+        <Text style={{ color: theme.text, fontSize: 20, fontWeight: "700", marginTop: 16 }}>Movie Not Found</Text>
+        <Text style={{ color: theme.textSecondary, fontSize: 14, marginTop: 8 }}>The requested movie could not be found.</Text>
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={{
+            marginTop: 24,
+            backgroundColor: theme.primary,
+            paddingHorizontal: 24,
+            paddingVertical: 12,
+            borderRadius: 12,
+          }}
+        >
+          <Text style={{ color: "white", fontWeight: "600" }}>Go Back</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.background }}>
@@ -603,8 +657,8 @@ export default function MovieDetailScreen() {
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={{ paddingRight: 20 }}
             >
-              {CAST.map((cast, index) => (
-                <CastCard key={cast.name} cast={cast} index={index} theme={theme} isDark={isDark} />
+              {DEFAULT_CAST.map((cast, index) => (
+                <CastCard key={cast.name} cast={cast} index={index} theme={theme} />
               ))}
             </ScrollView>
           </Animated.View>
