@@ -401,7 +401,7 @@ export default function CategoryScreen() {
               />
             )}
             keyExtractor={(item) => item.id.toString()}
-            estimatedItemSize={280}
+            
           />
         ) : (
           <Animated.View

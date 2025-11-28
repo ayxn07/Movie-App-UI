@@ -563,7 +563,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({ visible, onClose }) =>
                     />
                   )}
                   keyExtractor={(item) => item.id.toString()}
-                  estimatedItemSize={130}
+                  
                 />
               </Animated.View>
             ) : (
@@ -593,7 +593,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({ visible, onClose }) =>
                       />
                     )}
                     keyExtractor={(item) => item.id.toString()}
-                    estimatedItemSize={130}
+                    
                   />
                 ) : (
                   <View
