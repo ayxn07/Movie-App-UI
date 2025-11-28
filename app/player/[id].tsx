@@ -3,9 +3,11 @@ import { Image } from "expo-image";
 import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import * as ScreenOrientation from "expo-screen-orientation";
 import { StatusBar } from "expo-status-bar";
 import React, { useEffect, useState } from "react";
 import {
+  Dimensions,
   Text,
   TouchableOpacity,
   View,
@@ -129,11 +131,40 @@ export default function PlayerScreen() {
   const [progress, setProgress] = useState(0);
   const [currentTime, setCurrentTime] = useState("00:00");
   const [isMuted, setIsMuted] = useState(false);
-  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isLandscape, setIsLandscape] = useState(false);
   const [showQualityMenu, setShowQualityMenu] = useState(false);
   const [selectedQuality, setSelectedQuality] = useState("1080p");
+  const [screenDimensions, setScreenDimensions] = useState(Dimensions.get("window"));
 
   const playPulse = useSharedValue(1);
+
+  // Handle screen orientation changes
+  useEffect(() => {
+    const subscription = Dimensions.addEventListener("change", ({ window }) => {
+      setScreenDimensions(window);
+      setIsLandscape(window.width > window.height);
+    });
+
+    return () => subscription?.remove();
+  }, []);
+
+  // Lock to portrait on mount, unlock on unmount
+  useEffect(() => {
+    return () => {
+      ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
+    };
+  }, []);
+
+  const toggleLandscape = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    if (isLandscape) {
+      await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
+      setIsLandscape(false);
+    } else {
+      await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE);
+      setIsLandscape(true);
+    }
+  };
 
   // Simulate video progress
   useEffect(() => {
@@ -207,13 +238,10 @@ export default function PlayerScreen() {
     setIsMuted(!isMuted);
   };
 
-  const handleToggleFullscreen = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    setIsFullscreen(!isFullscreen);
-  };
-
-  const handleBack = () => {
+  const handleBack = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    // Reset to portrait before navigating back
+    await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
     router.back();
   };
 
@@ -465,9 +493,9 @@ export default function PlayerScreen() {
                     <Ionicons name="tv-outline" size={22} color="white" />
                   </TouchableOpacity>
                   <TouchableOpacity
-                    onPress={handleToggleFullscreen}
+                    onPress={toggleLandscape}
                   >
-                    <Ionicons name={isFullscreen ? "contract" : "expand"} size={22} color="white" />
+                    <Ionicons name={isLandscape ? "phone-portrait" : "phone-landscape"} size={22} color="white" />
                   </TouchableOpacity>
                 </View>
               </View>

@@ -1,6 +1,7 @@
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { LogBox } from "react-native";
+import { useEffect } from "react";
+import { LogBox, Platform } from "react-native";
 
 import { ThemeProvider, useTheme } from "@/context";
 import "./global.css";
@@ -21,18 +22,21 @@ function RootLayoutContent() {
         screenOptions={{
           headerShown: false,
           contentStyle: { backgroundColor: theme.background },
-          animation: "fade_from_bottom",
-          animationDuration: 200,
+          animation: "ios_from_right",
+          animationDuration: 250,
+          gestureEnabled: true,
+          gestureDirection: "horizontal",
         }}
       >
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="(tabs)" options={{ headerShown: false, animation: "none" }} />
         <Stack.Screen 
           name="movie/[id]" 
           options={{ 
             headerShown: false, 
             presentation: "card",
-            animation: "fade_from_bottom",
-            animationDuration: 200,
+            animation: "ios_from_right",
+            animationDuration: 250,
+            contentStyle: { backgroundColor: theme.background },
           }} 
         />
         <Stack.Screen 
@@ -41,7 +45,8 @@ function RootLayoutContent() {
             headerShown: false, 
             presentation: "fullScreenModal",
             animation: "fade",
-            animationDuration: 150,
+            animationDuration: 200,
+            contentStyle: { backgroundColor: "#000000" },
           }} 
         />
         <Stack.Screen 
@@ -49,8 +54,9 @@ function RootLayoutContent() {
           options={{ 
             headerShown: false, 
             presentation: "card",
-            animation: "slide_from_right",
-            animationDuration: 200,
+            animation: "ios_from_right",
+            animationDuration: 250,
+            contentStyle: { backgroundColor: theme.background },
           }} 
         />
         <Stack.Screen 
@@ -58,8 +64,9 @@ function RootLayoutContent() {
           options={{ 
             headerShown: false, 
             presentation: "card",
-            animation: "slide_from_right",
-            animationDuration: 200,
+            animation: "ios_from_right",
+            animationDuration: 250,
+            contentStyle: { backgroundColor: theme.background },
           }} 
         />
       </Stack>
