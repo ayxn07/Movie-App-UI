@@ -10,6 +10,13 @@ export interface Movie {
   description?: string;
 }
 
+// Cast Member Type
+export interface CastMember {
+  name: string;
+  role: string;
+  image: string;
+}
+
 // Genre Type
 export interface Genre {
   name: string;
@@ -22,4 +29,15 @@ export interface TabItem {
   name: string;
   icon: string;
   activeIcon: string;
+}
+
+// Notification Type
+export interface NotificationItem {
+  id: string;
+  type: "movie" | "series" | "system" | "social";
+  title: string;
+  message: string;
+  image?: string;
+  timestamp: string;
+  isRead: boolean;
 }

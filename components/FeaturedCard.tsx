@@ -1,5 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
+import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useEffect } from "react";
@@ -42,6 +43,7 @@ export const FeaturedCard: React.FC<FeaturedCardProps> = ({ movie, onPress, onPl
   }));
 
   const handlePress = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (onPress) {
       onPress();
     } else {
@@ -50,6 +52,7 @@ export const FeaturedCard: React.FC<FeaturedCardProps> = ({ movie, onPress, onPl
   };
 
   const handlePlayPress = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     if (onPlayPress) {
       onPlayPress();
     } else {

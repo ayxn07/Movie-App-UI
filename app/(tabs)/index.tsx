@@ -1,6 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
+import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
+import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
@@ -32,6 +34,7 @@ import { useTheme } from "@/context";
 
 export default function HomeScreen() {
   const { theme, isDark } = useTheme();
+  const router = useRouter();
   const scrollY = useSharedValue(0);
 
   const scrollHandler = useAnimatedScrollHandler({
@@ -86,6 +89,10 @@ export default function HomeScreen() {
             </View>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
               <TouchableOpacity 
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  router.push("/notifications");
+                }}
                 style={{ 
                   width: 44, height: 44, borderRadius: 22, 
                   backgroundColor: isDark ? "rgba(30, 41, 59, 0.8)" : "rgba(226, 232, 240, 0.8)",
@@ -95,7 +102,10 @@ export default function HomeScreen() {
                 <Ionicons name="notifications-outline" size={22} color={theme.text} />
                 <View style={{ position: "absolute", top: 8, right: 8, width: 10, height: 10, backgroundColor: theme.danger, borderRadius: 5 }} />
               </TouchableOpacity>
-              <TouchableOpacity style={{ width: 44, height: 44, borderRadius: 22, overflow: "hidden", borderWidth: 2, borderColor: theme.primary }}>
+              <TouchableOpacity 
+                onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
+                style={{ width: 44, height: 44, borderRadius: 22, overflow: "hidden", borderWidth: 2, borderColor: theme.primary }}
+              >
                 <Image
                   source={{ uri: "https://randomuser.me/api/portraits/men/32.jpg" }}
                   style={{ width: "100%", height: "100%" }}

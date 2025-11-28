@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import * as Haptics from "expo-haptics";
 import React, { useEffect } from "react";
 import { Pressable, Text, View } from "react-native";
 import Animated, {
@@ -48,6 +49,7 @@ export const TabBarButton: React.FC<TabBarButtonProps> = ({
 
   const handlePressIn = () => {
     scale.value = withSpring(0.9, { damping: 15, stiffness: 400 });
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   };
 
   const handlePressOut = () => {

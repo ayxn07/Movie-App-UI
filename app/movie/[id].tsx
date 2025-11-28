@@ -1,5 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
+import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -22,8 +23,9 @@ import Animated, {
     withSpring,
 } from "react-native-reanimated";
 
-import { ALL_MOVIES, Colors } from "@/constants/data";
+import { ALL_MOVIES, Colors, MovieCast } from "@/constants/data";
 import { ThemeColors, useTheme } from "@/context";
+import { CastMember } from "@/types";
 
 const { height } = Dimensions.get("window");
 
@@ -46,13 +48,6 @@ interface QualityOption {
 }
 
 type SelectionOption = LanguageOption | SubtitleOption | QualityOption;
-
-// Cast member type
-interface CastMember {
-  name: string;
-  role: string;
-  image: string;
-}
 
 // Language options
 const LANGUAGES: LanguageOption[] = [
@@ -90,7 +85,7 @@ const QUALITY_OPTIONS: QualityOption[] = [
   { value: "480p", label: "SD 480p", badge: null },
 ];
 
-// Generic placeholder cast data
+// Generic placeholder cast data (fallback)
 const DEFAULT_CAST: CastMember[] = [
   { name: "Lead Actor", role: "Main Character", image: "https://randomuser.me/api/portraits/men/1.jpg" },
   { name: "Supporting Actor", role: "Supporting Role", image: "https://randomuser.me/api/portraits/women/1.jpg" },
@@ -98,6 +93,11 @@ const DEFAULT_CAST: CastMember[] = [
   { name: "Actor 4", role: "Character 4", image: "https://randomuser.me/api/portraits/men/2.jpg" },
   { name: "Actor 5", role: "Character 5", image: "https://randomuser.me/api/portraits/men/3.jpg" },
 ];
+
+// Helper function to get cast for a movie
+const getMovieCast = (movieId: number): CastMember[] => {
+  return MovieCast[movieId] || DEFAULT_CAST;
+};
 
 // Selection Modal Component
 const SelectionModal = ({
@@ -259,11 +259,16 @@ const ActionButton = ({
     transform: [{ scale: scale.value }],
   }));
 
+  const handlePressIn = () => {
+    scale.value = withSpring(0.9);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  };
+
   return (
     <Animated.View style={animatedStyle}>
       <TouchableOpacity
         onPress={onPress}
-        onPressIn={() => { scale.value = withSpring(0.9); }}
+        onPressIn={handlePressIn}
         onPressOut={() => { scale.value = withSpring(1); }}
         style={{
           alignItems: "center",
@@ -367,7 +372,10 @@ export default function MovieDetailScreen() {
             paddingHorizontal: 20,
           }}>
             <TouchableOpacity
-              onPress={() => router.back()}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.back();
+              }}
               style={{
                 width: 44,
                 height: 44,
@@ -381,7 +389,10 @@ export default function MovieDetailScreen() {
             </TouchableOpacity>
             <View style={{ flexDirection: "row", gap: 12 }}>
               <TouchableOpacity
-                onPress={() => setLiked(!liked)}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                  setLiked(!liked);
+                }}
                 style={{
                   width: 44,
                   height: 44,
@@ -398,6 +409,7 @@ export default function MovieDetailScreen() {
                 />
               </TouchableOpacity>
               <TouchableOpacity
+                onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
                 style={{
                   width: 44,
                   height: 44,
@@ -424,6 +436,10 @@ export default function MovieDetailScreen() {
             }}
           >
             <TouchableOpacity
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+                router.push(`/movie/player/${movieId}`);
+              }}
               style={{
                 width: 80,
                 height: 80,
@@ -648,7 +664,7 @@ export default function MovieDetailScreen() {
               <Text style={{ fontSize: 20, fontWeight: "800", color: theme.text }}>
                 Cast & Crew
               </Text>
-              <TouchableOpacity>
+              <TouchableOpacity onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}>
                 <Text style={{ color: theme.primary, fontWeight: "600" }}>See All</Text>
               </TouchableOpacity>
             </View>
@@ -657,7 +673,7 @@ export default function MovieDetailScreen() {
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={{ paddingRight: 20 }}
             >
-              {DEFAULT_CAST.map((cast, index) => (
+              {getMovieCast(movieId).map((cast, index) => (
                 <CastCard key={cast.name} cast={cast} index={index} theme={theme} />
               ))}
             </ScrollView>
@@ -731,6 +747,7 @@ export default function MovieDetailScreen() {
       >
         <View style={{ flexDirection: "row", gap: 12 }}>
           <TouchableOpacity
+            onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
             style={{
               flex: 1,
               flexDirection: "row",
@@ -751,6 +768,10 @@ export default function MovieDetailScreen() {
           <TouchableOpacity
             style={{ flex: 2 }}
             activeOpacity={0.9}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+              router.push(`/movie/player/${movieId}`);
+            }}
           >
             <LinearGradient
               colors={[Colors.primary, Colors.primaryDark]}
