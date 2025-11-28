@@ -1,4 +1,4 @@
-import { Genre, Movie } from "@/types";
+import { Download, Genre, LiveEvent, Movie, Series } from "@/types";
 
 // ============================================================================
 // MOVIE POSTER IMAGES - Edit these URLs to change movie posters
@@ -478,4 +478,229 @@ export const DEFAULT_CAST: CastMember[] = [
   { name: "Actor 3", role: "Character 3", image: "https://randomuser.me/api/portraits/women/2.jpg" },
   { name: "Actor 4", role: "Character 4", image: "https://randomuser.me/api/portraits/men/2.jpg" },
   { name: "Actor 5", role: "Character 5", image: "https://randomuser.me/api/portraits/men/3.jpg" },
+];
+
+// ============================================================================
+// TV SERIES DATA
+// ============================================================================
+
+export const SeriesImages = {
+  BREAKING_BAD: "https://m.media-amazon.com/images/M/MV5BYmQ4YWMxYjUtNjZmYi00MDQ1LWFjMjMtNjA5ZDdiYjdiODU5XkEyXkFqcGdeQXVyMTMzNDExODE5._V1_.jpg",
+  GAME_OF_THRONES: "https://m.media-amazon.com/images/M/MV5BN2IzYzBiOTQtNGZmMi00NDI5LTgxMzMtN2EzZjA1NjhlOGMxXkEyXkFqcGdeQXVyNjAwNDUxODI@._V1_.jpg",
+  STRANGER_THINGS: "https://m.media-amazon.com/images/M/MV5BMDZkYmVhNjMtNWU4MC00MDQxLWE3MjYtZGMzZWI1ZjhlOWJmXkEyXkFqcGdeQXVyMTkxNjUyNQ@@._V1_.jpg",
+  THE_MANDALORIAN: "https://m.media-amazon.com/images/M/MV5BZDhlMzY0ZGItZTcyNS00ZTAxLWIyMmYtZGQ2ODg5OWZiYmJkXkEyXkFqcGdeQXVyODkzNTgxMDg@._V1_.jpg",
+  THE_WITCHER: "https://m.media-amazon.com/images/M/MV5BMDEzNTMwODktODg2Ny00ZjliLWJkZTUtMDBiMjY0N2UxZmUyXkEyXkFqcGdeQXVyMTUzMTg2ODkz._V1_.jpg",
+  HOUSE_OF_DRAGON: "https://m.media-amazon.com/images/M/MV5BZjBiOGIyY2YtOTA3OC00YzY1LThkYjktMGRkYTNhNTExY2I2XkEyXkFqcGdeQXVyMTEyMjM2NDc2._V1_.jpg",
+  PEAKY_BLINDERS: "https://m.media-amazon.com/images/M/MV5BMTkzNjEzMDEzMF5BMl5BanBnXkFtZTgwMDI0MjE4MjE@._V1_.jpg",
+  THE_BOYS: "https://m.media-amazon.com/images/M/MV5BMjMzODA2MDg0NV5BMl5BanBnXkFtZTgwNjMwMDk0NjM@._V1_.jpg",
+};
+
+export const SERIES: Series[] = [
+  {
+    id: 201,
+    title: "Breaking Bad",
+    rating: 9.5,
+    image: SeriesImages.BREAKING_BAD,
+    genre: "Drama",
+    year: "2008",
+    seasons: 5,
+    episodes: 62,
+    description: "A high school chemistry teacher diagnosed with inoperable lung cancer turns to manufacturing and selling methamphetamine.",
+  },
+  {
+    id: 202,
+    title: "Game of Thrones",
+    rating: 9.2,
+    image: SeriesImages.GAME_OF_THRONES,
+    genre: "Fantasy",
+    year: "2011",
+    seasons: 8,
+    episodes: 73,
+    description: "Nine noble families fight for control over the lands of Westeros, while an ancient enemy returns.",
+  },
+  {
+    id: 203,
+    title: "Stranger Things",
+    rating: 8.7,
+    image: SeriesImages.STRANGER_THINGS,
+    genre: "Sci-Fi",
+    year: "2016",
+    seasons: 4,
+    episodes: 34,
+    description: "When a young boy disappears, his mother, a police chief and his friends must confront terrifying supernatural forces.",
+  },
+  {
+    id: 204,
+    title: "The Mandalorian",
+    rating: 8.8,
+    image: SeriesImages.THE_MANDALORIAN,
+    genre: "Sci-Fi",
+    year: "2019",
+    seasons: 3,
+    episodes: 24,
+    description: "A lone bounty hunter makes his way through the outer reaches of the galaxy.",
+  },
+  {
+    id: 205,
+    title: "The Witcher",
+    rating: 8.1,
+    image: SeriesImages.THE_WITCHER,
+    genre: "Fantasy",
+    year: "2019",
+    seasons: 3,
+    episodes: 24,
+    description: "Geralt of Rivia, a solitary monster hunter, struggles to find his place in a world.",
+  },
+  {
+    id: 206,
+    title: "House of the Dragon",
+    rating: 8.4,
+    image: SeriesImages.HOUSE_OF_DRAGON,
+    genre: "Fantasy",
+    year: "2022",
+    seasons: 2,
+    episodes: 18,
+    description: "The prequel series finds the Targaryen dynasty at the absolute apex of its power.",
+  },
+  {
+    id: 207,
+    title: "Peaky Blinders",
+    rating: 8.8,
+    image: SeriesImages.PEAKY_BLINDERS,
+    genre: "Crime",
+    year: "2013",
+    seasons: 6,
+    episodes: 36,
+    description: "A gangster family epic set in Birmingham, England in 1919.",
+  },
+  {
+    id: 208,
+    title: "The Boys",
+    rating: 8.7,
+    image: SeriesImages.THE_BOYS,
+    genre: "Action",
+    year: "2019",
+    seasons: 4,
+    episodes: 32,
+    description: "A group of vigilantes set out to take down corrupt superheroes who abuse their superpowers.",
+  },
+];
+
+// ============================================================================
+// LIVE EVENTS DATA
+// ============================================================================
+
+export const LIVE_EVENTS: LiveEvent[] = [
+  {
+    id: 301,
+    title: "Movie Premiere: Avengers 6",
+    channel: "HBO Max",
+    image: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=800",
+    category: "Premiere",
+    isLive: true,
+    viewers: 245000,
+    startTime: "Now",
+  },
+  {
+    id: 302,
+    title: "Behind the Scenes: Dune 3",
+    channel: "Entertainment TV",
+    image: "https://images.unsplash.com/photo-1518676590629-3dcbd9c5a5c9?w=800",
+    category: "Documentary",
+    isLive: true,
+    viewers: 89000,
+    startTime: "Now",
+  },
+  {
+    id: 303,
+    title: "Celebrity Interview: Tom Cruise",
+    channel: "E! Entertainment",
+    image: "https://images.unsplash.com/photo-1594909122845-11baa439b7bf?w=800",
+    category: "Talk Show",
+    isLive: true,
+    viewers: 156000,
+    startTime: "Now",
+  },
+  {
+    id: 304,
+    title: "Golden Globe Awards 2024",
+    channel: "NBC",
+    image: "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=800",
+    category: "Awards",
+    isLive: false,
+    viewers: 0,
+    startTime: "8:00 PM",
+  },
+  {
+    id: 305,
+    title: "Film Festival Opening Night",
+    channel: "Sundance TV",
+    image: "https://images.unsplash.com/photo-1478720568477-152d9b164e26?w=800",
+    category: "Festival",
+    isLive: false,
+    viewers: 0,
+    startTime: "9:30 PM",
+  },
+  {
+    id: 306,
+    title: "Director's Commentary: Interstellar",
+    channel: "AMC",
+    image: "https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=800",
+    category: "Commentary",
+    isLive: false,
+    viewers: 0,
+    startTime: "10:00 PM",
+  },
+];
+
+// ============================================================================
+// DOWNLOADS DATA
+// ============================================================================
+
+export const DOWNLOADS: Download[] = [
+  {
+    id: 401,
+    title: "Dune: Part Two",
+    image: MovieImages.DUNE_PART_TWO,
+    type: "movie",
+    progress: 100,
+    size: "4.2 GB",
+    status: "completed",
+  },
+  {
+    id: 402,
+    title: "Oppenheimer",
+    image: MovieImages.OPPENHEIMER,
+    type: "movie",
+    progress: 67,
+    size: "5.1 GB",
+    status: "downloading",
+  },
+  {
+    id: 403,
+    title: "Breaking Bad - S1E1",
+    image: SeriesImages.BREAKING_BAD,
+    type: "episode",
+    progress: 45,
+    size: "1.2 GB",
+    status: "paused",
+  },
+  {
+    id: 404,
+    title: "The Dark Knight",
+    image: MovieImages.THE_DARK_KNIGHT,
+    type: "movie",
+    progress: 100,
+    size: "3.8 GB",
+    status: "completed",
+  },
+  {
+    id: 405,
+    title: "Stranger Things - S1",
+    image: SeriesImages.STRANGER_THINGS,
+    type: "series",
+    progress: 100,
+    size: "8.5 GB",
+    status: "completed",
+  },
 ];

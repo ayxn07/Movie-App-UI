@@ -1,6 +1,12 @@
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { LogBox } from "react-native";
+import { useEffect } from "react";
+import { LogBox, View } from "react-native";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
 
 import { ThemeProvider, useTheme } from "@/context";
 import "./global.css";
@@ -13,74 +19,94 @@ LogBox.ignoreLogs([
 
 function RootLayoutContent() {
   const { isDark, theme } = useTheme();
+  const bgOpacity = useSharedValue(1);
+
+  useEffect(() => {
+    bgOpacity.value = withTiming(1, { duration: 200 });
+  }, [isDark, bgOpacity]);
+
+  const animatedBgStyle = useAnimatedStyle(() => ({
+    opacity: bgOpacity.value,
+  }));
 
   return (
-    <>
+    <View style={{ flex: 1, backgroundColor: theme.background }}>
       <StatusBar style={isDark ? "light" : "dark"} />
-      <Stack
-        screenOptions={{
-          headerShown: false,
-          contentStyle: { backgroundColor: theme.background },
-          animation: "fade_from_bottom",
-          animationDuration: 200,
-          gestureEnabled: true,
-          gestureDirection: "horizontal",
-          freezeOnBlur: true,
-        }}
+      <Animated.View 
+        style={[{ flex: 1 }, animatedBgStyle]}
       >
-        <Stack.Screen name="(tabs)" options={{ headerShown: false, animation: "none" }} />
-        <Stack.Screen 
-          name="movie/[id]" 
-          options={{ 
-            headerShown: false, 
-            presentation: "card",
-            animation: "fade_from_bottom",
-            animationDuration: 200,
+        <Stack
+          screenOptions={{
+            headerShown: false,
             contentStyle: { backgroundColor: theme.background },
-          }} 
-        />
-        <Stack.Screen 
-          name="player/[id]" 
-          options={{ 
-            headerShown: false, 
-            presentation: "fullScreenModal",
-            animation: "fade",
-            animationDuration: 200,
-            contentStyle: { backgroundColor: "#000000" },
-          }} 
-        />
-        <Stack.Screen 
-          name="notifications/index" 
-          options={{ 
-            headerShown: false, 
-            presentation: "card",
             animation: "slide_from_right",
             animationDuration: 200,
-            contentStyle: { backgroundColor: theme.background },
-          }} 
-        />
-        <Stack.Screen 
-          name="cast/[id]" 
-          options={{ 
-            headerShown: false, 
-            presentation: "card",
-            animation: "slide_from_right",
-            animationDuration: 200,
-            contentStyle: { backgroundColor: theme.background },
-          }} 
-        />
-        <Stack.Screen 
-          name="category/[type]" 
-          options={{ 
-            headerShown: false, 
-            presentation: "card",
-            animation: "fade_from_bottom",
-            animationDuration: 200,
-            contentStyle: { backgroundColor: theme.background },
-          }} 
-        />
-      </Stack>
-    </>
+            gestureEnabled: true,
+            gestureDirection: "horizontal",
+            freezeOnBlur: true,
+          }}
+        >
+          <Stack.Screen 
+            name="(tabs)" 
+            options={{ 
+              headerShown: false, 
+              animation: "none",
+              contentStyle: { backgroundColor: theme.background },
+            }} 
+          />
+          <Stack.Screen 
+            name="movie/[id]" 
+            options={{ 
+              headerShown: false, 
+              presentation: "card",
+              animation: "slide_from_right",
+              animationDuration: 200,
+              contentStyle: { backgroundColor: theme.background },
+            }} 
+          />
+          <Stack.Screen 
+            name="player/[id]" 
+            options={{ 
+              headerShown: false, 
+              presentation: "fullScreenModal",
+              animation: "fade",
+              animationDuration: 150,
+              contentStyle: { backgroundColor: "#000000" },
+            }} 
+          />
+          <Stack.Screen 
+            name="notifications/index" 
+            options={{ 
+              headerShown: false, 
+              presentation: "card",
+              animation: "slide_from_right",
+              animationDuration: 200,
+              contentStyle: { backgroundColor: theme.background },
+            }} 
+          />
+          <Stack.Screen 
+            name="cast/[id]" 
+            options={{ 
+              headerShown: false, 
+              presentation: "card",
+              animation: "slide_from_right",
+              animationDuration: 200,
+              contentStyle: { backgroundColor: theme.background },
+            }} 
+          />
+          <Stack.Screen 
+            name="category/[type]" 
+            options={{ 
+              headerShown: false, 
+              presentation: "card",
+              animation: "slide_from_right",
+              animationDuration: 200,
+              contentStyle: { backgroundColor: theme.background },
+            }} 
+          />
+        </Stack>
+      </Animated.View>
+    </View>
   );
 }
 
