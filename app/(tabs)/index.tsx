@@ -21,6 +21,7 @@ import {
     FeaturedCard,
     GenreButton,
     MovieCard,
+    SearchModal,
     SectionHeader,
     TopRatedCard,
 } from "@/components";
