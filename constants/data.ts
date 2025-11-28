@@ -395,7 +395,7 @@ export const MOVIE_CAST_DATA: Record<number, MovieCastData> = {
     cast: [
       { name: "Leonardo DiCaprio", role: "Dom Cobb", image: "https://image.tmdb.org/t/p/w200/wo2hJpn04vbtmh0B9utCFdsQhxM.jpg" },
       { name: "Joseph Gordon-Levitt", role: "Arthur", image: "https://image.tmdb.org/t/p/w200/msugySeTCyCmlRWtyB6sMixTQYY.jpg" },
-      { name: "Ellen Page", role: "Ariadne", image: "https://image.tmdb.org/t/p/w200/haSb4UdyZRNWoJD3vTflSzSFcAd.jpg" },
+      { name: "Elliot Page", role: "Ariadne", image: "https://image.tmdb.org/t/p/w200/haSb4UdyZRNWoJD3vTflSzSFcAd.jpg" },
       { name: "Tom Hardy", role: "Eames", image: "https://image.tmdb.org/t/p/w200/d81K0RH8UX7tZb0rZvp079CVLKp.jpg" },
       { name: "Marion Cotillard", role: "Mal", image: "https://image.tmdb.org/t/p/w200/k5kDDYBqIqEIyTqCBGVGzgI0FCl.jpg" },
     ],
