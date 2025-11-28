@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { FlashList } from "@shopify/flash-list";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
+import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useState } from "react";
 import { Dimensions, Text, TextInput, TouchableOpacity, View } from "react-native";
@@ -15,7 +16,7 @@ const { width } = Dimensions.get("window");
 const CARD_WIDTH = (width - 48) / 2;
 
 // Movie Grid Card
-const MovieGridCard = ({ movie, index, theme }: { movie: Movie; index: number; theme: ThemeColors }) => {
+const MovieGridCard = ({ movie, index, theme, onPress }: { movie: Movie; index: number; theme: ThemeColors; onPress: () => void }) => {
   const [liked, setLiked] = useState(false);
 
   return (
@@ -24,7 +25,7 @@ const MovieGridCard = ({ movie, index, theme }: { movie: Movie; index: number; t
       className="mb-4"
       style={{ width: CARD_WIDTH, marginRight: index % 2 === 0 ? 16 : 0 }}
     >
-      <TouchableOpacity activeOpacity={0.9}>
+      <TouchableOpacity activeOpacity={0.9} onPress={onPress}>
         <View className="rounded-3xl overflow-hidden" style={{ backgroundColor: theme.card }}>
           <View className="h-52 relative">
             <Image
@@ -102,6 +103,7 @@ const GenreChip = ({
 
 export default function ExploreScreen() {
   const { theme, isDark } = useTheme();
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
 
@@ -197,7 +199,12 @@ export default function ExploreScreen() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: 100 }}
           renderItem={({ item, index }) => (
-            <MovieGridCard movie={item} index={index} theme={theme} />
+            <MovieGridCard 
+              movie={item} 
+              index={index} 
+              theme={theme} 
+              onPress={() => router.push(`/movie/${item.id}`)}
+            />
           )}
           keyExtractor={(item) => item.id.toString()}
           ListEmptyComponent={
