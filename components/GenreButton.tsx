@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
 import React from "react";
 import { Text, TouchableOpacity } from "react-native";
@@ -34,13 +35,20 @@ export const GenreButton: React.FC<GenreButtonProps> = ({ genre, index, onPress 
     scale.value = withSpring(1, { damping: 15, stiffness: 400 });
   };
 
+  const handlePress = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (onPress) {
+      onPress();
+    }
+  };
+
   return (
     <Animated.View entering={FadeInDown.delay(index * 80).springify().damping(12)}>
       <AnimatedTouchable
         style={animatedStyle}
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
-        onPress={onPress}
+        onPress={handlePress}
         activeOpacity={1}
       >
         <LinearGradient

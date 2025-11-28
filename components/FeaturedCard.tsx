@@ -1,5 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
+import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useEffect } from "react";
@@ -42,6 +43,7 @@ export const FeaturedCard: React.FC<FeaturedCardProps> = ({ movie, onPress, onPl
   }));
 
   const handlePress = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (onPress) {
       onPress();
     } else {
@@ -50,11 +52,20 @@ export const FeaturedCard: React.FC<FeaturedCardProps> = ({ movie, onPress, onPl
   };
 
   const handlePlayPress = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     if (onPlayPress) {
       onPlayPress();
     } else {
-      router.push(`/movie/${movie.id}`);
+      router.push(`/player/${movie.id}`);
     }
+  };
+
+  const handleBookmark = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+  };
+
+  const handleAddToList = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
   };
 
   return (
@@ -86,7 +97,10 @@ export const FeaturedCard: React.FC<FeaturedCardProps> = ({ movie, onPress, onPl
                   <Text className="text-white text-xs font-black ml-1">NOW PLAYING</Text>
                 </LinearGradient>
               </Animated.View>
-              <TouchableOpacity className="w-10 h-10 rounded-full bg-black/40 items-center justify-center">
+              <TouchableOpacity 
+                onPress={handleBookmark}
+                className="w-10 h-10 rounded-full bg-black/40 items-center justify-center"
+              >
                 <Ionicons name="bookmark-outline" size={20} color="white" />
               </TouchableOpacity>
             </View>
@@ -129,6 +143,7 @@ export const FeaturedCard: React.FC<FeaturedCardProps> = ({ movie, onPress, onPl
                   </LinearGradient>
                 </TouchableOpacity>
                 <TouchableOpacity
+                  onPress={handleAddToList}
                   className="w-14 h-14 rounded-2xl bg-white/20 items-center justify-center"
                   activeOpacity={0.8}
                 >

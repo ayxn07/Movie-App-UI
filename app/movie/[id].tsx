@@ -1,5 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
+import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -22,7 +23,7 @@ import Animated, {
     withSpring,
 } from "react-native-reanimated";
 
-import { ALL_MOVIES, Colors } from "@/constants/data";
+import { ALL_MOVIES, Colors, MOVIE_CAST_DATA, type CastMember } from "@/constants/data";
 import { ThemeColors, useTheme } from "@/context";
 
 const { height } = Dimensions.get("window");
@@ -46,13 +47,6 @@ interface QualityOption {
 }
 
 type SelectionOption = LanguageOption | SubtitleOption | QualityOption;
-
-// Cast member type
-interface CastMember {
-  name: string;
-  role: string;
-  image: string;
-}
 
 // Language options
 const LANGUAGES: LanguageOption[] = [
@@ -88,15 +82,6 @@ const QUALITY_OPTIONS: QualityOption[] = [
   { value: "1080p", label: "Full HD 1080p", badge: null },
   { value: "720p", label: "HD 720p", badge: null },
   { value: "480p", label: "SD 480p", badge: null },
-];
-
-// Generic placeholder cast data
-const DEFAULT_CAST: CastMember[] = [
-  { name: "Lead Actor", role: "Main Character", image: "https://randomuser.me/api/portraits/men/1.jpg" },
-  { name: "Supporting Actor", role: "Supporting Role", image: "https://randomuser.me/api/portraits/women/1.jpg" },
-  { name: "Actor 3", role: "Character 3", image: "https://randomuser.me/api/portraits/women/2.jpg" },
-  { name: "Actor 4", role: "Character 4", image: "https://randomuser.me/api/portraits/men/2.jpg" },
-  { name: "Actor 5", role: "Character 5", image: "https://randomuser.me/api/portraits/men/3.jpg" },
 ];
 
 // Selection Modal Component
@@ -259,10 +244,15 @@ const ActionButton = ({
     transform: [{ scale: scale.value }],
   }));
 
+  const handlePress = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    onPress();
+  };
+
   return (
     <Animated.View style={animatedStyle}>
       <TouchableOpacity
-        onPress={onPress}
+        onPress={handlePress}
         onPressIn={() => { scale.value = withSpring(0.9); }}
         onPressOut={() => { scale.value = withSpring(1); }}
         style={{
@@ -367,7 +357,10 @@ export default function MovieDetailScreen() {
             paddingHorizontal: 20,
           }}>
             <TouchableOpacity
-              onPress={() => router.back()}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.back();
+              }}
               style={{
                 width: 44,
                 height: 44,
@@ -381,7 +374,10 @@ export default function MovieDetailScreen() {
             </TouchableOpacity>
             <View style={{ flexDirection: "row", gap: 12 }}>
               <TouchableOpacity
-                onPress={() => setLiked(!liked)}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                  setLiked(!liked);
+                }}
                 style={{
                   width: 44,
                   height: 44,
@@ -398,6 +394,7 @@ export default function MovieDetailScreen() {
                 />
               </TouchableOpacity>
               <TouchableOpacity
+                onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
                 style={{
                   width: 44,
                   height: 44,
@@ -424,6 +421,10 @@ export default function MovieDetailScreen() {
             }}
           >
             <TouchableOpacity
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+                router.push(`/player/${movieId}`);
+              }}
               style={{
                 width: 80,
                 height: 80,
@@ -648,7 +649,10 @@ export default function MovieDetailScreen() {
               <Text style={{ fontSize: 20, fontWeight: "800", color: theme.text }}>
                 Cast & Crew
               </Text>
-              <TouchableOpacity>
+              <TouchableOpacity onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push(`/cast/${movieId}`);
+              }}>
                 <Text style={{ color: theme.primary, fontWeight: "600" }}>See All</Text>
               </TouchableOpacity>
             </View>
@@ -657,7 +661,7 @@ export default function MovieDetailScreen() {
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={{ paddingRight: 20 }}
             >
-              {DEFAULT_CAST.map((cast, index) => (
+              {(MOVIE_CAST_DATA[movieId]?.cast || MOVIE_CAST_DATA[1]?.cast || []).map((cast, index) => (
                 <CastCard key={cast.name} cast={cast} index={index} theme={theme} />
               ))}
             </ScrollView>
@@ -681,21 +685,21 @@ export default function MovieDetailScreen() {
               <View style={{ flexDirection: "row", marginBottom: 16 }}>
                 <View style={{ flex: 1 }}>
                   <Text style={{ color: theme.textMuted, fontSize: 13, marginBottom: 4 }}>Director</Text>
-                  <Text style={{ color: theme.text, fontSize: 15, fontWeight: "600" }}>Denis Villeneuve</Text>
+                  <Text style={{ color: theme.text, fontSize: 15, fontWeight: "600" }}>{MOVIE_CAST_DATA[movieId]?.director || "Unknown"}</Text>
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={{ color: theme.textMuted, fontSize: 13, marginBottom: 4 }}>Writers</Text>
-                  <Text style={{ color: theme.text, fontSize: 15, fontWeight: "600" }}>Jon Spaihts</Text>
+                  <Text style={{ color: theme.text, fontSize: 15, fontWeight: "600" }}>{MOVIE_CAST_DATA[movieId]?.writers || "Unknown"}</Text>
                 </View>
               </View>
               <View style={{ flexDirection: "row", marginBottom: 16 }}>
                 <View style={{ flex: 1 }}>
                   <Text style={{ color: theme.textMuted, fontSize: 13, marginBottom: 4 }}>Studio</Text>
-                  <Text style={{ color: theme.text, fontSize: 15, fontWeight: "600" }}>Warner Bros.</Text>
+                  <Text style={{ color: theme.text, fontSize: 15, fontWeight: "600" }}>{MOVIE_CAST_DATA[movieId]?.studio || "Unknown"}</Text>
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={{ color: theme.textMuted, fontSize: 13, marginBottom: 4 }}>Budget</Text>
-                  <Text style={{ color: theme.text, fontSize: 15, fontWeight: "600" }}>$190 Million</Text>
+                  <Text style={{ color: theme.text, fontSize: 15, fontWeight: "600" }}>{MOVIE_CAST_DATA[movieId]?.budget || "Unknown"}</Text>
                 </View>
               </View>
               <View style={{ flexDirection: "row" }}>
@@ -705,7 +709,7 @@ export default function MovieDetailScreen() {
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={{ color: theme.textMuted, fontSize: 13, marginBottom: 4 }}>Box Office</Text>
-                  <Text style={{ color: theme.text, fontSize: 15, fontWeight: "600" }}>$711 Million</Text>
+                  <Text style={{ color: theme.text, fontSize: 15, fontWeight: "600" }}>{MOVIE_CAST_DATA[movieId]?.boxOffice || "Unknown"}</Text>
                 </View>
               </View>
             </View>
@@ -731,6 +735,7 @@ export default function MovieDetailScreen() {
       >
         <View style={{ flexDirection: "row", gap: 12 }}>
           <TouchableOpacity
+            onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
             style={{
               flex: 1,
               flexDirection: "row",
@@ -751,6 +756,10 @@ export default function MovieDetailScreen() {
           <TouchableOpacity
             style={{ flex: 2 }}
             activeOpacity={0.9}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+              router.push(`/player/${movieId}`);
+            }}
           >
             <LinearGradient
               colors={[Colors.primary, Colors.primaryDark]}

@@ -1,5 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
+import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
@@ -41,11 +42,17 @@ export const MovieCard: React.FC<MovieCardProps> = ({ movie, index, onPress }) =
   };
 
   const handlePress = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (onPress) {
       onPress();
     } else {
       router.push(`/movie/${movie.id}`);
     }
+  };
+
+  const handleLike = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setLiked(!liked);
   };
 
   return (
@@ -76,7 +83,7 @@ export const MovieCard: React.FC<MovieCardProps> = ({ movie, index, onPress }) =
             />
             {/* Like Button */}
             <TouchableOpacity
-              onPress={() => setLiked(!liked)}
+              onPress={handleLike}
               style={{ 
                 position: "absolute", top: 12, right: 12, 
                 width: 36, height: 36, borderRadius: 18, 
