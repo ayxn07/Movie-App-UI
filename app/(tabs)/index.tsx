@@ -4,7 +4,7 @@ import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import React from "react";
+import React, { useState } from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import Animated, {
     Extrapolation,
@@ -14,12 +14,14 @@ import Animated, {
     useAnimatedScrollHandler,
     useAnimatedStyle,
     useSharedValue,
+    withSpring,
 } from "react-native-reanimated";
 
 import {
     FeaturedCard,
     GenreButton,
     MovieCard,
+    SearchModal,
     SectionHeader,
     TopRatedCard,
 } from "@/components";
@@ -32,10 +34,76 @@ import {
 } from "@/constants/data";
 import { useTheme } from "@/context";
 
+// Quick Action Button Component with animations
+const QuickActionButton = ({
+  icon,
+  label,
+  color,
+  index,
+  onPress,
+  isDark,
+}: {
+  icon: string;
+  label: string;
+  color: string;
+  index: number;
+  onPress: () => void;
+  isDark: boolean;
+}) => {
+  const scale = useSharedValue(1);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  const handlePress = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    scale.value = withSpring(0.9, { damping: 15, stiffness: 400 });
+    setTimeout(() => {
+      scale.value = withSpring(1, { damping: 15, stiffness: 400 });
+    }, 100);
+    onPress();
+  };
+
+  return (
+    <Animated.View entering={FadeInUp.delay(200 + index * 50).springify()}>
+      <Animated.View style={animatedStyle}>
+        <TouchableOpacity onPress={handlePress} style={{ alignItems: "center" }}>
+          <View
+            style={{
+              width: 64,
+              height: 64,
+              borderRadius: 20,
+              alignItems: "center",
+              justifyContent: "center",
+              marginBottom: 8,
+              backgroundColor: `${color}20`,
+              borderWidth: 1,
+              borderColor: `${color}30`,
+            }}
+          >
+            <Ionicons name={icon as any} size={28} color={color} />
+          </View>
+          <Text
+            style={{
+              color: isDark ? "#94a3b8" : "#475569",
+              fontSize: 12,
+              fontWeight: "600",
+            }}
+          >
+            {label}
+          </Text>
+        </TouchableOpacity>
+      </Animated.View>
+    </Animated.View>
+  );
+};
+
 export default function HomeScreen() {
   const { theme, isDark } = useTheme();
   const router = useRouter();
   const scrollY = useSharedValue(0);
+  const [searchModalVisible, setSearchModalVisible] = useState(false);
 
   const scrollHandler = useAnimatedScrollHandler({
     onScroll: (event) => {
@@ -52,17 +120,32 @@ export default function HomeScreen() {
     ],
   }));
 
-  // Quick Actions Data
+  // Quick Actions Data with routes
   const quickActions = [
-    { icon: "film-outline", label: "Movies", color: theme.primary },
-    { icon: "tv-outline", label: "Series", color: theme.secondary },
-    { icon: "videocam-outline", label: "Live", color: theme.accent },
-    { icon: "download-outline", label: "Downloads", color: theme.success },
+    { icon: "film-outline", label: "Movies", color: theme.primary, route: "/category/movies" },
+    { icon: "tv-outline", label: "Series", color: theme.secondary, route: "/category/series" },
+    { icon: "videocam-outline", label: "Live", color: theme.accent, route: "/category/live" },
+    { icon: "download-outline", label: "Downloads", color: theme.success, route: "/category/downloads" },
   ];
+
+  const handleQuickAction = (route: string) => {
+    router.push(route as any);
+  };
+
+  const openSearchModal = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setSearchModalVisible(true);
+  };
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.background }}>
       <StatusBar style={isDark ? "light" : "dark"} />
+
+      {/* Search Modal */}
+      <SearchModal
+        visible={searchModalVisible}
+        onClose={() => setSearchModalVisible(false)}
+      />
 
       {/* Background Gradient */}
       <LinearGradient
@@ -117,6 +200,7 @@ export default function HomeScreen() {
           {/* Search Bar */}
           <Animated.View entering={FadeInDown.delay(100).springify()}>
             <TouchableOpacity 
+              onPress={openSearchModal}
               style={{ 
                 marginTop: 20, flexDirection: "row", alignItems: "center",
                 backgroundColor: isDark ? "rgba(30, 41, 59, 0.6)" : "rgba(241, 245, 249, 0.9)",
@@ -139,23 +223,15 @@ export default function HomeScreen() {
           style={{ flexDirection: "row", justifyContent: "space-around", paddingHorizontal: 20, marginBottom: 32 }}
         >
           {quickActions.map((item, index) => (
-            <Animated.View key={item.label} entering={FadeInUp.delay(200 + index * 50)}>
-              <TouchableOpacity 
-                onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
-                style={{ alignItems: "center" }}
-              >
-                <View
-                  style={{ 
-                    width: 64, height: 64, borderRadius: 16, 
-                    alignItems: "center", justifyContent: "center", marginBottom: 8,
-                    backgroundColor: `${item.color}20`,
-                  }}
-                >
-                  <Ionicons name={item.icon as any} size={28} color={item.color} />
-                </View>
-                <Text style={{ color: theme.textSecondary, fontSize: 12, fontWeight: "500" }}>{item.label}</Text>
-              </TouchableOpacity>
-            </Animated.View>
+            <QuickActionButton
+              key={item.label}
+              icon={item.icon}
+              label={item.label}
+              color={item.color}
+              index={index}
+              onPress={() => handleQuickAction(item.route)}
+              isDark={isDark}
+            />
           ))}
         </Animated.View>
 

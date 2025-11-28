@@ -1,7 +1,6 @@
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { useEffect } from "react";
-import { LogBox, Platform } from "react-native";
+import { LogBox, View } from "react-native";
 
 import { ThemeProvider, useTheme } from "@/context";
 import "./global.css";
@@ -16,26 +15,33 @@ function RootLayoutContent() {
   const { isDark, theme } = useTheme();
 
   return (
-    <>
+    <View style={{ flex: 1, backgroundColor: theme.background }}>
       <StatusBar style={isDark ? "light" : "dark"} />
       <Stack
         screenOptions={{
           headerShown: false,
           contentStyle: { backgroundColor: theme.background },
-          animation: "ios_from_right",
-          animationDuration: 250,
+          animation: "fade_from_bottom",
+          animationDuration: 200,
           gestureEnabled: true,
           gestureDirection: "horizontal",
         }}
       >
-        <Stack.Screen name="(tabs)" options={{ headerShown: false, animation: "none" }} />
+        <Stack.Screen 
+          name="(tabs)" 
+          options={{ 
+            headerShown: false, 
+            animation: "none",
+            contentStyle: { backgroundColor: theme.background },
+          }} 
+        />
         <Stack.Screen 
           name="movie/[id]" 
           options={{ 
             headerShown: false, 
             presentation: "card",
-            animation: "ios_from_right",
-            animationDuration: 250,
+            animation: "fade_from_bottom",
+            animationDuration: 200,
             contentStyle: { backgroundColor: theme.background },
           }} 
         />
@@ -45,7 +51,7 @@ function RootLayoutContent() {
             headerShown: false, 
             presentation: "fullScreenModal",
             animation: "fade",
-            animationDuration: 200,
+            animationDuration: 150,
             contentStyle: { backgroundColor: "#000000" },
           }} 
         />
@@ -54,8 +60,8 @@ function RootLayoutContent() {
           options={{ 
             headerShown: false, 
             presentation: "card",
-            animation: "ios_from_right",
-            animationDuration: 250,
+            animation: "fade_from_bottom",
+            animationDuration: 200,
             contentStyle: { backgroundColor: theme.background },
           }} 
         />
@@ -64,13 +70,23 @@ function RootLayoutContent() {
           options={{ 
             headerShown: false, 
             presentation: "card",
-            animation: "ios_from_right",
-            animationDuration: 250,
+            animation: "fade_from_bottom",
+            animationDuration: 200,
+            contentStyle: { backgroundColor: theme.background },
+          }} 
+        />
+        <Stack.Screen 
+          name="category/[type]" 
+          options={{ 
+            headerShown: false, 
+            presentation: "card",
+            animation: "fade_from_bottom",
+            animationDuration: 200,
             contentStyle: { backgroundColor: theme.background },
           }} 
         />
       </Stack>
-    </>
+    </View>
   );
 }
 
