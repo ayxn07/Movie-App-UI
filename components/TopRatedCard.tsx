@@ -1,5 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
+import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React from "react";
@@ -41,6 +42,7 @@ export const TopRatedCard: React.FC<TopRatedCardProps> = ({ movie, index, onPres
   };
 
   const handlePress = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (onPress) {
       onPress();
     } else {
