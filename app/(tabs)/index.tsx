@@ -4,7 +4,7 @@ import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import React from "react";
+import React, { useState, useCallback } from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import Animated, {
     Extrapolation,
@@ -20,6 +20,7 @@ import {
     FeaturedCard,
     GenreButton,
     MovieCard,
+    SearchModal,
     SectionHeader,
     TopRatedCard,
 } from "@/components";
@@ -36,6 +37,7 @@ export default function HomeScreen() {
   const { theme, isDark } = useTheme();
   const router = useRouter();
   const scrollY = useSharedValue(0);
+  const [showSearchModal, setShowSearchModal] = useState(false);
 
   const scrollHandler = useAnimatedScrollHandler({
     onScroll: (event) => {
@@ -52,13 +54,23 @@ export default function HomeScreen() {
     ],
   }));
 
-  // Quick Actions Data
+  // Quick Actions Data with routes
   const quickActions = [
-    { icon: "film-outline", label: "Movies", color: theme.primary },
-    { icon: "tv-outline", label: "Series", color: theme.secondary },
-    { icon: "videocam-outline", label: "Live", color: theme.accent },
-    { icon: "download-outline", label: "Downloads", color: theme.success },
+    { icon: "film-outline", label: "Movies", color: theme.primary, route: "/category/movies" },
+    { icon: "tv-outline", label: "Series", color: theme.secondary, route: "/category/series" },
+    { icon: "videocam-outline", label: "Live", color: theme.accent, route: "/category/live" },
+    { icon: "download-outline", label: "Downloads", color: theme.success, route: "/category/downloads" },
   ];
+
+  const handleQuickActionPress = useCallback((route: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    router.push(route as any);
+  }, [router]);
+
+  const openSearchModal = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setShowSearchModal(true);
+  }, []);
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.background }}>
@@ -117,6 +129,7 @@ export default function HomeScreen() {
           {/* Search Bar */}
           <Animated.View entering={FadeInDown.delay(100).springify()}>
             <TouchableOpacity 
+              onPress={openSearchModal}
               style={{ 
                 marginTop: 20, flexDirection: "row", alignItems: "center",
                 backgroundColor: isDark ? "rgba(30, 41, 59, 0.6)" : "rgba(241, 245, 249, 0.9)",
@@ -141,7 +154,7 @@ export default function HomeScreen() {
           {quickActions.map((item, index) => (
             <Animated.View key={item.label} entering={FadeInUp.delay(200 + index * 50)}>
               <TouchableOpacity 
-                onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
+                onPress={() => handleQuickActionPress(item.route)}
                 style={{ alignItems: "center" }}
               >
                 <View
@@ -256,6 +269,9 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </Animated.View>
       </Animated.ScrollView>
+
+      {/* Search Modal */}
+      <SearchModal visible={showSearchModal} onClose={() => setShowSearchModal(false)} />
     </View>
   );
 }
