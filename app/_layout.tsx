@@ -15,7 +15,7 @@ function RootLayoutContent() {
   const { isDark, theme } = useTheme();
 
   return (
-    <>
+    <View style={{ flex: 1, backgroundColor: theme.background }}>
       <StatusBar style={isDark ? "light" : "dark"} />
       <Stack
         screenOptions={{
@@ -28,7 +28,14 @@ function RootLayoutContent() {
           freezeOnBlur: true,
         }}
       >
-        <Stack.Screen name="(tabs)" options={{ headerShown: false, animation: "none" }} />
+        <Stack.Screen 
+          name="(tabs)" 
+          options={{ 
+            headerShown: false, 
+            animation: "none",
+            contentStyle: { backgroundColor: theme.background },
+          }} 
+        />
         <Stack.Screen 
           name="movie/[id]" 
           options={{ 
@@ -45,7 +52,7 @@ function RootLayoutContent() {
             headerShown: false, 
             presentation: "fullScreenModal",
             animation: "fade",
-            animationDuration: 200,
+            animationDuration: 150,
             contentStyle: { backgroundColor: "#000000" },
           }} 
         />
@@ -80,7 +87,7 @@ function RootLayoutContent() {
           }} 
         />
       </Stack>
-    </>
+    </View>
   );
 }
 

@@ -14,6 +14,7 @@ import Animated, {
     useAnimatedScrollHandler,
     useAnimatedStyle,
     useSharedValue,
+    withSpring,
 } from "react-native-reanimated";
 
 import {
@@ -32,6 +33,71 @@ import {
     TRENDING,
 } from "@/constants/data";
 import { useTheme } from "@/context";
+
+// Quick Action Button Component with animations
+const QuickActionButton = ({
+  icon,
+  label,
+  color,
+  index,
+  onPress,
+  isDark,
+}: {
+  icon: string;
+  label: string;
+  color: string;
+  index: number;
+  onPress: () => void;
+  isDark: boolean;
+}) => {
+  const scale = useSharedValue(1);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  const handlePress = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    scale.value = withSpring(0.9, { damping: 15, stiffness: 400 });
+    setTimeout(() => {
+      scale.value = withSpring(1, { damping: 15, stiffness: 400 });
+    }, 100);
+    onPress();
+  };
+
+  return (
+    <Animated.View entering={FadeInUp.delay(200 + index * 50).springify()}>
+      <Animated.View style={animatedStyle}>
+        <TouchableOpacity onPress={handlePress} style={{ alignItems: "center" }}>
+          <View
+            style={{
+              width: 64,
+              height: 64,
+              borderRadius: 20,
+              alignItems: "center",
+              justifyContent: "center",
+              marginBottom: 8,
+              backgroundColor: `${color}20`,
+              borderWidth: 1,
+              borderColor: `${color}30`,
+            }}
+          >
+            <Ionicons name={icon as any} size={28} color={color} />
+          </View>
+          <Text
+            style={{
+              color: isDark ? "#94a3b8" : "#475569",
+              fontSize: 12,
+              fontWeight: "600",
+            }}
+          >
+            {label}
+          </Text>
+        </TouchableOpacity>
+      </Animated.View>
+    </Animated.View>
+  );
+};
 
 export default function HomeScreen() {
   const { theme, isDark } = useTheme();
@@ -75,6 +141,12 @@ export default function HomeScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: theme.background }}>
       <StatusBar style={isDark ? "light" : "dark"} />
+
+      {/* Search Modal */}
+      <SearchModal
+        visible={searchModalVisible}
+        onClose={() => setSearchModalVisible(false)}
+      />
 
       {/* Background Gradient */}
       <LinearGradient
