@@ -28,6 +28,11 @@ import { ALL_MOVIES, Colors, GENRES } from "@/constants/data";
 import { ThemeColors, useTheme } from "@/context";
 import { Genre, Movie } from "@/types";
 
+// Route constants for navigation
+const ROUTES = {
+  EXPLORE: "/(tabs)/explore" as const,
+} as const;
+
 interface SearchModalProps {
   visible: boolean;
   onClose: () => void;
@@ -457,7 +462,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({ visible, onClose }) =>
                           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                           onClose();
                           router.push({
-                            pathname: "/(tabs)/explore",
+                            pathname: ROUTES.EXPLORE,
                           });
                         }}
                         style={{ marginRight: 10, marginBottom: 10 }}

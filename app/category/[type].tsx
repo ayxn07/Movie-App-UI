@@ -6,7 +6,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useState, useMemo } from "react";
-import { Dimensions, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Dimensions, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
 import Animated, {
   FadeIn,
   FadeInDown,
@@ -430,7 +430,7 @@ export default function CategoryScreen() {
       {/* Genre Filters - Only for Movies and Series */}
       {(categoryType === "movies" || categoryType === "series") && (
         <Animated.View entering={FadeInDown.delay(100).springify()} style={{ marginBottom: 16 }}>
-          <Animated.ScrollView
+          <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
             style={{ paddingLeft: 20 }}
@@ -473,7 +473,7 @@ export default function CategoryScreen() {
                 theme={theme}
               />
             ))}
-          </Animated.ScrollView>
+          </ScrollView>
         </Animated.View>
       )}
 
