@@ -7,8 +7,9 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from "react-native-reanimated";
+import Toast from "react-native-toast-message";
 
-import { ThemeProvider, useTheme } from "@/context";
+import { MyListProvider, ThemeProvider, useTheme } from "@/context";
 import "./global.css";
 
 // Suppress SafeAreaView deprecation warnings emitted by some libraries
@@ -113,7 +114,10 @@ function RootLayoutContent() {
 export default function RootLayout() {
   return (
     <ThemeProvider>
-      <RootLayoutContent />
+      <MyListProvider>
+        <RootLayoutContent />
+        <Toast />
+      </MyListProvider>
     </ThemeProvider>
   );
 }
