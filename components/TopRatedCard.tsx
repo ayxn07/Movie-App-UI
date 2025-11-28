@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
+import { useRouter } from "expo-router";
 import React from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 import Animated, {
@@ -24,6 +25,7 @@ interface TopRatedCardProps {
 
 export const TopRatedCard: React.FC<TopRatedCardProps> = ({ movie, index, onPress }) => {
   const { theme, isDark } = useTheme();
+  const router = useRouter();
   const scale = useSharedValue(1);
 
   const animatedStyle = useAnimatedStyle(() => ({
@@ -38,6 +40,14 @@ export const TopRatedCard: React.FC<TopRatedCardProps> = ({ movie, index, onPres
     scale.value = withSpring(1, { damping: 15, stiffness: 400 });
   };
 
+  const handlePress = () => {
+    if (onPress) {
+      onPress();
+    } else {
+      router.push(`/movie/${movie.id}`);
+    }
+  };
+
   return (
     <Animated.View entering={FadeInRight.delay(index * 120).springify()}>
       <AnimatedTouchable
@@ -45,7 +55,7 @@ export const TopRatedCard: React.FC<TopRatedCardProps> = ({ movie, index, onPres
         style={animatedStyle}
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
-        onPress={onPress}
+        onPress={handlePress}
         activeOpacity={1}
       >
         {/* Large Rank Number */}
