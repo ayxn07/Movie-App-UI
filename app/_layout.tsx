@@ -31,10 +31,10 @@ function RootLayoutContent() {
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.background }}>
+      <StatusBar style={isDark ? "light" : "dark"} />
       <Animated.View 
-        style={[{ flex: 1, backgroundColor: theme.background }, animatedBgStyle]}
+        style={[{ flex: 1 }, animatedBgStyle]}
       >
-        <StatusBar style={isDark ? "light" : "dark"} />
         <Stack
           screenOptions={{
             headerShown: false,
