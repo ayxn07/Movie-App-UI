@@ -1,7 +1,6 @@
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { useEffect } from "react";
-import { LogBox, Platform } from "react-native";
+import { LogBox } from "react-native";
 
 import { ThemeProvider, useTheme } from "@/context";
 import "./global.css";
@@ -22,10 +21,11 @@ function RootLayoutContent() {
         screenOptions={{
           headerShown: false,
           contentStyle: { backgroundColor: theme.background },
-          animation: "ios_from_right",
-          animationDuration: 250,
+          animation: "fade_from_bottom",
+          animationDuration: 200,
           gestureEnabled: true,
           gestureDirection: "horizontal",
+          freezeOnBlur: true,
         }}
       >
         <Stack.Screen name="(tabs)" options={{ headerShown: false, animation: "none" }} />
@@ -34,8 +34,8 @@ function RootLayoutContent() {
           options={{ 
             headerShown: false, 
             presentation: "card",
-            animation: "ios_from_right",
-            animationDuration: 250,
+            animation: "fade_from_bottom",
+            animationDuration: 200,
             contentStyle: { backgroundColor: theme.background },
           }} 
         />
@@ -54,8 +54,8 @@ function RootLayoutContent() {
           options={{ 
             headerShown: false, 
             presentation: "card",
-            animation: "ios_from_right",
-            animationDuration: 250,
+            animation: "slide_from_right",
+            animationDuration: 200,
             contentStyle: { backgroundColor: theme.background },
           }} 
         />
@@ -64,8 +64,18 @@ function RootLayoutContent() {
           options={{ 
             headerShown: false, 
             presentation: "card",
-            animation: "ios_from_right",
-            animationDuration: 250,
+            animation: "slide_from_right",
+            animationDuration: 200,
+            contentStyle: { backgroundColor: theme.background },
+          }} 
+        />
+        <Stack.Screen 
+          name="category/[type]" 
+          options={{ 
+            headerShown: false, 
+            presentation: "card",
+            animation: "fade_from_bottom",
+            animationDuration: 200,
             contentStyle: { backgroundColor: theme.background },
           }} 
         />
