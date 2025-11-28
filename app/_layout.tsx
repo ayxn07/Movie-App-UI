@@ -1,6 +1,6 @@
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { LogBox, View } from "react-native";
+import { LogBox } from "react-native";
 
 import { ThemeProvider, useTheme } from "@/context";
 import "./global.css";
@@ -25,6 +25,7 @@ function RootLayoutContent() {
           animationDuration: 200,
           gestureEnabled: true,
           gestureDirection: "horizontal",
+          freezeOnBlur: true,
         }}
       >
         <Stack.Screen 
@@ -60,7 +61,7 @@ function RootLayoutContent() {
           options={{ 
             headerShown: false, 
             presentation: "card",
-            animation: "fade_from_bottom",
+            animation: "slide_from_right",
             animationDuration: 200,
             contentStyle: { backgroundColor: theme.background },
           }} 
@@ -70,7 +71,7 @@ function RootLayoutContent() {
           options={{ 
             headerShown: false, 
             presentation: "card",
-            animation: "fade_from_bottom",
+            animation: "slide_from_right",
             animationDuration: 200,
             contentStyle: { backgroundColor: theme.background },
           }} 
