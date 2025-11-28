@@ -4,10 +4,11 @@ import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import React from "react";
-import { ScrollView, Text, TouchableOpacity, View } from "react-native";
+import React, { useState } from "react";
+import { Modal, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
 import Animated, {
     Extrapolation,
+    FadeIn,
     FadeInDown,
     FadeInUp,
     interpolate,
@@ -24,6 +25,8 @@ import {
     TopRatedCard,
 } from "@/components";
 import {
+    ALL_MOVIES,
+    Colors,
     FEATURED_MOVIE,
     GENRES,
     MOVIES,
@@ -31,11 +34,14 @@ import {
     TRENDING,
 } from "@/constants/data";
 import { useTheme } from "@/context";
+import { ContentType, Movie } from "@/types";
 
 export default function HomeScreen() {
   const { theme, isDark } = useTheme();
   const router = useRouter();
   const scrollY = useSharedValue(0);
+  const [showSearchModal, setShowSearchModal] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const scrollHandler = useAnimatedScrollHandler({
     onScroll: (event) => {
@@ -52,13 +58,73 @@ export default function HomeScreen() {
     ],
   }));
 
-  // Quick Actions Data
-  const quickActions = [
-    { icon: "film-outline", label: "Movies", color: theme.primary },
-    { icon: "tv-outline", label: "Series", color: theme.secondary },
-    { icon: "videocam-outline", label: "Live", color: theme.accent },
-    { icon: "download-outline", label: "Downloads", color: theme.success },
+  // Quick Actions Data with navigation
+  const quickActions: { icon: string; label: string; color: string; type: ContentType }[] = [
+    { icon: "film-outline", label: "Movies", color: theme.primary, type: "movies" },
+    { icon: "tv-outline", label: "Series", color: theme.secondary, type: "series" },
+    { icon: "videocam-outline", label: "Live", color: theme.accent, type: "live" },
+    { icon: "download-outline", label: "Downloads", color: theme.success, type: "downloads" },
   ];
+
+  // Filter movies based on search
+  const filteredMovies = ALL_MOVIES.filter((movie) =>
+    movie.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    movie.genre.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  // Handle quick action navigation
+  const handleQuickAction = (type: ContentType) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    router.push(`/category/${type}`);
+  };
+
+  // Handle genre navigation
+  const handleGenrePress = (genreName: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    router.push(`/category/movies?genre=${genreName}`);
+  };
+
+  // Search result card component
+  const SearchResultCard = ({ movie }: { movie: Movie }) => (
+    <TouchableOpacity
+      style={{
+        flexDirection: "row",
+        alignItems: "center",
+        paddingVertical: 12,
+        paddingHorizontal: 16,
+        borderBottomWidth: 1,
+        borderBottomColor: theme.border,
+      }}
+      onPress={() => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        setShowSearchModal(false);
+        setSearchQuery("");
+        router.push(`/movie/${movie.id}`);
+      }}
+    >
+      <Image
+        source={{ uri: movie.image }}
+        style={{ width: 50, height: 75, borderRadius: 8 }}
+        contentFit="cover"
+      />
+      <View style={{ flex: 1, marginLeft: 12 }}>
+        <Text style={{ color: theme.text, fontWeight: "600", fontSize: 15 }} numberOfLines={1}>
+          {movie.title}
+        </Text>
+        <View style={{ flexDirection: "row", alignItems: "center", marginTop: 4, gap: 8 }}>
+          <View style={{ flexDirection: "row", alignItems: "center" }}>
+            <Ionicons name="star" size={12} color={Colors.star} />
+            <Text style={{ color: Colors.star, fontSize: 12, fontWeight: "600", marginLeft: 4 }}>
+              {movie.rating}
+            </Text>
+          </View>
+          <Text style={{ color: theme.textSecondary, fontSize: 12 }}>{movie.genre}</Text>
+          <Text style={{ color: theme.textSecondary, fontSize: 12 }}>{movie.year}</Text>
+        </View>
+      </View>
+      <Ionicons name="chevron-forward" size={20} color={theme.textMuted} />
+    </TouchableOpacity>
+  );
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.background }}>
@@ -117,6 +183,10 @@ export default function HomeScreen() {
           {/* Search Bar */}
           <Animated.View entering={FadeInDown.delay(100).springify()}>
             <TouchableOpacity 
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setShowSearchModal(true);
+              }}
               style={{ 
                 marginTop: 20, flexDirection: "row", alignItems: "center",
                 backgroundColor: isDark ? "rgba(30, 41, 59, 0.6)" : "rgba(241, 245, 249, 0.9)",
@@ -141,7 +211,7 @@ export default function HomeScreen() {
           {quickActions.map((item, index) => (
             <Animated.View key={item.label} entering={FadeInUp.delay(200 + index * 50)}>
               <TouchableOpacity 
-                onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
+                onPress={() => handleQuickAction(item.type)}
                 style={{ alignItems: "center" }}
               >
                 <View
@@ -151,7 +221,7 @@ export default function HomeScreen() {
                     backgroundColor: `${item.color}20`,
                   }}
                 >
-                  <Ionicons name={item.icon as any} size={28} color={item.color} />
+                  <Ionicons name={item.icon as keyof typeof Ionicons.glyphMap} size={28} color={item.color} />
                 </View>
                 <Text style={{ color: theme.textSecondary, fontSize: 12, fontWeight: "500" }}>{item.label}</Text>
               </TouchableOpacity>
@@ -164,7 +234,15 @@ export default function HomeScreen() {
 
         {/* Popular This Week */}
         <View style={{ marginBottom: 32 }}>
-          <SectionHeader title="Popular This Week" icon="trending-up" delay={300} />
+          <SectionHeader 
+            title="Popular This Week" 
+            icon="trending-up" 
+            delay={300} 
+            onSeeAllPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.push("/category/movies");
+            }}
+          />
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -179,7 +257,15 @@ export default function HomeScreen() {
 
         {/* Top 10 */}
         <View style={{ marginBottom: 32 }}>
-          <SectionHeader title="Top 10 This Week" icon="trophy" delay={350} />
+          <SectionHeader 
+            title="Top 10 This Week" 
+            icon="trophy" 
+            delay={350}
+            onSeeAllPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.push("/category/movies");
+            }}
+          />
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -194,7 +280,15 @@ export default function HomeScreen() {
 
         {/* Trending Now */}
         <View style={{ marginBottom: 32 }}>
-          <SectionHeader title="Trending Now" icon="flame" delay={400} />
+          <SectionHeader 
+            title="Trending Now" 
+            icon="flame" 
+            delay={400}
+            onSeeAllPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.push("/category/movies");
+            }}
+          />
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -215,7 +309,7 @@ export default function HomeScreen() {
           </View>
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12 }}>
             {GENRES.map((genre, index) => (
-              <GenreButton key={genre.name} genre={genre} index={index} />
+              <GenreButton key={genre.name} genre={genre} index={index} onPress={() => handleGenrePress(genre.name)} />
             ))}
           </View>
         </Animated.View>
@@ -227,6 +321,10 @@ export default function HomeScreen() {
             <Text style={{ color: theme.text, fontSize: 20, fontWeight: "900" }}>Continue Watching</Text>
           </View>
           <TouchableOpacity 
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.push("/movie/1");
+            }}
             style={{ 
               backgroundColor: isDark ? "rgba(30, 41, 59, 0.6)" : theme.card,
               borderRadius: 24, overflow: "hidden",
@@ -256,6 +354,122 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </Animated.View>
       </Animated.ScrollView>
+
+      {/* Search Modal */}
+      <Modal
+        visible={showSearchModal}
+        animationType="fade"
+        transparent
+        onRequestClose={() => {
+          setShowSearchModal(false);
+          setSearchQuery("");
+        }}
+      >
+        <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.5)" }}>
+          <Animated.View
+            entering={FadeIn.duration(200)}
+            style={{
+              flex: 1,
+              backgroundColor: theme.background,
+              marginTop: 50,
+              borderTopLeftRadius: 24,
+              borderTopRightRadius: 24,
+            }}
+          >
+            {/* Search Header */}
+            <View style={{
+              flexDirection: "row",
+              alignItems: "center",
+              paddingHorizontal: 20,
+              paddingVertical: 16,
+              borderBottomWidth: 1,
+              borderBottomColor: theme.border,
+            }}>
+              <View style={{
+                flex: 1,
+                flexDirection: "row",
+                alignItems: "center",
+                backgroundColor: isDark ? "rgba(30, 41, 59, 0.8)" : "rgba(241, 245, 249, 0.9)",
+                borderRadius: 12,
+                paddingHorizontal: 12,
+                paddingVertical: 10,
+              }}>
+                <Ionicons name="search" size={20} color={theme.textSecondary} />
+                <TextInput
+                  value={searchQuery}
+                  onChangeText={setSearchQuery}
+                  placeholder="Search movies, series..."
+                  placeholderTextColor={theme.textMuted}
+                  autoFocus
+                  style={{
+                    flex: 1,
+                    marginLeft: 10,
+                    fontSize: 16,
+                    color: theme.text,
+                  }}
+                />
+                {searchQuery.length > 0 && (
+                  <TouchableOpacity onPress={() => setSearchQuery("")}>
+                    <Ionicons name="close-circle" size={20} color={theme.textSecondary} />
+                  </TouchableOpacity>
+                )}
+              </View>
+              <TouchableOpacity
+                onPress={() => {
+                  setShowSearchModal(false);
+                  setSearchQuery("");
+                }}
+                style={{ marginLeft: 12 }}
+              >
+                <Text style={{ color: theme.primary, fontWeight: "600", fontSize: 16 }}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Search Results */}
+            <ScrollView
+              style={{ flex: 1 }}
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={{ paddingBottom: 100 }}
+            >
+              {searchQuery.length === 0 ? (
+                <View style={{ padding: 20 }}>
+                  <Text style={{ color: theme.textSecondary, fontSize: 14, marginBottom: 16 }}>
+                    Popular Searches
+                  </Text>
+                  {["Dune", "Batman", "Spider-Man", "Interstellar", "Oppenheimer"].map((term) => (
+                    <TouchableOpacity
+                      key={term}
+                      onPress={() => setSearchQuery(term)}
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        paddingVertical: 12,
+                      }}
+                    >
+                      <Ionicons name="trending-up" size={18} color={theme.textMuted} />
+                      <Text style={{ color: theme.text, marginLeft: 12, fontSize: 15 }}>{term}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              ) : filteredMovies.length > 0 ? (
+                filteredMovies.map((movie) => (
+                  <SearchResultCard key={movie.id} movie={movie} />
+                ))
+              ) : (
+                <View style={{ alignItems: "center", paddingVertical: 60 }}>
+                  <Ionicons name="search-outline" size={48} color={theme.textMuted} />
+                  <Text style={{ color: theme.text, fontSize: 18, fontWeight: "600", marginTop: 16 }}>
+                    No results found
+                  </Text>
+                  <Text style={{ color: theme.textSecondary, marginTop: 8, textAlign: "center", paddingHorizontal: 40 }}>
+                    Try searching for a different movie or series
+                  </Text>
+                </View>
+              )}
+            </ScrollView>
+          </Animated.View>
+        </View>
+      </Modal>
     </View>
   );
 }
