@@ -18,24 +18,24 @@ import Animated, {
 } from "react-native-reanimated";
 
 import {
-    FeaturedCard,
     GenreButton,
     MovieCard,
-    SearchModal,
+    NowPlayingCarousel,
     SectionHeader,
     TopRatedCard,
 } from "@/components";
 import {
     ALL_MOVIES,
     Colors,
-    FEATURED_MOVIE,
+    CONTINUE_WATCHING,
     GENRES,
     MOVIES,
+    NOW_PLAYING,
     TOP_RATED,
     TRENDING,
 } from "@/constants/data";
 import { useTheme } from "@/context";
-import { ContentType, Movie } from "@/types";
+import { ContentType, ContinueWatchingItem, Movie } from "@/types";
 
 export default function HomeScreen() {
   const { theme, isDark } = useTheme();
@@ -230,8 +230,8 @@ export default function HomeScreen() {
           ))}
         </Animated.View>
 
-        {/* Featured Movie */}
-        <FeaturedCard movie={FEATURED_MOVIE} />
+        {/* Now Playing Carousel */}
+        <NowPlayingCarousel movies={NOW_PLAYING} autoPlayInterval={5000} />
 
         {/* Popular This Week */}
         <View style={{ marginBottom: 32 }}>
@@ -241,7 +241,7 @@ export default function HomeScreen() {
             delay={300} 
             onSeeAllPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              router.push("/category/movies");
+              router.push("/seeall/popular");
             }}
           />
           <ScrollView
@@ -264,7 +264,7 @@ export default function HomeScreen() {
             delay={350}
             onSeeAllPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              router.push("/category/movies");
+              router.push("/seeall/top10");
             }}
           />
           <ScrollView
@@ -287,7 +287,7 @@ export default function HomeScreen() {
             delay={400}
             onSeeAllPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              router.push("/category/movies");
+              router.push("/seeall/trending");
             }}
           />
           <ScrollView
@@ -315,44 +315,35 @@ export default function HomeScreen() {
           </View>
         </Animated.View>
 
-        {/* Continue Watching */}
+        {/* Continue Watching - Multiple Cards */}
         <Animated.View entering={FadeInDown.delay(550).springify()} style={{ paddingHorizontal: 20, marginBottom: 40 }}>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 16 }}>
             <Ionicons name="play-circle" size={22} color={theme.primary} />
             <Text style={{ color: theme.text, fontSize: 20, fontWeight: "900" }}>Continue Watching</Text>
           </View>
-          <TouchableOpacity 
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              router.push("/movie/1");
-            }}
-            style={{ 
-              backgroundColor: isDark ? "rgba(30, 41, 59, 0.6)" : theme.card,
-              borderRadius: 24, overflow: "hidden",
-              borderWidth: isDark ? 0 : 1, borderColor: theme.border,
-            }}
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ gap: 12 }}
           >
-            <View style={{ flexDirection: "row", alignItems: "center", padding: 16 }}>
-              <View style={{ width: 112, height: 64, borderRadius: 12, overflow: "hidden" }}>
-                <Image
-                  source={{ uri: "https://m.media-amazon.com/images/M/MV5BN2QyZGU4ZDctOWMzMy00NTc5LThlOGQtODhmNDI1NmY5YzAwXkEyXkFqcGdeQXVyMDM2NDM2MQ@@._V1_.jpg" }}
-                  style={{ width: "100%", height: "100%" }}
-                  contentFit="cover"
-                />
-                <View style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(0,0,0,0.3)" }}>
-                  <Ionicons name="play-circle" size={32} color="white" />
-                </View>
-              </View>
-              <View style={{ flex: 1, marginLeft: 16 }}>
-                <Text style={{ color: theme.text, fontWeight: "700", fontSize: 16 }}>Dune: Part Two</Text>
-                <Text style={{ color: theme.textSecondary, fontSize: 14, marginTop: 4 }}>1h 20m remaining</Text>
-                <View style={{ height: 6, backgroundColor: isDark ? "#334155" : "#e2e8f0", borderRadius: 3, marginTop: 8, overflow: "hidden" }}>
-                  <View style={{ height: "100%", width: "60%", backgroundColor: theme.primary, borderRadius: 3 }} />
-                </View>
-              </View>
-              <Ionicons name="chevron-forward" size={24} color={theme.textMuted} />
-            </View>
-          </TouchableOpacity>
+            {CONTINUE_WATCHING.map((item, index) => (
+              <ContinueWatchingCard 
+                key={item.id} 
+                item={item} 
+                index={index} 
+                theme={theme} 
+                isDark={isDark}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  if (item.type === "series") {
+                    router.push(`/series/${item.id}`);
+                  } else {
+                    router.push(`/movie/${item.id}`);
+                  }
+                }}
+              />
+            ))}
+          </ScrollView>
         </Animated.View>
       </Animated.ScrollView>
 

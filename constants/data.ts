@@ -704,3 +704,411 @@ export const DOWNLOADS: Download[] = [
     status: "completed",
   },
 ];
+
+// ============================================================================
+// NOW PLAYING MOVIES DATA (for carousel)
+// ============================================================================
+
+export const NOW_PLAYING: Movie[] = [
+  FEATURED_MOVIE,
+  {
+    id: 101,
+    title: "Dune: Part Two",
+    rating: 8.8,
+    image: MovieImages.DUNE_PART_TWO,
+    genre: "Sci-Fi",
+    year: "2024",
+    duration: "2h 46m",
+    description: "Paul Atreides unites with Chani and the Fremen while seeking revenge against the conspirators who destroyed his family.",
+  },
+  {
+    id: 102,
+    title: "Oppenheimer",
+    rating: 8.9,
+    image: MovieImages.OPPENHEIMER,
+    genre: "Drama",
+    year: "2023",
+    duration: "3h 00m",
+    description: "The story of American scientist J. Robert Oppenheimer and his role in the development of the atomic bomb.",
+  },
+  {
+    id: 103,
+    title: "The Dark Knight",
+    rating: 9.5,
+    image: MovieImages.THE_DARK_KNIGHT,
+    genre: "Action",
+    year: "2008",
+    duration: "2h 32m",
+    description: "When the menace known as the Joker wreaks havoc on Gotham, Batman must accept one of the greatest tests.",
+  },
+];
+
+// ============================================================================
+// CONTINUE WATCHING DATA
+// ============================================================================
+
+export interface ContinueWatchingItem {
+  id: number;
+  title: string;
+  image: string;
+  progress: number;
+  remainingTime: string;
+  type: "movie" | "series";
+  episode?: string;
+}
+
+export const CONTINUE_WATCHING: ContinueWatchingItem[] = [
+  {
+    id: 1,
+    title: "Dune: Part Two",
+    image: "https://m.media-amazon.com/images/M/MV5BN2QyZGU4ZDctOWMzMy00NTc5LThlOGQtODhmNDI1NmY5YzAwXkEyXkFqcGdeQXVyMDM2NDM2MQ@@._V1_.jpg",
+    progress: 60,
+    remainingTime: "1h 20m remaining",
+    type: "movie",
+  },
+  {
+    id: 203,
+    title: "Stranger Things",
+    image: SeriesImages.STRANGER_THINGS,
+    progress: 45,
+    remainingTime: "32m remaining",
+    type: "series",
+    episode: "S4 E5",
+  },
+  {
+    id: 10,
+    title: "The Dark Knight",
+    image: MovieImages.THE_DARK_KNIGHT,
+    progress: 75,
+    remainingTime: "38m remaining",
+    type: "movie",
+  },
+  {
+    id: 201,
+    title: "Breaking Bad",
+    image: SeriesImages.BREAKING_BAD,
+    progress: 25,
+    remainingTime: "45m remaining",
+    type: "series",
+    episode: "S3 E2",
+  },
+  {
+    id: 5,
+    title: "Interstellar",
+    image: MovieImages.INTERSTELLAR,
+    progress: 80,
+    remainingTime: "33m remaining",
+    type: "movie",
+  },
+];
+
+// ============================================================================
+// REVIEWS DATA
+// ============================================================================
+
+export interface Review {
+  id: string;
+  movieId: number;
+  userName: string;
+  userAvatar: string;
+  rating: number;
+  date: string;
+  title: string;
+  content: string;
+  helpful: number;
+  verified: boolean;
+}
+
+export const MOVIE_REVIEWS: Record<number, Review[]> = {
+  1: [
+    {
+      id: "r1",
+      movieId: 1,
+      userName: "MovieBuff2024",
+      userAvatar: "https://randomuser.me/api/portraits/men/1.jpg",
+      rating: 9,
+      date: "2024-03-15",
+      title: "A Masterpiece of Sci-Fi Cinema",
+      content: "Denis Villeneuve has done it again! Dune: Part Two is an incredible cinematic experience that surpasses the first film in every way. The visuals are breathtaking, the performances are outstanding, and the story keeps you on the edge of your seat.",
+      helpful: 234,
+      verified: true,
+    },
+    {
+      id: "r2",
+      movieId: 1,
+      userName: "SciFiFanatic",
+      userAvatar: "https://randomuser.me/api/portraits/women/2.jpg",
+      rating: 8,
+      date: "2024-03-10",
+      title: "Epic sequel that delivers",
+      content: "Timothée Chalamet and Zendaya have incredible chemistry. The action sequences are some of the best I've seen in years. Hans Zimmer's score is hauntingly beautiful.",
+      helpful: 189,
+      verified: true,
+    },
+    {
+      id: "r3",
+      movieId: 1,
+      userName: "CinemaLover",
+      userAvatar: "https://randomuser.me/api/portraits/men/3.jpg",
+      rating: 10,
+      date: "2024-03-08",
+      title: "Perfect adaptation!",
+      content: "As a huge fan of the books, I couldn't be happier with this adaptation. Every scene is crafted with such care and attention to detail. This is how you make a blockbuster.",
+      helpful: 156,
+      verified: false,
+    },
+  ],
+  2: [
+    {
+      id: "r4",
+      movieId: 2,
+      userName: "HistoryNerd",
+      userAvatar: "https://randomuser.me/api/portraits/men/4.jpg",
+      rating: 10,
+      date: "2023-08-20",
+      title: "Nolan's Best Work",
+      content: "Christopher Nolan has crafted an absolute masterpiece. Cillian Murphy delivers a career-defining performance as Oppenheimer. The IMAX experience is unmissable.",
+      helpful: 512,
+      verified: true,
+    },
+    {
+      id: "r5",
+      movieId: 2,
+      userName: "FilmCritic101",
+      userAvatar: "https://randomuser.me/api/portraits/women/5.jpg",
+      rating: 9,
+      date: "2023-08-15",
+      title: "A haunting biographical drama",
+      content: "The way Nolan weaves the timelines together is brilliant. The ensemble cast is phenomenal, with Robert Downey Jr. giving an Oscar-worthy performance.",
+      helpful: 389,
+      verified: true,
+    },
+  ],
+  10: [
+    {
+      id: "r6",
+      movieId: 10,
+      userName: "BatmanFan",
+      userAvatar: "https://randomuser.me/api/portraits/men/6.jpg",
+      rating: 10,
+      date: "2008-07-25",
+      title: "The greatest superhero film ever made",
+      content: "Heath Ledger's Joker is absolutely mesmerizing. Every scene he's in is pure gold. This film transcends the superhero genre and becomes something truly special.",
+      helpful: 2341,
+      verified: true,
+    },
+    {
+      id: "r7",
+      movieId: 10,
+      userName: "MovieExpert",
+      userAvatar: "https://randomuser.me/api/portraits/women/7.jpg",
+      rating: 10,
+      date: "2008-07-20",
+      title: "A cinematic achievement",
+      content: "Nolan proved that comic book movies can be art. The practical effects, the performances, the score - everything comes together perfectly.",
+      helpful: 1876,
+      verified: true,
+    },
+  ],
+  100: [
+    {
+      id: "r8",
+      movieId: 100,
+      userName: "MarvelDCFan",
+      userAvatar: "https://randomuser.me/api/portraits/men/8.jpg",
+      rating: 9,
+      date: "2024-07-28",
+      title: "Hilariously violent and heartfelt",
+      content: "Ryan Reynolds and Hugh Jackman have incredible chemistry. The jokes land perfectly, the action is brutal, and there are some genuinely emotional moments.",
+      helpful: 456,
+      verified: true,
+    },
+    {
+      id: "r9",
+      movieId: 100,
+      userName: "ComicBookNerd",
+      userAvatar: "https://randomuser.me/api/portraits/women/9.jpg",
+      rating: 8,
+      date: "2024-07-26",
+      title: "A love letter to fans",
+      content: "So many Easter eggs and references! The cameos are insane. This is exactly what fans wanted and more. The multiverse concept is used brilliantly.",
+      helpful: 378,
+      verified: true,
+    },
+  ],
+};
+
+// Default reviews for movies without specific data
+export const DEFAULT_REVIEWS: Review[] = [
+  {
+    id: "default1",
+    movieId: 0,
+    userName: "MovieWatcher",
+    userAvatar: "https://randomuser.me/api/portraits/men/10.jpg",
+    rating: 8,
+    date: "2024-01-15",
+    title: "Great movie!",
+    content: "Really enjoyed this film. The acting was superb and the story kept me engaged throughout. Would definitely recommend to others.",
+    helpful: 45,
+    verified: true,
+  },
+  {
+    id: "default2",
+    movieId: 0,
+    userName: "CasualViewer",
+    userAvatar: "https://randomuser.me/api/portraits/women/11.jpg",
+    rating: 7,
+    date: "2024-01-10",
+    title: "Solid entertainment",
+    content: "A well-made film with good production values. Some parts dragged a bit, but overall it was an enjoyable watch.",
+    helpful: 32,
+    verified: false,
+  },
+];
+
+// ============================================================================
+// FRIENDS & SOCIAL DATA
+// ============================================================================
+
+export interface Friend {
+  id: string;
+  name: string;
+  avatar: string;
+  username: string;
+  isOnline: boolean;
+  lastActive?: string;
+  favoriteMovies: number[];
+  watchedCount: number;
+}
+
+export const FRIENDS: Friend[] = [
+  {
+    id: "f1",
+    name: "Alex Thompson",
+    avatar: "https://randomuser.me/api/portraits/men/20.jpg",
+    username: "@alexthompson",
+    isOnline: true,
+    favoriteMovies: [1, 2, 10],
+    watchedCount: 234,
+  },
+  {
+    id: "f2",
+    name: "Sarah Miller",
+    avatar: "https://randomuser.me/api/portraits/women/21.jpg",
+    username: "@sarahmiller",
+    isOnline: true,
+    favoriteMovies: [5, 7, 9],
+    watchedCount: 189,
+  },
+  {
+    id: "f3",
+    name: "James Wilson",
+    avatar: "https://randomuser.me/api/portraits/men/22.jpg",
+    username: "@jameswilson",
+    isOnline: false,
+    lastActive: "2 hours ago",
+    favoriteMovies: [3, 6, 8],
+    watchedCount: 156,
+  },
+  {
+    id: "f4",
+    name: "Emma Davis",
+    avatar: "https://randomuser.me/api/portraits/women/23.jpg",
+    username: "@emmadavis",
+    isOnline: false,
+    lastActive: "5 hours ago",
+    favoriteMovies: [2, 4, 10],
+    watchedCount: 201,
+  },
+  {
+    id: "f5",
+    name: "Michael Brown",
+    avatar: "https://randomuser.me/api/portraits/men/24.jpg",
+    username: "@michaelbrown",
+    isOnline: true,
+    favoriteMovies: [1, 5, 11],
+    watchedCount: 312,
+  },
+];
+
+export const SUGGESTED_FRIENDS: Friend[] = [
+  {
+    id: "sf1",
+    name: "David Lee",
+    avatar: "https://randomuser.me/api/portraits/men/25.jpg",
+    username: "@davidlee",
+    isOnline: false,
+    lastActive: "1 day ago",
+    favoriteMovies: [2, 7, 12],
+    watchedCount: 178,
+  },
+  {
+    id: "sf2",
+    name: "Jessica Wang",
+    avatar: "https://randomuser.me/api/portraits/women/26.jpg",
+    username: "@jessicawang",
+    isOnline: true,
+    favoriteMovies: [1, 3, 9],
+    watchedCount: 245,
+  },
+  {
+    id: "sf3",
+    name: "Ryan Garcia",
+    avatar: "https://randomuser.me/api/portraits/men/27.jpg",
+    username: "@ryangarcia",
+    isOnline: false,
+    lastActive: "30 minutes ago",
+    favoriteMovies: [5, 8, 10],
+    watchedCount: 167,
+  },
+];
+
+// ============================================================================
+// CHAT MESSAGES DATA
+// ============================================================================
+
+export interface ChatMessage {
+  id: string;
+  senderId: string;
+  text?: string;
+  image?: string;
+  timestamp: string;
+  isRead: boolean;
+}
+
+export interface Chat {
+  id: string;
+  friendId: string;
+  messages: ChatMessage[];
+  lastMessage: string;
+  lastMessageTime: string;
+  unreadCount: number;
+}
+
+export const SAMPLE_CHATS: Chat[] = [
+  {
+    id: "chat1",
+    friendId: "f1",
+    messages: [
+      { id: "m1", senderId: "f1", text: "Hey! Have you watched Dune Part Two yet?", timestamp: "10:30 AM", isRead: true },
+      { id: "m2", senderId: "me", text: "Yes! It was amazing! The visuals were incredible", timestamp: "10:32 AM", isRead: true },
+      { id: "m3", senderId: "f1", text: "I know right! Hans Zimmer's score was phenomenal", timestamp: "10:35 AM", isRead: true },
+      { id: "m4", senderId: "me", text: "We should watch the next one together when it comes out", timestamp: "10:38 AM", isRead: true },
+    ],
+    lastMessage: "We should watch the next one together when it comes out",
+    lastMessageTime: "10:38 AM",
+    unreadCount: 0,
+  },
+  {
+    id: "chat2",
+    friendId: "f2",
+    messages: [
+      { id: "m5", senderId: "f2", text: "What should we watch tonight?", timestamp: "2:15 PM", isRead: true },
+      { id: "m6", senderId: "me", text: "How about Interstellar? I've been meaning to rewatch it", timestamp: "2:20 PM", isRead: true },
+      { id: "m7", senderId: "f2", text: "Perfect! I'll bring the popcorn 🍿", timestamp: "2:22 PM", isRead: false },
+    ],
+    lastMessage: "Perfect! I'll bring the popcorn 🍿",
+    lastMessageTime: "2:22 PM",
+    unreadCount: 1,
+  },
+];
