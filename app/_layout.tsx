@@ -1,7 +1,6 @@
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { useEffect } from "react";
-import { LogBox, Platform } from "react-native";
+import { LogBox } from "react-native";
 
 import { ThemeProvider, useTheme } from "@/context";
 import "./global.css";
@@ -61,6 +60,16 @@ function RootLayoutContent() {
         />
         <Stack.Screen 
           name="cast/[id]" 
+          options={{ 
+            headerShown: false, 
+            presentation: "card",
+            animation: "ios_from_right",
+            animationDuration: 250,
+            contentStyle: { backgroundColor: theme.background },
+          }} 
+        />
+        <Stack.Screen 
+          name="category/[type]" 
           options={{ 
             headerShown: false, 
             presentation: "card",
