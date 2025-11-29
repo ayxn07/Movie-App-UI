@@ -49,6 +49,7 @@ const SettingsItem = ({
   delay = 0,
   theme,
   customRight,
+  onPress,
 }: {
   icon: string;
   label: string;
@@ -59,12 +60,19 @@ const SettingsItem = ({
   delay?: number;
   theme: ThemeColors;
   customRight?: React.ReactNode;
+  onPress?: () => void;
 }) => (
   <Animated.View entering={FadeInRight.delay(delay).springify()}>
     <TouchableOpacity
       className="flex-row items-center justify-between py-4"
       style={{ borderBottomWidth: 1, borderBottomColor: theme.border }}
       disabled={hasToggle || !!customRight}
+      onPress={() => {
+        if (!hasToggle && !customRight && onPress) {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          onPress();
+        }
+      }}
     >
       <View className="flex-row items-center gap-4">
         <View className="w-10 h-10 rounded-full items-center justify-center" style={{ backgroundColor: theme.backgroundTertiary }}>
@@ -273,6 +281,7 @@ export default function ProfileScreen() {
               value="English"
               delay={450}
               theme={theme}
+              onPress={() => router.push("/settings/language")}
             />
             <SettingsItem
               icon="moon"
@@ -299,24 +308,28 @@ export default function ProfileScreen() {
               value="Free"
               delay={550}
               theme={theme}
+              onPress={() => router.push("/settings/subscription")}
             />
             <SettingsItem
               icon="shield-checkmark"
               label="Privacy & Security"
               delay={600}
               theme={theme}
+              onPress={() => router.push("/settings/privacy")}
             />
             <SettingsItem
               icon="help-circle"
               label="Help & Support"
               delay={650}
               theme={theme}
+              onPress={() => router.push("/settings/help")}
             />
             <SettingsItem
               icon="information-circle"
               label="About"
               delay={700}
               theme={theme}
+              onPress={() => router.push("/settings/about")}
             />
           </View>
         </Animated.View>

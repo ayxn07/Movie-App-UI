@@ -1,16 +1,16 @@
 import { Ionicons } from "@expo/vector-icons";
-import { FlashList } from "@shopify/flash-list";
 import { Image } from "expo-image";
 import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useState } from "react";
-import { ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Modal, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
 import Animated, {
   FadeIn,
   FadeInDown,
   FadeInRight,
+  FadeInUp,
   useAnimatedStyle,
   useSharedValue,
   withSpring,
@@ -145,12 +145,32 @@ const FriendCard = ({
 export default function FriendsScreen() {
   const { theme, isDark } = useTheme();
   const router = useRouter();
-  const { friends, searchFriends } = useApp();
+  const { friends, searchFriends, showToast } = useApp();
   const [searchQuery, setSearchQuery] = useState("");
+  const [showAddFriendModal, setShowAddFriendModal] = useState(false);
+  const [friendUsername, setFriendUsername] = useState("");
 
   const filteredFriends = searchFriends(searchQuery);
   const onlineFriends = filteredFriends.filter((f) => f.isOnline);
   const offlineFriends = filteredFriends.filter((f) => !f.isOnline);
+
+  // Suggested friends data
+  const suggestedFriends = [
+    { id: "s1", name: "John Smith", avatar: "https://randomuser.me/api/portraits/men/10.jpg", mutualFriends: 5 },
+    { id: "s2", name: "Emily Davis", avatar: "https://randomuser.me/api/portraits/women/15.jpg", mutualFriends: 3 },
+    { id: "s3", name: "Michael Brown", avatar: "https://randomuser.me/api/portraits/men/20.jpg", mutualFriends: 8 },
+  ];
+
+  const handleAddFriend = () => {
+    if (!friendUsername.trim()) {
+      showToast("Please enter a username", "error");
+      return;
+    }
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    showToast(`Friend request sent to ${friendUsername}`, "success");
+    setFriendUsername("");
+    setShowAddFriendModal(false);
+  };
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.background }}>
@@ -185,6 +205,10 @@ export default function FriendsScreen() {
             </Text>
           </View>
           <TouchableOpacity
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              setShowAddFriendModal(true);
+            }}
             style={{
               width: 44, height: 44, borderRadius: 22,
               backgroundColor: theme.primary,
@@ -289,6 +313,150 @@ export default function FriendsScreen() {
           </Animated.View>
         )}
       </ScrollView>
+
+      {/* Add Friend Modal */}
+      <Modal
+        visible={showAddFriendModal}
+        animationType="fade"
+        transparent
+        onRequestClose={() => setShowAddFriendModal(false)}
+      >
+        <View style={{ flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(0,0,0,0.5)" }}>
+          <Animated.View
+            entering={FadeInUp.springify()}
+            style={{
+              backgroundColor: isDark ? "#1e293b" : "#ffffff",
+              borderTopLeftRadius: 24,
+              borderTopRightRadius: 24,
+              paddingBottom: 40,
+              maxHeight: "80%",
+            }}
+          >
+            {/* Modal Header */}
+            <View style={{
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "center",
+              padding: 20,
+              borderBottomWidth: 1,
+              borderBottomColor: theme.border,
+            }}>
+              <Text style={{ fontSize: 20, fontWeight: "800", color: theme.text }}>Add Friend</Text>
+              <TouchableOpacity onPress={() => setShowAddFriendModal(false)}>
+                <Ionicons name="close" size={24} color={theme.textSecondary} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={{ padding: 20 }}>
+              {/* Search by Username */}
+              <Text style={{ color: theme.text, fontSize: 16, fontWeight: "700", marginBottom: 12 }}>
+                Search by username
+              </Text>
+              <View style={{
+                flexDirection: "row",
+                alignItems: "center",
+                backgroundColor: isDark ? "rgba(30, 41, 59, 0.8)" : theme.backgroundSecondary,
+                borderRadius: 16,
+                paddingHorizontal: 16,
+                paddingVertical: 12,
+                marginBottom: 24,
+              }}>
+                <Ionicons name="at" size={20} color={theme.textSecondary} />
+                <TextInput
+                  value={friendUsername}
+                  onChangeText={setFriendUsername}
+                  placeholder="Enter username..."
+                  placeholderTextColor={theme.textMuted}
+                  style={{ flex: 1, marginLeft: 12, fontSize: 15, color: theme.text }}
+                  autoCapitalize="none"
+                />
+                <TouchableOpacity
+                  onPress={handleAddFriend}
+                  style={{
+                    backgroundColor: theme.primary,
+                    paddingHorizontal: 16,
+                    paddingVertical: 10,
+                    borderRadius: 12,
+                  }}
+                >
+                  <Text style={{ color: "white", fontWeight: "600" }}>Add</Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Suggested Friends */}
+              <Text style={{ color: theme.text, fontSize: 16, fontWeight: "700", marginBottom: 16 }}>
+                People you may know
+              </Text>
+              {suggestedFriends.map((friend, index) => (
+                <Animated.View
+                  key={friend.id}
+                  entering={FadeInRight.delay(index * 100).springify()}
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    paddingVertical: 12,
+                    borderBottomWidth: 1,
+                    borderBottomColor: theme.border,
+                  }}
+                >
+                  <Image
+                    source={{ uri: friend.avatar }}
+                    style={{ width: 50, height: 50, borderRadius: 25 }}
+                    contentFit="cover"
+                  />
+                  <View style={{ flex: 1, marginLeft: 12 }}>
+                    <Text style={{ color: theme.text, fontSize: 15, fontWeight: "600" }}>
+                      {friend.name}
+                    </Text>
+                    <Text style={{ color: theme.textSecondary, fontSize: 12, marginTop: 2 }}>
+                      {friend.mutualFriends} mutual friends
+                    </Text>
+                  </View>
+                  <TouchableOpacity
+                    onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      showToast(`Friend request sent to ${friend.name}`, "success");
+                    }}
+                    style={{
+                      backgroundColor: `${theme.primary}20`,
+                      paddingHorizontal: 16,
+                      paddingVertical: 8,
+                      borderRadius: 12,
+                    }}
+                  >
+                    <Text style={{ color: theme.primary, fontWeight: "600", fontSize: 13 }}>
+                      Add
+                    </Text>
+                  </TouchableOpacity>
+                </Animated.View>
+              ))}
+
+              {/* Invite Friends */}
+              <TouchableOpacity
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  showToast("Share link copied!", "success");
+                }}
+                style={{
+                  marginTop: 24,
+                  padding: 16,
+                  borderRadius: 16,
+                  backgroundColor: isDark ? "rgba(139, 92, 246, 0.2)" : "rgba(139, 92, 246, 0.1)",
+                  alignItems: "center",
+                }}
+              >
+                <Ionicons name="share-outline" size={28} color={theme.primary} />
+                <Text style={{ color: theme.text, fontSize: 15, fontWeight: "600", marginTop: 8 }}>
+                  Invite friends to MoviesHub
+                </Text>
+                <Text style={{ color: theme.textSecondary, fontSize: 12, marginTop: 4 }}>
+                  Share your invite link
+                </Text>
+              </TouchableOpacity>
+            </ScrollView>
+          </Animated.View>
+        </View>
+      </Modal>
     </View>
   );
 }
