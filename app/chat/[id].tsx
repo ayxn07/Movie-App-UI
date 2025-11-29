@@ -7,8 +7,9 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useRef, useState } from "react";
 import {
-  Alert,
+  Dimensions,
   KeyboardAvoidingView,
+  Modal,
   Platform,
   ScrollView,
   Text,
@@ -19,297 +20,149 @@ import {
 import Animated, {
   FadeIn,
   FadeInDown,
+  FadeInRight,
   FadeInUp,
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
 } from "react-native-reanimated";
 
 import { Colors } from "@/constants/data";
-import { useTheme } from "@/context";
+import { ChatMessage, useApp, useTheme } from "@/context";
 
-// Mock user data
-const USERS: Record<string, { name: string; avatar: string; isOnline: boolean }> = {
-  "1": {
-    name: "Emma Wilson",
-    avatar: "https://randomuser.me/api/portraits/women/1.jpg",
-    isOnline: true,
-  },
-  "2": {
-    name: "James Rodriguez",
-    avatar: "https://randomuser.me/api/portraits/men/2.jpg",
-    isOnline: true,
-  },
-  "3": {
-    name: "Sophia Chen",
-    avatar: "https://randomuser.me/api/portraits/women/3.jpg",
-    isOnline: false,
-  },
-  "4": {
-    name: "Michael Brown",
-    avatar: "https://randomuser.me/api/portraits/men/4.jpg",
-    isOnline: true,
-  },
-  "5": {
-    name: "Olivia Taylor",
-    avatar: "https://randomuser.me/api/portraits/women/5.jpg",
-    isOnline: false,
-  },
-};
-
-// Message type
-interface Message {
-  id: string;
-  text?: string;
-  image?: string;
-  isMe: boolean;
-  timestamp: string;
-  type: "text" | "image" | "movie";
-  movieData?: {
-    title: string;
-    image: string;
-    rating: number;
-  };
-}
-
-// Initial messages
-const getInitialMessages = (userId: string): Message[] => [
-  {
-    id: "1",
-    text: "Hey! Have you watched Dune Part Two yet? 🎬",
-    isMe: false,
-    timestamp: "10:30 AM",
-    type: "text",
-  },
-  {
-    id: "2",
-    text: "Not yet! Is it good?",
-    isMe: true,
-    timestamp: "10:32 AM",
-    type: "text",
-  },
-  {
-    id: "3",
-    text: "It's amazing! The visuals are incredible. You should definitely watch it.",
-    isMe: false,
-    timestamp: "10:33 AM",
-    type: "text",
-  },
-  {
-    id: "4",
-    type: "movie",
-    isMe: false,
-    timestamp: "10:34 AM",
-    movieData: {
-      title: "Dune: Part Two",
-      image: "https://m.media-amazon.com/images/I/81Rrx-Bv+6L.jpg",
-      rating: 8.8,
-    },
-  },
-  {
-    id: "5",
-    text: "Wow, the rating is really high! I'll add it to my list 📋",
-    isMe: true,
-    timestamp: "10:35 AM",
-    type: "text",
-  },
-];
+const { width, height } = Dimensions.get("window");
 
 // Message Bubble Component
 const MessageBubble = ({
   message,
-  theme,
-  isDark,
-  onMoviePress,
+  isMe,
+  index,
 }: {
-  message: Message;
-  theme: ReturnType<typeof useTheme>["theme"];
-  isDark: boolean;
-  onMoviePress?: () => void;
+  message: ChatMessage;
+  isMe: boolean;
+  index: number;
 }) => {
-  const scale = useSharedValue(1);
+  const { theme, isDark } = useTheme();
 
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }));
-
-  if (message.type === "movie" && message.movieData) {
-    return (
-      <Animated.View
-        entering={FadeInUp.springify()}
-        style={{
-          alignSelf: message.isMe ? "flex-end" : "flex-start",
-          maxWidth: "75%",
-          marginBottom: 12,
-        }}
-      >
-        <TouchableOpacity
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            onMoviePress?.();
-          }}
-          activeOpacity={0.9}
-        >
-          <View
-            style={{
-              backgroundColor: message.isMe
-                ? theme.primary
-                : isDark
-                ? "rgba(30, 41, 59, 0.9)"
-                : theme.card,
-              borderRadius: 20,
-              overflow: "hidden",
-            }}
-          >
-            <Image
-              source={{ uri: message.movieData.image }}
-              style={{ width: 200, height: 120 }}
-              contentFit="cover"
-            />
-            <View style={{ padding: 12 }}>
-              <Text
-                style={{
-                  color: message.isMe ? "white" : theme.text,
-                  fontWeight: "700",
-                  fontSize: 14,
-                }}
-                numberOfLines={1}
-              >
-                {message.movieData.title}
-              </Text>
-              <View
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  marginTop: 6,
-                }}
-              >
-                <Ionicons name="star" size={12} color={Colors.star} />
-                <Text
-                  style={{
-                    color: Colors.star,
-                    fontSize: 12,
-                    fontWeight: "600",
-                    marginLeft: 4,
-                  }}
-                >
-                  {message.movieData.rating}
-                </Text>
-                <Text
-                  style={{
-                    color: message.isMe ? "rgba(255,255,255,0.7)" : theme.textSecondary,
-                    fontSize: 12,
-                    marginLeft: 8,
-                  }}
-                >
-                  Tap to view
-                </Text>
-              </View>
-            </View>
-          </View>
-        </TouchableOpacity>
-        <Text
-          style={{
-            color: theme.textMuted,
-            fontSize: 11,
-            marginTop: 4,
-            alignSelf: message.isMe ? "flex-end" : "flex-start",
-          }}
-        >
-          {message.timestamp}
-        </Text>
-      </Animated.View>
-    );
-  }
-
-  if (message.type === "image" && message.image) {
-    return (
-      <Animated.View
-        entering={FadeInUp.springify()}
-        style={{
-          alignSelf: message.isMe ? "flex-end" : "flex-start",
-          maxWidth: "75%",
-          marginBottom: 12,
-        }}
-      >
-        <View
-          style={{
-            backgroundColor: message.isMe
-              ? theme.primary
-              : isDark
-              ? "rgba(30, 41, 59, 0.9)"
-              : theme.card,
-            borderRadius: 20,
-            padding: 4,
-          }}
-        >
-          <Image
-            source={{ uri: message.image }}
-            style={{ width: 200, height: 200, borderRadius: 16 }}
-            contentFit="cover"
-          />
-        </View>
-        <Text
-          style={{
-            color: theme.textMuted,
-            fontSize: 11,
-            marginTop: 4,
-            alignSelf: message.isMe ? "flex-end" : "flex-start",
-          }}
-        >
-          {message.timestamp}
-        </Text>
-      </Animated.View>
-    );
-  }
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  };
 
   return (
     <Animated.View
-      entering={FadeInUp.springify()}
-      style={[
-        animatedStyle,
-        {
-          alignSelf: message.isMe ? "flex-end" : "flex-start",
-          maxWidth: "75%",
-          marginBottom: 12,
-        },
-      ]}
+      entering={FadeInUp.delay(index * 50).springify()}
+      style={{
+        alignSelf: isMe ? "flex-end" : "flex-start",
+        maxWidth: "80%",
+        marginBottom: 12,
+      }}
     >
-      <View
-        style={{
-          backgroundColor: message.isMe
+      {message.type === "image" && message.imageUri ? (
+        <View style={{
+          borderRadius: 20,
+          overflow: "hidden",
+          marginBottom: 4,
+        }}>
+          <Image
+            source={{ uri: message.imageUri }}
+            style={{ width: 200, height: 200 }}
+            contentFit="cover"
+          />
+        </View>
+      ) : (
+        <View style={{
+          backgroundColor: isMe
             ? theme.primary
-            : isDark
-            ? "rgba(30, 41, 59, 0.9)"
-            : theme.card,
+            : isDark ? "rgba(30, 41, 59, 0.8)" : theme.card,
+          borderRadius: 20,
+          borderBottomRightRadius: isMe ? 4 : 20,
+          borderBottomLeftRadius: isMe ? 20 : 4,
           paddingHorizontal: 16,
           paddingVertical: 12,
-          borderRadius: 20,
-          borderTopRightRadius: message.isMe ? 4 : 20,
-          borderTopLeftRadius: message.isMe ? 20 : 4,
-        }}
-      >
-        <Text
-          style={{
-            color: message.isMe ? "white" : theme.text,
+        }}>
+          <Text style={{
+            color: isMe ? "white" : theme.text,
             fontSize: 15,
             lineHeight: 22,
-          }}
-        >
-          {message.text}
-        </Text>
-      </View>
-      <Text
-        style={{
-          color: theme.textMuted,
-          fontSize: 11,
-          marginTop: 4,
-          alignSelf: message.isMe ? "flex-end" : "flex-start",
-        }}
-      >
-        {message.timestamp}
+          }}>
+            {message.content}
+          </Text>
+        </View>
+      )}
+      <Text style={{
+        color: theme.textMuted,
+        fontSize: 11,
+        marginTop: 4,
+        alignSelf: isMe ? "flex-end" : "flex-start",
+      }}>
+        {formatTime(message.createdAt)}
+        {isMe && (
+          <Text> • {message.isRead ? "Read" : "Sent"}</Text>
+        )}
       </Text>
     </Animated.View>
+  );
+};
+
+// Image Preview Modal
+const ImagePreviewModal = ({
+  visible,
+  imageUri,
+  onClose,
+  onSend,
+}: {
+  visible: boolean;
+  imageUri: string | null;
+  onClose: () => void;
+  onSend: () => void;
+}) => {
+  const { theme, isDark } = useTheme();
+
+  if (!imageUri) return null;
+
+  return (
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+      <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.9)", justifyContent: "center", alignItems: "center" }}>
+        <TouchableOpacity
+          onPress={onClose}
+          style={{ position: "absolute", top: 50, right: 20, zIndex: 10, padding: 10 }}
+        >
+          <Ionicons name="close" size={28} color="white" />
+        </TouchableOpacity>
+        
+        <Image
+          source={{ uri: imageUri }}
+          style={{ width: width - 40, height: height * 0.5, borderRadius: 16 }}
+          contentFit="contain"
+        />
+
+        <View style={{ flexDirection: "row", gap: 20, marginTop: 30 }}>
+          <TouchableOpacity
+            onPress={onClose}
+            style={{
+              paddingHorizontal: 32,
+              paddingVertical: 14,
+              borderRadius: 16,
+              backgroundColor: "rgba(255,255,255,0.2)",
+            }}
+          >
+            <Text style={{ color: "white", fontWeight: "600", fontSize: 16 }}>Cancel</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={onSend}>
+            <LinearGradient
+              colors={[Colors.primary, Colors.primaryDark]}
+              style={{
+                paddingHorizontal: 32,
+                paddingVertical: 14,
+                borderRadius: 16,
+                flexDirection: "row",
+                alignItems: "center",
+              }}
+            >
+              <Ionicons name="send" size={18} color="white" />
+              <Text style={{ color: "white", fontWeight: "700", fontSize: 16, marginLeft: 8 }}>Send</Text>
+            </LinearGradient>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
   );
 };
 
@@ -317,117 +170,104 @@ export default function ChatScreen() {
   const { theme, isDark } = useTheme();
   const router = useRouter();
   const params = useLocalSearchParams();
-  const userId = (params.id as string) || "1";
-
+  const friendId = params.id as string;
+  const { friends, getMessagesForFriend, sendMessage, showToast } = useApp();
   const scrollViewRef = useRef<ScrollView>(null);
-  const [messages, setMessages] = useState<Message[]>(getInitialMessages(userId));
-  const [inputText, setInputText] = useState("");
-  const [isTyping, setIsTyping] = useState(false);
 
-  const user = USERS[userId] || USERS["1"];
+  const [inputText, setInputText] = useState("");
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [showImagePreview, setShowImagePreview] = useState(false);
+  const [showAttachMenu, setShowAttachMenu] = useState(false);
+
+  const friend = friends.find((f) => f.id === friendId);
+  const messages = getMessagesForFriend(friendId);
 
   const handleSend = () => {
     if (!inputText.trim()) return;
-
+    
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-
-    const newMessage: Message = {
-      id: Date.now().toString(),
-      text: inputText.trim(),
-      isMe: true,
-      timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      type: "text",
-    };
-
-    setMessages((prev) => [...prev, newMessage]);
+    sendMessage(friendId, inputText.trim(), "text");
     setInputText("");
-
+    
     // Scroll to bottom
     setTimeout(() => {
       scrollViewRef.current?.scrollToEnd({ animated: true });
     }, 100);
+  };
 
-    // Simulate typing response
-    setIsTyping(true);
+  const handlePickImage = async (source: "camera" | "gallery") => {
+    setShowAttachMenu(false);
+
+    let result;
+    
+    if (source === "camera") {
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      if (status !== "granted") {
+        showToast("Camera permission is required", "error");
+        return;
+      }
+      result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+    } else {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== "granted") {
+        showToast("Gallery permission is required", "error");
+        return;
+      }
+      result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+    }
+
+    if (!result.canceled && result.assets[0]) {
+      setPreviewImage(result.assets[0].uri);
+      setShowImagePreview(true);
+    }
+  };
+
+  const handleSendImage = () => {
+    if (!previewImage) return;
+    
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    sendMessage(friendId, "Photo", "image", previewImage);
+    setPreviewImage(null);
+    setShowImagePreview(false);
+    showToast("Image sent!", "success");
+    
     setTimeout(() => {
-      setIsTyping(false);
-      const responseMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        text: "That sounds great! Let me know what you think after watching it 🍿",
-        isMe: false,
-        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-        type: "text",
-      };
-      setMessages((prev) => [...prev, responseMessage]);
-      setTimeout(() => {
-        scrollViewRef.current?.scrollToEnd({ animated: true });
-      }, 100);
-    }, 2000);
+      scrollViewRef.current?.scrollToEnd({ animated: true });
+    }, 100);
   };
 
-  const handlePickImage = async () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-
-    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permissionResult.granted) {
-      Alert.alert("Permission Required", "Please allow access to your photo library.");
-      return;
-    }
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ["images"],
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.8,
-    });
-
-    if (!result.canceled && result.assets[0]) {
-      const newMessage: Message = {
-        id: Date.now().toString(),
-        image: result.assets[0].uri,
-        isMe: true,
-        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-        type: "image",
-      };
-      setMessages((prev) => [...prev, newMessage]);
-      setTimeout(() => {
-        scrollViewRef.current?.scrollToEnd({ animated: true });
-      }, 100);
-    }
-  };
-
-  const handleCamera = async () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-
-    const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
-    if (!permissionResult.granted) {
-      Alert.alert("Permission Required", "Please allow access to your camera.");
-      return;
-    }
-
-    const result = await ImagePicker.launchCameraAsync({
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.8,
-    });
-
-    if (!result.canceled && result.assets[0]) {
-      const newMessage: Message = {
-        id: Date.now().toString(),
-        image: result.assets[0].uri,
-        isMe: true,
-        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-        type: "image",
-      };
-      setMessages((prev) => [...prev, newMessage]);
-      setTimeout(() => {
-        scrollViewRef.current?.scrollToEnd({ animated: true });
-      }, 100);
-    }
-  };
+  if (!friend) {
+    return (
+      <View style={{ flex: 1, backgroundColor: theme.background, alignItems: "center", justifyContent: "center" }}>
+        <StatusBar style={isDark ? "light" : "dark"} />
+        <Ionicons name="person-outline" size={64} color={theme.textMuted} />
+        <Text style={{ color: theme.text, fontSize: 20, fontWeight: "700", marginTop: 16 }}>Friend Not Found</Text>
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={{ marginTop: 24, backgroundColor: theme.primary, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 12 }}
+        >
+          <Text style={{ color: "white", fontWeight: "600" }}>Go Back</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   return (
-    <View style={{ flex: 1, backgroundColor: theme.background }}>
+    <KeyboardAvoidingView
+      style={{ flex: 1, backgroundColor: theme.background }}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
+    >
       <StatusBar style={isDark ? "light" : "dark"} />
 
       {/* Background Gradient */}
@@ -443,7 +283,7 @@ export default function ChatScreen() {
           paddingHorizontal: 20,
           paddingTop: 56,
           paddingBottom: 16,
-          backgroundColor: isDark ? "rgba(2, 6, 23, 0.8)" : "rgba(255, 255, 255, 0.9)",
+          backgroundColor: isDark ? "rgba(2, 6, 23, 0.9)" : "rgba(255, 255, 255, 0.9)",
           borderBottomWidth: 1,
           borderBottomColor: theme.border,
         }}
@@ -455,220 +295,230 @@ export default function ChatScreen() {
               router.back();
             }}
             style={{
-              width: 44,
-              height: 44,
-              borderRadius: 22,
+              width: 44, height: 44, borderRadius: 22,
               backgroundColor: isDark ? "rgba(30, 41, 59, 0.8)" : "rgba(226, 232, 240, 0.8)",
-              alignItems: "center",
-              justifyContent: "center",
-              marginRight: 12,
+              alignItems: "center", justifyContent: "center", marginRight: 12,
             }}
           >
             <Ionicons name="arrow-back" size={24} color={theme.text} />
           </TouchableOpacity>
-
+          
           <View style={{ position: "relative" }}>
             <Image
-              source={{ uri: user.avatar }}
+              source={{ uri: friend.avatar }}
               style={{ width: 44, height: 44, borderRadius: 22 }}
               contentFit="cover"
             />
-            {user.isOnline && (
-              <View
-                style={{
-                  position: "absolute",
-                  bottom: 0,
-                  right: 0,
-                  width: 14,
-                  height: 14,
-                  borderRadius: 7,
-                  backgroundColor: Colors.success,
-                  borderWidth: 2,
-                  borderColor: isDark ? theme.background : "white",
-                }}
-              />
-            )}
+            <View style={{
+              position: "absolute",
+              bottom: 0,
+              right: 0,
+              width: 12,
+              height: 12,
+              borderRadius: 6,
+              backgroundColor: friend.isOnline ? Colors.success : theme.textMuted,
+              borderWidth: 2,
+              borderColor: isDark ? theme.background : "white",
+            }} />
           </View>
-
+          
           <View style={{ flex: 1, marginLeft: 12 }}>
-            <Text style={{ color: theme.text, fontWeight: "700", fontSize: 16 }}>{user.name}</Text>
-            <Text style={{ color: user.isOnline ? Colors.success : theme.textSecondary, fontSize: 12 }}>
-              {user.isOnline ? "Online" : "Offline"}
+            <Text style={{ color: theme.text, fontWeight: "700", fontSize: 17 }}>{friend.name}</Text>
+            <Text style={{ color: theme.textSecondary, fontSize: 13 }}>
+              {friend.isOnline ? "Online" : friend.lastSeen}
             </Text>
           </View>
 
-          <TouchableOpacity
-            onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
-            style={{
-              width: 44,
-              height: 44,
-              borderRadius: 22,
-              backgroundColor: isDark ? "rgba(30, 41, 59, 0.8)" : "rgba(226, 232, 240, 0.8)",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <Ionicons name="videocam" size={22} color={theme.text} />
+          <TouchableOpacity style={{ padding: 8 }}>
+            <Ionicons name="videocam-outline" size={24} color={theme.primary} />
+          </TouchableOpacity>
+          <TouchableOpacity style={{ padding: 8 }}>
+            <Ionicons name="call-outline" size={22} color={theme.primary} />
           </TouchableOpacity>
         </View>
       </Animated.View>
 
       {/* Messages */}
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        keyboardVerticalOffset={0}
+      <ScrollView
+        ref={scrollViewRef}
+        style={{ flex: 1, paddingHorizontal: 20 }}
+        contentContainerStyle={{ paddingTop: 20, paddingBottom: 20 }}
+        showsVerticalScrollIndicator={false}
+        onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: false })}
       >
-        <ScrollView
-          ref={scrollViewRef}
-          style={{ flex: 1, paddingHorizontal: 20 }}
-          contentContainerStyle={{ paddingVertical: 20 }}
-          showsVerticalScrollIndicator={false}
-          onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: false })}
-        >
-          {messages.map((message) => (
+        {messages.length > 0 ? (
+          messages.map((message, index) => (
             <MessageBubble
               key={message.id}
               message={message}
-              theme={theme}
-              isDark={isDark}
-              onMoviePress={() => router.push("/movie/1")}
+              isMe={message.senderId === "me"}
+              index={index}
             />
-          ))}
+          ))
+        ) : (
+          <Animated.View
+            entering={FadeIn.delay(200)}
+            style={{ alignItems: "center", paddingTop: 60 }}
+          >
+            <View style={{
+              width: 80, height: 80, borderRadius: 40,
+              backgroundColor: isDark ? "rgba(30, 41, 59, 0.6)" : theme.card,
+              alignItems: "center", justifyContent: "center", marginBottom: 16,
+            }}>
+              <Ionicons name="chatbubbles-outline" size={40} color={theme.textMuted} />
+            </View>
+            <Text style={{ color: theme.text, fontSize: 18, fontWeight: "700", marginBottom: 4 }}>
+              No messages yet
+            </Text>
+            <Text style={{ color: theme.textSecondary, fontSize: 14, textAlign: "center", paddingHorizontal: 40 }}>
+              Start a conversation with {friend.name}!
+            </Text>
+          </Animated.View>
+        )}
+      </ScrollView>
 
-          {/* Typing Indicator */}
-          {isTyping && (
-            <Animated.View
-              entering={FadeIn}
-              style={{
-                alignSelf: "flex-start",
-                backgroundColor: isDark ? "rgba(30, 41, 59, 0.9)" : theme.card,
-                paddingHorizontal: 16,
-                paddingVertical: 12,
-                borderRadius: 20,
-                borderTopLeftRadius: 4,
-              }}
-            >
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-                <View
-                  style={{
-                    width: 8,
-                    height: 8,
-                    borderRadius: 4,
-                    backgroundColor: theme.textMuted,
-                  }}
-                />
-                <View
-                  style={{
-                    width: 8,
-                    height: 8,
-                    borderRadius: 4,
-                    backgroundColor: theme.textMuted,
-                  }}
-                />
-                <View
-                  style={{
-                    width: 8,
-                    height: 8,
-                    borderRadius: 4,
-                    backgroundColor: theme.textMuted,
-                  }}
-                />
-              </View>
-            </Animated.View>
-          )}
-        </ScrollView>
+      {/* Input Area */}
+      <Animated.View
+        entering={FadeInUp.delay(100)}
+        style={{
+          paddingHorizontal: 20,
+          paddingVertical: 12,
+          paddingBottom: 32,
+          backgroundColor: isDark ? "rgba(2, 6, 23, 0.95)" : "rgba(255, 255, 255, 0.95)",
+          borderTopWidth: 1,
+          borderTopColor: theme.border,
+        }}
+      >
+        <View style={{ flexDirection: "row", alignItems: "flex-end", gap: 12 }}>
+          {/* Attachment Button */}
+          <TouchableOpacity
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              setShowAttachMenu(!showAttachMenu);
+            }}
+            style={{
+              width: 44, height: 44, borderRadius: 22,
+              backgroundColor: isDark ? "rgba(30, 41, 59, 0.8)" : theme.card,
+              alignItems: "center", justifyContent: "center",
+            }}
+          >
+            <Ionicons name="add" size={24} color={theme.primary} />
+          </TouchableOpacity>
 
-        {/* Input Area */}
-        <View
-          style={{
-            paddingHorizontal: 20,
-            paddingVertical: 16,
-            paddingBottom: 32,
-            backgroundColor: isDark ? "rgba(2, 6, 23, 0.95)" : "rgba(255, 255, 255, 0.95)",
-            borderTopWidth: 1,
-            borderTopColor: theme.border,
-          }}
-        >
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-            <TouchableOpacity
-              onPress={handleCamera}
-              style={{
-                width: 44,
-                height: 44,
-                borderRadius: 22,
-                backgroundColor: isDark ? theme.backgroundTertiary : theme.backgroundSecondary,
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <Ionicons name="camera" size={22} color={theme.primary} />
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              onPress={handlePickImage}
-              style={{
-                width: 44,
-                height: 44,
-                borderRadius: 22,
-                backgroundColor: isDark ? theme.backgroundTertiary : theme.backgroundSecondary,
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <Ionicons name="image" size={22} color={theme.primary} />
-            </TouchableOpacity>
-
-            <View
+          {/* Text Input */}
+          <View style={{
+            flex: 1,
+            flexDirection: "row",
+            alignItems: "flex-end",
+            backgroundColor: isDark ? "rgba(30, 41, 59, 0.8)" : theme.card,
+            borderRadius: 24,
+            paddingHorizontal: 16,
+            paddingVertical: 8,
+            borderWidth: isDark ? 0 : 1,
+            borderColor: theme.border,
+            minHeight: 44,
+            maxHeight: 120,
+          }}>
+            <TextInput
+              value={inputText}
+              onChangeText={setInputText}
+              placeholder="Type a message..."
+              placeholderTextColor={theme.textMuted}
+              multiline
               style={{
                 flex: 1,
-                flexDirection: "row",
-                alignItems: "center",
-                backgroundColor: isDark ? "rgba(30, 41, 59, 0.8)" : "rgba(241, 245, 249, 0.9)",
-                borderRadius: 24,
-                paddingHorizontal: 16,
-                paddingVertical: 12,
+                fontSize: 15,
+                color: theme.text,
+                maxHeight: 100,
+                paddingVertical: 4,
               }}
-            >
-              <TextInput
-                value={inputText}
-                onChangeText={setInputText}
-                placeholder="Type a message..."
-                placeholderTextColor={theme.textMuted}
-                style={{ flex: 1, fontSize: 15, color: theme.text }}
-                multiline
-                maxLength={500}
-              />
-            </View>
-
-            <TouchableOpacity
-              onPress={handleSend}
-              disabled={!inputText.trim()}
-            >
-              <LinearGradient
-                colors={
-                  inputText.trim()
-                    ? [Colors.primary, Colors.primaryDark]
-                    : [theme.backgroundTertiary, theme.backgroundTertiary]
-                }
-                style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: 22,
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <Ionicons
-                  name="send"
-                  size={20}
-                  color={inputText.trim() ? "white" : theme.textMuted}
-                />
-              </LinearGradient>
+            />
+            <TouchableOpacity style={{ padding: 4 }}>
+              <Ionicons name="happy-outline" size={22} color={theme.textSecondary} />
             </TouchableOpacity>
           </View>
+
+          {/* Send Button */}
+          <TouchableOpacity
+            onPress={handleSend}
+            disabled={!inputText.trim()}
+            style={{ opacity: inputText.trim() ? 1 : 0.5 }}
+          >
+            <LinearGradient
+              colors={[Colors.primary, Colors.primaryDark]}
+              style={{
+                width: 44, height: 44, borderRadius: 22,
+                alignItems: "center", justifyContent: "center",
+              }}
+            >
+              <Ionicons name="send" size={20} color="white" style={{ marginLeft: 2 }} />
+            </LinearGradient>
+          </TouchableOpacity>
         </View>
-      </KeyboardAvoidingView>
-    </View>
+
+        {/* Attachment Menu */}
+        {showAttachMenu && (
+          <Animated.View
+            entering={FadeInRight.springify()}
+            style={{
+              flexDirection: "row",
+              gap: 16,
+              marginTop: 16,
+              paddingTop: 16,
+              borderTopWidth: 1,
+              borderTopColor: theme.border,
+            }}
+          >
+            <TouchableOpacity
+              onPress={() => handlePickImage("camera")}
+              style={{ alignItems: "center" }}
+            >
+              <View style={{
+                width: 56, height: 56, borderRadius: 16,
+                backgroundColor: `${Colors.primary}20`,
+                alignItems: "center", justifyContent: "center", marginBottom: 8,
+              }}>
+                <Ionicons name="camera" size={28} color={theme.primary} />
+              </View>
+              <Text style={{ color: theme.textSecondary, fontSize: 12 }}>Camera</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => handlePickImage("gallery")}
+              style={{ alignItems: "center" }}
+            >
+              <View style={{
+                width: 56, height: 56, borderRadius: 16,
+                backgroundColor: `${Colors.secondary}20`,
+                alignItems: "center", justifyContent: "center", marginBottom: 8,
+              }}>
+                <Ionicons name="images" size={28} color={theme.secondary} />
+              </View>
+              <Text style={{ color: theme.textSecondary, fontSize: 12 }}>Gallery</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={{ alignItems: "center" }}>
+              <View style={{
+                width: 56, height: 56, borderRadius: 16,
+                backgroundColor: `${Colors.accent}20`,
+                alignItems: "center", justifyContent: "center", marginBottom: 8,
+              }}>
+                <Ionicons name="film" size={28} color={theme.accent} />
+              </View>
+              <Text style={{ color: theme.textSecondary, fontSize: 12 }}>Movie</Text>
+            </TouchableOpacity>
+          </Animated.View>
+        )}
+      </Animated.View>
+
+      {/* Image Preview Modal */}
+      <ImagePreviewModal
+        visible={showImagePreview}
+        imageUri={previewImage}
+        onClose={() => {
+          setShowImagePreview(false);
+          setPreviewImage(null);
+        }}
+        onSend={handleSendImage}
+      />
+    </KeyboardAvoidingView>
   );
 }

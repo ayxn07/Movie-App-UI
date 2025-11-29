@@ -5,7 +5,13 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useEffect, useState } from "react";
-import { Dimensions, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import {
+  Dimensions,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import Animated, {
   FadeIn,
   FadeInDown,
@@ -18,63 +24,176 @@ import Animated, {
 } from "react-native-reanimated";
 
 import { Colors, LIVE_EVENTS } from "@/constants/data";
-import { useTheme } from "@/context";
+import { useApp, useTheme } from "@/context";
 
-const { height } = Dimensions.get("window");
+const { height, width } = Dimensions.get("window");
 
-// Schedule data
-const SCHEDULE = [
-  { id: 1, time: "Now", title: "Movie Premiere Live", isLive: true },
-  { id: 2, time: "8:00 PM", title: "Behind the Scenes Special", isLive: false },
-  { id: 3, time: "9:00 PM", title: "Celebrity Interview", isLive: false },
-  { id: 4, time: "10:00 PM", title: "Film Festival Coverage", isLive: false },
-  { id: 5, time: "11:00 PM", title: "Late Night Movie Talk", isLive: false },
+// Upcoming Event type
+interface UpcomingEvent {
+  id: number;
+  title: string;
+  time: string;
+  channel: string;
+}
+
+// Sample upcoming events
+const UPCOMING_EVENTS: UpcomingEvent[] = [
+  { id: 1, title: "Behind the Scenes: Marvel Phase 5", time: "10:00 PM", channel: "Disney+" },
+  { id: 2, title: "Live Q&A with Christopher Nolan", time: "11:30 PM", channel: "HBO Max" },
+  { id: 3, title: "Movie Trivia Night", time: "Tomorrow 8:00 PM", channel: "Entertainment TV" },
 ];
 
-// Related events
-const RELATED_EVENTS = LIVE_EVENTS.slice(0, 3);
+// Live Indicator Component with pulsing animation
+const LiveIndicator = () => {
+  const scale = useSharedValue(1);
+
+  useEffect(() => {
+    scale.value = withRepeat(
+      withSequence(
+        withTiming(1.2, { duration: 500 }),
+        withTiming(1, { duration: 500 })
+      ),
+      -1,
+      true
+    );
+  }, [scale]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  return (
+    <View style={{ flexDirection: "row", alignItems: "center" }}>
+      <Animated.View
+        style={[
+          animatedStyle,
+          {
+            width: 10,
+            height: 10,
+            borderRadius: 5,
+            backgroundColor: Colors.danger,
+            marginRight: 8,
+          },
+        ]}
+      />
+      <Text style={{ color: Colors.danger, fontWeight: "800", fontSize: 14 }}>LIVE</Text>
+    </View>
+  );
+};
+
+// Upcoming Event Card
+const UpcomingEventCard = ({
+  event,
+  index,
+}: {
+  event: UpcomingEvent;
+  index: number;
+}) => {
+  const { theme, isDark } = useTheme();
+
+  return (
+    <Animated.View
+      entering={FadeInUp.delay(index * 80).springify()}
+      style={{
+        flexDirection: "row",
+        alignItems: "center",
+        backgroundColor: isDark ? "rgba(30, 41, 59, 0.6)" : theme.card,
+        borderRadius: 16,
+        padding: 16,
+        marginBottom: 12,
+        borderWidth: isDark ? 0 : 1,
+        borderColor: theme.border,
+      }}
+    >
+      <View style={{
+        width: 48,
+        height: 48,
+        borderRadius: 12,
+        backgroundColor: `${theme.primary}20`,
+        alignItems: "center",
+        justifyContent: "center",
+        marginRight: 12,
+      }}>
+        <Ionicons name="time-outline" size={24} color={theme.primary} />
+      </View>
+      <View style={{ flex: 1 }}>
+        <Text style={{ color: theme.text, fontWeight: "700", fontSize: 14 }} numberOfLines={1}>
+          {event.title}
+        </Text>
+        <View style={{ flexDirection: "row", alignItems: "center", marginTop: 4 }}>
+          <Text style={{ color: theme.textSecondary, fontSize: 12 }}>{event.time}</Text>
+          <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: theme.textMuted, marginHorizontal: 8 }} />
+          <Text style={{ color: theme.textSecondary, fontSize: 12 }}>{event.channel}</Text>
+        </View>
+      </View>
+      <TouchableOpacity
+        onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
+        style={{
+          backgroundColor: `${theme.primary}20`,
+          paddingHorizontal: 12,
+          paddingVertical: 8,
+          borderRadius: 10,
+        }}
+      >
+        <Text style={{ color: theme.primary, fontWeight: "700", fontSize: 12 }}>Remind</Text>
+      </TouchableOpacity>
+    </Animated.View>
+  );
+};
+
+// Viewer Count Component with animated number
+const ViewerCount = ({ count }: { count: number }) => {
+  const { theme } = useTheme();
+  const [displayCount, setDisplayCount] = useState(count);
+
+  // Simulate viewer count changing
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setDisplayCount((prev) => prev + Math.floor(Math.random() * 100) - 50);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <View style={{ flexDirection: "row", alignItems: "center" }}>
+      <Ionicons name="eye" size={16} color={theme.textSecondary} />
+      <Text style={{ color: theme.textSecondary, fontSize: 14, fontWeight: "600", marginLeft: 6 }}>
+        {displayCount.toLocaleString()} watching
+      </Text>
+    </View>
+  );
+};
 
 export default function LiveDetailScreen() {
   const { theme, isDark } = useTheme();
   const router = useRouter();
   const params = useLocalSearchParams();
-  const eventId = Number(params.id) || 301;
+  const eventId = Number(params.id);
+  const { showToast } = useApp();
 
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [viewerCount, setViewerCount] = useState(245000);
-  const pulseScale = useSharedValue(1);
+  // Find the event from our data
+  const event = LIVE_EVENTS.find((e) => e.id === eventId);
 
-  // Find the event
-  const event = LIVE_EVENTS.find((e) => e.id === eventId) || LIVE_EVENTS[0];
-
-  // Pulse animation for live badge
-  useEffect(() => {
-    pulseScale.value = withRepeat(
-      withSequence(
-        withTiming(1.1, { duration: 800 }),
-        withTiming(1, { duration: 800 })
-      ),
-      -1,
-      true
+  // Handle event not found
+  if (!event) {
+    return (
+      <View style={{ flex: 1, backgroundColor: theme.background, alignItems: "center", justifyContent: "center" }}>
+        <StatusBar style={isDark ? "light" : "dark"} />
+        <Ionicons name="videocam-outline" size={64} color={theme.textMuted} />
+        <Text style={{ color: theme.text, fontSize: 20, fontWeight: "700", marginTop: 16 }}>Event Not Found</Text>
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={{ marginTop: 24, backgroundColor: theme.primary, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 12 }}
+        >
+          <Text style={{ color: "white", fontWeight: "600" }}>Go Back</Text>
+        </TouchableOpacity>
+      </View>
     );
-  }, []);
+  }
 
-  // Simulate viewer count changes
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setViewerCount((prev) => prev + Math.floor(Math.random() * 100) - 50);
-    }, 3000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const liveStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: pulseScale.value }],
-  }));
-
-  const formatViewers = (count: number) => {
-    if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M`;
-    if (count >= 1000) return `${(count / 1000).toFixed(0)}K`;
-    return count.toString();
+  const handleShare = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    showToast("Sharing options coming soon!", "info");
   };
 
   return (
@@ -86,8 +205,8 @@ export default function LiveDetailScreen() {
         bounces={false}
         contentContainerStyle={{ paddingBottom: 100 }}
       >
-        {/* Hero Video Section */}
-        <View style={{ height: height * 0.35, position: "relative" }}>
+        {/* Hero Image Section */}
+        <View style={{ height: height * 0.4, position: "relative" }}>
           <Image
             source={{ uri: event.image }}
             style={{ width: "100%", height: "100%" }}
@@ -95,384 +214,227 @@ export default function LiveDetailScreen() {
             transition={300}
           />
           <LinearGradient
-            colors={["transparent", "rgba(0,0,0,0.5)", theme.background]}
-            locations={[0, 0.6, 1]}
+            colors={["rgba(0,0,0,0.5)", "transparent", "rgba(0,0,0,0.7)", theme.background]}
+            locations={[0, 0.3, 0.7, 1]}
             style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}
           />
 
           {/* Header Buttons */}
-          <View
-            style={{
-              position: "absolute",
-              top: 50,
-              left: 0,
-              right: 0,
-              flexDirection: "row",
-              justifyContent: "space-between",
-              paddingHorizontal: 20,
-            }}
-          >
+          <View style={{
+            position: "absolute",
+            top: 50,
+            left: 0,
+            right: 0,
+            flexDirection: "row",
+            justifyContent: "space-between",
+            paddingHorizontal: 20,
+          }}>
             <TouchableOpacity
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 router.back();
               }}
               style={{
-                width: 44,
-                height: 44,
-                borderRadius: 22,
+                width: 44, height: 44, borderRadius: 22,
                 backgroundColor: "rgba(0,0,0,0.5)",
-                alignItems: "center",
-                justifyContent: "center",
+                alignItems: "center", justifyContent: "center",
               }}
             >
               <Ionicons name="arrow-back" size={24} color="white" />
             </TouchableOpacity>
-
-            {/* Live Badge */}
-            {event.isLive && (
-              <Animated.View style={liveStyle}>
-                <View
-                  style={{
-                    flexDirection: "row",
-                    alignItems: "center",
-                    backgroundColor: Colors.danger,
-                    paddingHorizontal: 12,
-                    paddingVertical: 8,
-                    borderRadius: 20,
-                    gap: 6,
-                  }}
-                >
-                  <View
-                    style={{
-                      width: 8,
-                      height: 8,
-                      borderRadius: 4,
-                      backgroundColor: "white",
-                    }}
-                  />
-                  <Text style={{ color: "white", fontWeight: "900", fontSize: 12 }}>LIVE</Text>
-                </View>
-              </Animated.View>
-            )}
+            <TouchableOpacity
+              onPress={handleShare}
+              style={{
+                width: 44, height: 44, borderRadius: 22,
+                backgroundColor: "rgba(0,0,0,0.5)",
+                alignItems: "center", justifyContent: "center",
+              }}
+            >
+              <Ionicons name="share-outline" size={24} color="white" />
+            </TouchableOpacity>
           </View>
 
+          {/* Live Badge */}
+          {event.isLive && (
+            <Animated.View
+              entering={FadeIn.delay(200)}
+              style={{
+                position: "absolute",
+                top: 100,
+                left: 20,
+                backgroundColor: "rgba(0,0,0,0.7)",
+                paddingHorizontal: 16,
+                paddingVertical: 8,
+                borderRadius: 20,
+              }}
+            >
+              <LiveIndicator />
+            </Animated.View>
+          )}
+
           {/* Play Button */}
-          <TouchableOpacity
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-              setIsPlaying(!isPlaying);
-            }}
+          <Animated.View
+            entering={FadeIn.delay(300)}
             style={{
               position: "absolute",
               top: "40%",
               left: "50%",
               marginLeft: -40,
               marginTop: -40,
-              width: 80,
-              height: 80,
-              borderRadius: 40,
-              backgroundColor: "rgba(139, 92, 246, 0.9)",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <Ionicons
-              name={isPlaying ? "pause" : "play"}
-              size={36}
-              color="white"
-              style={{ marginLeft: isPlaying ? 0 : 4 }}
-            />
-          </TouchableOpacity>
-
-          {/* Viewer Count */}
-          <View
-            style={{
-              position: "absolute",
-              bottom: 40,
-              left: 20,
-              flexDirection: "row",
-              alignItems: "center",
-              gap: 8,
-            }}
-          >
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                backgroundColor: "rgba(0,0,0,0.6)",
-                paddingHorizontal: 12,
-                paddingVertical: 6,
-                borderRadius: 16,
-                gap: 6,
-              }}
-            >
-              <Ionicons name="eye" size={16} color="white" />
-              <Text style={{ color: "white", fontWeight: "600", fontSize: 13 }}>
-                {formatViewers(viewerCount)} watching
-              </Text>
-            </View>
-          </View>
-        </View>
-
-        {/* Event Info */}
-        <View style={{ paddingHorizontal: 20, marginTop: -20 }}>
-          <Animated.View entering={FadeInUp.delay(100).springify()}>
-            <View
-              style={{
-                backgroundColor: theme.primary,
-                alignSelf: "flex-start",
-                paddingHorizontal: 12,
-                paddingVertical: 6,
-                borderRadius: 12,
-                marginBottom: 12,
-              }}
-            >
-              <Text style={{ color: "white", fontWeight: "700", fontSize: 12 }}>
-                {event.category}
-              </Text>
-            </View>
-            <Text style={{ fontSize: 28, fontWeight: "900", color: theme.text, marginBottom: 8 }}>
-              {event.title}
-            </Text>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 20 }}>
-              <View
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  gap: 6,
-                }}
-              >
-                <Ionicons name="tv" size={16} color={theme.textSecondary} />
-                <Text style={{ color: theme.textSecondary, fontSize: 14 }}>{event.channel}</Text>
-              </View>
-              <View
-                style={{
-                  width: 4,
-                  height: 4,
-                  borderRadius: 2,
-                  backgroundColor: theme.textMuted,
-                }}
-              />
-              <Text style={{ color: theme.textSecondary, fontSize: 14 }}>
-                {event.isLive ? "Live Now" : event.startTime}
-              </Text>
-            </View>
-          </Animated.View>
-
-          {/* Action Buttons */}
-          <Animated.View
-            entering={FadeInUp.delay(150).springify()}
-            style={{
-              flexDirection: "row",
-              gap: 12,
-              marginBottom: 32,
             }}
           >
             <TouchableOpacity
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-                setIsPlaying(true);
+                showToast("Starting live stream...", "info");
               }}
-              style={{ flex: 1 }}
+              style={{
+                width: 80,
+                height: 80,
+                borderRadius: 40,
+                backgroundColor: Colors.danger,
+                alignItems: "center",
+                justifyContent: "center",
+                shadowColor: Colors.danger,
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.5,
+                shadowRadius: 12,
+                elevation: 8,
+              }}
             >
+              <Ionicons name="play" size={36} color="white" style={{ marginLeft: 4 }} />
+            </TouchableOpacity>
+          </Animated.View>
+        </View>
+
+        {/* Event Info Section */}
+        <View style={{ paddingHorizontal: 20, marginTop: -20 }}>
+          {/* Title */}
+          <Animated.View entering={FadeInUp.delay(100).springify()}>
+            <View style={{
+              backgroundColor: theme.accent,
+              paddingHorizontal: 12,
+              paddingVertical: 6,
+              borderRadius: 8,
+              alignSelf: "flex-start",
+              marginBottom: 12,
+            }}>
+              <Text style={{ color: "white", fontWeight: "700", fontSize: 12 }}>{event.category}</Text>
+            </View>
+            <Text style={{ fontSize: 28, fontWeight: "900", color: theme.text, marginBottom: 8 }}>
+              {event.title}
+            </Text>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 16, marginBottom: 20 }}>
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
+                <Ionicons name="tv-outline" size={16} color={theme.textSecondary} />
+                <Text style={{ color: theme.textSecondary, fontSize: 14, marginLeft: 6 }}>{event.channel}</Text>
+              </View>
+              {event.isLive && event.viewers > 0 && (
+                <ViewerCount count={event.viewers} />
+              )}
+            </View>
+          </Animated.View>
+
+          {/* Action Buttons */}
+          <Animated.View entering={FadeInUp.delay(150).springify()} style={{ flexDirection: "row", gap: 12, marginBottom: 32 }}>
+            <TouchableOpacity style={{ flex: 1 }} activeOpacity={0.9}>
               <LinearGradient
-                colors={[Colors.primary, Colors.primaryDark]}
+                colors={event.isLive ? [Colors.danger, "#dc2626"] : [Colors.primary, Colors.primaryDark]}
                 style={{
                   flexDirection: "row",
                   alignItems: "center",
                   justifyContent: "center",
                   paddingVertical: 16,
                   borderRadius: 16,
-                  gap: 8,
                 }}
               >
-                <Ionicons name="play" size={20} color="white" />
-                <Text style={{ color: "white", fontWeight: "700", fontSize: 15 }}>
-                  Watch Now
+                <Ionicons name={event.isLive ? "play" : "notifications"} size={22} color="white" />
+                <Text style={{ color: "white", fontWeight: "700", fontSize: 16, marginLeft: 8 }}>
+                  {event.isLive ? "Watch Live" : "Set Reminder"}
                 </Text>
               </LinearGradient>
             </TouchableOpacity>
             <TouchableOpacity
-              onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
               style={{
-                width: 56,
-                height: 56,
-                borderRadius: 16,
-                backgroundColor: isDark ? theme.backgroundTertiary : theme.card,
-                alignItems: "center",
-                justifyContent: "center",
-                borderWidth: isDark ? 0 : 1,
-                borderColor: theme.border,
+                width: 56, height: 56, borderRadius: 16,
+                backgroundColor: isDark ? "rgba(30, 41, 59, 0.8)" : theme.card,
+                alignItems: "center", justifyContent: "center",
+                borderWidth: isDark ? 0 : 1, borderColor: theme.border,
               }}
             >
-              <Ionicons name="notifications-outline" size={24} color={theme.text} />
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
-              style={{
-                width: 56,
-                height: 56,
-                borderRadius: 16,
-                backgroundColor: isDark ? theme.backgroundTertiary : theme.card,
-                alignItems: "center",
-                justifyContent: "center",
-                borderWidth: isDark ? 0 : 1,
-                borderColor: theme.border,
-              }}
-            >
-              <Ionicons name="share-outline" size={24} color={theme.text} />
+              <Ionicons name="heart-outline" size={24} color={theme.text} />
             </TouchableOpacity>
           </Animated.View>
 
-          {/* Description */}
+          {/* About Section */}
           <Animated.View entering={FadeInUp.delay(200).springify()}>
             <Text style={{ fontSize: 20, fontWeight: "800", color: theme.text, marginBottom: 12 }}>
-              About
+              About This Event
             </Text>
-            <Text
-              style={{
-                color: theme.textSecondary,
-                fontSize: 15,
-                lineHeight: 24,
-                marginBottom: 32,
-              }}
-            >
-              Join us for an exclusive live event featuring the biggest names in entertainment. 
-              Get behind-the-scenes access, celebrity interviews, and be part of the excitement 
-              as it happens. Don't miss this unforgettable experience!
+            <Text style={{ color: theme.textSecondary, fontSize: 15, lineHeight: 24, marginBottom: 24 }}>
+              Join us for an exclusive live event featuring {event.title.toLowerCase()}. 
+              Don't miss this exciting opportunity to be part of something special. 
+              Tune in to {event.channel} for the best entertainment experience.
             </Text>
           </Animated.View>
 
-          {/* Schedule */}
-          <Animated.View entering={FadeInUp.delay(250).springify()}>
-            <Text style={{ fontSize: 20, fontWeight: "800", color: theme.text, marginBottom: 16 }}>
-              Today's Schedule
-            </Text>
-            <View
-              style={{
-                backgroundColor: isDark ? "rgba(30, 41, 59, 0.6)" : theme.card,
-                borderRadius: 20,
-                overflow: "hidden",
-                borderWidth: isDark ? 0 : 1,
-                borderColor: theme.border,
-              }}
-            >
-              {SCHEDULE.map((item, index) => (
-                <View
-                  key={item.id}
-                  style={{
-                    flexDirection: "row",
-                    alignItems: "center",
-                    padding: 16,
-                    borderBottomWidth: index < SCHEDULE.length - 1 ? 1 : 0,
-                    borderBottomColor: theme.border,
-                    backgroundColor: item.isLive
-                      ? isDark
-                        ? "rgba(139, 92, 246, 0.15)"
-                        : "rgba(139, 92, 246, 0.1)"
-                      : "transparent",
-                  }}
-                >
-                  <Text
-                    style={{
-                      width: 70,
-                      color: item.isLive ? theme.primary : theme.textSecondary,
-                      fontSize: 13,
-                      fontWeight: item.isLive ? "700" : "500",
-                    }}
-                  >
-                    {item.time}
-                  </Text>
-                  <Text
-                    style={{
-                      flex: 1,
-                      color: item.isLive ? theme.text : theme.textSecondary,
-                      fontSize: 14,
-                      fontWeight: item.isLive ? "700" : "500",
-                    }}
-                  >
-                    {item.title}
-                  </Text>
-                  {item.isLive && (
-                    <View
-                      style={{
-                        backgroundColor: Colors.danger,
-                        paddingHorizontal: 8,
-                        paddingVertical: 4,
-                        borderRadius: 8,
-                      }}
-                    >
-                      <Text style={{ color: "white", fontSize: 10, fontWeight: "800" }}>LIVE</Text>
-                    </View>
-                  )}
-                </View>
-              ))}
+          {/* Stats */}
+          <Animated.View
+            entering={FadeInUp.delay(250).springify()}
+            style={{
+              flexDirection: "row",
+              backgroundColor: isDark ? "rgba(30, 41, 59, 0.6)" : theme.card,
+              borderRadius: 20,
+              padding: 20,
+              marginBottom: 32,
+              borderWidth: isDark ? 0 : 1,
+              borderColor: theme.border,
+            }}
+          >
+            <View style={{ flex: 1, alignItems: "center" }}>
+              <View style={{
+                width: 48, height: 48, borderRadius: 24,
+                backgroundColor: `${theme.primary}20`,
+                alignItems: "center", justifyContent: "center", marginBottom: 8,
+              }}>
+                <Ionicons name="eye" size={24} color={theme.primary} />
+              </View>
+              <Text style={{ color: theme.text, fontSize: 18, fontWeight: "800" }}>
+                {event.isLive ? event.viewers.toLocaleString() : "0"}
+              </Text>
+              <Text style={{ color: theme.textSecondary, fontSize: 12, marginTop: 2 }}>Viewers</Text>
+            </View>
+            <View style={{ flex: 1, alignItems: "center", borderLeftWidth: 1, borderLeftColor: theme.border }}>
+              <View style={{
+                width: 48, height: 48, borderRadius: 24,
+                backgroundColor: `${Colors.danger}20`,
+                alignItems: "center", justifyContent: "center", marginBottom: 8,
+              }}>
+                <Ionicons name="heart" size={24} color={Colors.danger} />
+              </View>
+              <Text style={{ color: theme.text, fontSize: 18, fontWeight: "800" }}>12.5K</Text>
+              <Text style={{ color: theme.textSecondary, fontSize: 12, marginTop: 2 }}>Likes</Text>
+            </View>
+            <View style={{ flex: 1, alignItems: "center", borderLeftWidth: 1, borderLeftColor: theme.border }}>
+              <View style={{
+                width: 48, height: 48, borderRadius: 24,
+                backgroundColor: `${Colors.accent}20`,
+                alignItems: "center", justifyContent: "center", marginBottom: 8,
+              }}>
+                <Ionicons name="chatbubble" size={24} color={Colors.accent} />
+              </View>
+              <Text style={{ color: theme.text, fontSize: 18, fontWeight: "800" }}>2.3K</Text>
+              <Text style={{ color: theme.textSecondary, fontSize: 12, marginTop: 2 }}>Comments</Text>
             </View>
           </Animated.View>
 
-          {/* Related Events */}
-          <Animated.View entering={FadeIn.delay(300)} style={{ marginTop: 32 }}>
+          {/* Upcoming Events */}
+          <Animated.View entering={FadeInUp.delay(300).springify()}>
             <Text style={{ fontSize: 20, fontWeight: "800", color: theme.text, marginBottom: 16 }}>
-              Related Events
+              Coming Up Next
             </Text>
-            {RELATED_EVENTS.map((relatedEvent, index) => (
-              <TouchableOpacity
-                key={relatedEvent.id}
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  router.push(`/live/${relatedEvent.id}`);
-                }}
-                style={{ marginBottom: 16 }}
-              >
-                <View
-                  style={{
-                    flexDirection: "row",
-                    backgroundColor: isDark ? "rgba(30, 41, 59, 0.8)" : theme.card,
-                    borderRadius: 16,
-                    overflow: "hidden",
-                    borderWidth: isDark ? 0 : 1,
-                    borderColor: theme.border,
-                  }}
-                >
-                  <View style={{ width: 120, height: 80, position: "relative" }}>
-                    <Image
-                      source={{ uri: relatedEvent.image }}
-                      style={{ width: "100%", height: "100%" }}
-                      contentFit="cover"
-                    />
-                    {relatedEvent.isLive && (
-                      <View
-                        style={{
-                          position: "absolute",
-                          top: 8,
-                          left: 8,
-                          backgroundColor: Colors.danger,
-                          paddingHorizontal: 6,
-                          paddingVertical: 3,
-                          borderRadius: 4,
-                        }}
-                      >
-                        <Text style={{ color: "white", fontSize: 9, fontWeight: "800" }}>LIVE</Text>
-                      </View>
-                    )}
-                  </View>
-                  <View style={{ flex: 1, padding: 12, justifyContent: "center" }}>
-                    <Text
-                      style={{ color: theme.text, fontWeight: "700", fontSize: 14 }}
-                      numberOfLines={2}
-                    >
-                      {relatedEvent.title}
-                    </Text>
-                    <Text style={{ color: theme.textSecondary, fontSize: 12, marginTop: 4 }}>
-                      {relatedEvent.channel}
-                    </Text>
-                  </View>
-                  <View style={{ alignItems: "center", justifyContent: "center", paddingRight: 12 }}>
-                    <Ionicons name="chevron-forward" size={20} color={theme.textMuted} />
-                  </View>
-                </View>
-              </TouchableOpacity>
+            {UPCOMING_EVENTS.map((upcomingEvent, index) => (
+              <UpcomingEventCard key={upcomingEvent.id} event={upcomingEvent} index={index} />
             ))}
           </Animated.View>
         </View>

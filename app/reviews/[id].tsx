@@ -5,7 +5,15 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useState } from "react";
-import { Dimensions, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
+import {
+  Dimensions,
+  Modal,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import Animated, {
   FadeIn,
   FadeInDown,
@@ -16,263 +24,316 @@ import Animated, {
 } from "react-native-reanimated";
 
 import { ALL_MOVIES, Colors } from "@/constants/data";
-import { ThemeColors, useTheme } from "@/context";
+import { Review, useApp, useTheme } from "@/context";
 
-const { width } = Dimensions.get("window");
-
-// Generate reviews based on movie ID
-const generateReviews = (movieId: number) => {
-  const baseReviews = [
-    {
-      id: 1,
-      user: "MovieCritic2024",
-      avatar: "https://randomuser.me/api/portraits/men/1.jpg",
-      rating: 9.5,
-      date: "2 days ago",
-      title: "A Masterpiece of Cinema",
-      content: "This film exceeded all my expectations. The cinematography is breathtaking, the performances are outstanding, and the story keeps you engaged from start to finish. A must-watch for any movie enthusiast!",
-      likes: 245,
-      isVerified: true,
-    },
-    {
-      id: 2,
-      user: "FilmBuff",
-      avatar: "https://randomuser.me/api/portraits/women/2.jpg",
-      rating: 8.0,
-      date: "1 week ago",
-      title: "Impressive but not perfect",
-      content: "While the film has many strong points - excellent acting, stunning visuals, and a compelling narrative - it does drag a bit in the middle. Still, it's definitely worth watching on the big screen.",
-      likes: 128,
-      isVerified: false,
-    },
-    {
-      id: 3,
-      user: "CinemaLover",
-      avatar: "https://randomuser.me/api/portraits/men/3.jpg",
-      rating: 9.0,
-      date: "2 weeks ago",
-      title: "Simply Stunning",
-      content: "The director has outdone themselves with this one. Every frame is meticulously crafted, and the emotional depth of the characters is truly remarkable. This is what cinema should be!",
-      likes: 312,
-      isVerified: true,
-    },
-    {
-      id: 4,
-      user: "PopcornFanatic",
-      avatar: "https://randomuser.me/api/portraits/women/4.jpg",
-      rating: 7.5,
-      date: "3 weeks ago",
-      title: "Great Entertainment",
-      content: "If you're looking for an entertaining movie that doesn't require too much thinking, this is perfect. Great action sequences and some genuinely funny moments. A solid popcorn flick!",
-      likes: 89,
-      isVerified: false,
-    },
-    {
-      id: 5,
-      user: "OscarWatcher",
-      avatar: "https://randomuser.me/api/portraits/men/5.jpg",
-      rating: 9.2,
-      date: "1 month ago",
-      title: "Award-Worthy Performance",
-      content: "The lead actor delivers what might be the performance of their career. The supporting cast is equally impressive. I wouldn't be surprised to see multiple Oscar nominations for this film.",
-      likes: 456,
-      isVerified: true,
-    },
-  ];
-
-  // Modify reviews slightly based on movieId for variety
-  return baseReviews.map((review) => ({
-    ...review,
-    id: review.id + movieId * 10,
-    likes: review.likes + (movieId * 17) % 100,
-    rating: Math.min(10, Math.max(5, review.rating + ((movieId % 3) - 1) * 0.5)),
-  }));
-};
+const { height } = Dimensions.get("window");
 
 // Review Card Component
 const ReviewCard = ({
   review,
   index,
-  theme,
-  isDark,
+  onLike,
 }: {
-  review: ReturnType<typeof generateReviews>[0];
+  review: Review;
   index: number;
-  theme: ThemeColors;
-  isDark: boolean;
+  onLike: () => void;
 }) => {
-  const [liked, setLiked] = useState(false);
+  const { theme, isDark } = useTheme();
   const scale = useSharedValue(1);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
   }));
 
-  const handleLike = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setLiked(!liked);
-    scale.value = withSpring(1.2);
-    setTimeout(() => {
-      scale.value = withSpring(1);
-    }, 100);
+  const formatDate = (date: Date) => {
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    if (days === 0) return "Today";
+    if (days === 1) return "Yesterday";
+    if (days < 7) return `${days} days ago`;
+    if (days < 30) return `${Math.floor(days / 7)} weeks ago`;
+    return date.toLocaleDateString();
   };
 
   return (
     <Animated.View
-      entering={FadeInRight.delay(index * 100).springify()}
-      style={{
-        backgroundColor: isDark ? "rgba(30, 41, 59, 0.8)" : theme.card,
-        borderRadius: 20,
-        padding: 16,
-        marginBottom: 16,
-        borderWidth: isDark ? 0 : 1,
-        borderColor: theme.border,
-      }}
+      entering={FadeInRight.delay(index * 80).springify()}
+      style={[
+        animatedStyle,
+        {
+          backgroundColor: isDark ? "rgba(30, 41, 59, 0.6)" : theme.card,
+          borderRadius: 20,
+          padding: 16,
+          marginBottom: 16,
+          borderWidth: isDark ? 0 : 1,
+          borderColor: theme.border,
+        },
+      ]}
     >
       {/* User Info */}
       <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 12 }}>
         <Image
-          source={{ uri: review.avatar }}
+          source={{ uri: review.userAvatar }}
           style={{ width: 48, height: 48, borderRadius: 24 }}
           contentFit="cover"
         />
         <View style={{ flex: 1, marginLeft: 12 }}>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-            <Text style={{ color: theme.text, fontWeight: "700", fontSize: 15 }}>
-              {review.user}
-            </Text>
-            {review.isVerified && (
-              <Ionicons name="checkmark-circle" size={16} color={Colors.primary} />
-            )}
-          </View>
+          <Text style={{ color: theme.text, fontWeight: "700", fontSize: 15 }}>{review.userName}</Text>
           <Text style={{ color: theme.textSecondary, fontSize: 12, marginTop: 2 }}>
-            {review.date}
+            {formatDate(review.createdAt)}
           </Text>
         </View>
-        <View
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-            backgroundColor: "rgba(251, 191, 36, 0.2)",
-            paddingHorizontal: 10,
-            paddingVertical: 6,
-            borderRadius: 12,
-          }}
-        >
-          <Ionicons name="star" size={14} color={Colors.star} />
-          <Text style={{ color: Colors.star, fontWeight: "700", marginLeft: 4, fontSize: 14 }}>
-            {review.rating.toFixed(1)}
-          </Text>
+        {/* Rating */}
+        <View style={{
+          flexDirection: "row",
+          alignItems: "center",
+          backgroundColor: `${Colors.star}20`,
+          paddingHorizontal: 12,
+          paddingVertical: 6,
+          borderRadius: 12,
+        }}>
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Ionicons
+              key={i}
+              name={i < review.rating ? "star" : "star-outline"}
+              size={14}
+              color={Colors.star}
+              style={{ marginRight: 2 }}
+            />
+          ))}
         </View>
       </View>
 
-      {/* Review Content */}
-      <Text
-        style={{
-          color: theme.text,
-          fontWeight: "700",
-          fontSize: 16,
-          marginBottom: 8,
-        }}
-      >
+      {/* Review Title */}
+      <Text style={{ color: theme.text, fontWeight: "700", fontSize: 16, marginBottom: 8 }}>
         {review.title}
       </Text>
-      <Text
-        style={{
-          color: theme.textSecondary,
-          fontSize: 14,
-          lineHeight: 22,
-          marginBottom: 16,
-        }}
-      >
+
+      {/* Review Content */}
+      <Text style={{ color: theme.textSecondary, fontSize: 14, lineHeight: 22, marginBottom: 12 }}>
         {review.content}
       </Text>
 
       {/* Actions */}
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 20 }}>
+      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
         <TouchableOpacity
-          onPress={handleLike}
-          style={{ flexDirection: "row", alignItems: "center", gap: 6 }}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            onLike();
+          }}
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            paddingVertical: 8,
+            paddingHorizontal: 12,
+            backgroundColor: review.isLiked ? `${theme.danger}20` : "transparent",
+            borderRadius: 12,
+          }}
         >
-          <Animated.View style={animatedStyle}>
-            <Ionicons
-              name={liked ? "heart" : "heart-outline"}
-              size={20}
-              color={liked ? Colors.danger : theme.textSecondary}
-            />
-          </Animated.View>
-          <Text style={{ color: theme.textSecondary, fontSize: 13 }}>
-            {liked ? review.likes + 1 : review.likes}
+          <Ionicons
+            name={review.isLiked ? "heart" : "heart-outline"}
+            size={18}
+            color={review.isLiked ? theme.danger : theme.textSecondary}
+          />
+          <Text style={{
+            color: review.isLiked ? theme.danger : theme.textSecondary,
+            fontSize: 13,
+            fontWeight: "600",
+            marginLeft: 6,
+          }}>
+            {review.likes}
           </Text>
         </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
-          style={{ flexDirection: "row", alignItems: "center", gap: 6 }}
-        >
-          <Ionicons name="chatbubble-outline" size={18} color={theme.textSecondary} />
-          <Text style={{ color: theme.textSecondary, fontSize: 13 }}>Reply</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
-          style={{ flexDirection: "row", alignItems: "center", gap: 6 }}
-        >
+        <TouchableOpacity style={{ flexDirection: "row", alignItems: "center", padding: 8 }}>
           <Ionicons name="share-outline" size={18} color={theme.textSecondary} />
-          <Text style={{ color: theme.textSecondary, fontSize: 13 }}>Share</Text>
+          <Text style={{ color: theme.textSecondary, fontSize: 13, fontWeight: "500", marginLeft: 6 }}>
+            Share
+          </Text>
         </TouchableOpacity>
       </View>
     </Animated.View>
   );
 };
 
-// Rating Distribution Bar
-const RatingBar = ({
-  label,
-  percentage,
-  theme,
+// Write Review Modal
+const WriteReviewModal = ({
+  visible,
+  onClose,
+  movieId,
 }: {
-  label: string;
-  percentage: number;
-  theme: ThemeColors;
-}) => (
-  <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 8 }}>
-    <Text style={{ color: theme.textSecondary, fontSize: 12, width: 20 }}>{label}</Text>
-    <View
-      style={{
-        flex: 1,
-        height: 8,
-        backgroundColor: theme.backgroundTertiary,
-        borderRadius: 4,
-        marginHorizontal: 8,
-        overflow: "hidden",
-      }}
-    >
-      <View
-        style={{
-          width: `${percentage}%`,
-          height: "100%",
-          backgroundColor: Colors.star,
-          borderRadius: 4,
-        }}
-      />
-    </View>
-    <Text style={{ color: theme.textSecondary, fontSize: 12, width: 35 }}>{percentage}%</Text>
-  </View>
-);
+  visible: boolean;
+  onClose: () => void;
+  movieId: number;
+}) => {
+  const { theme, isDark } = useTheme();
+  const { addReview, showToast } = useApp();
+  const [rating, setRating] = useState(5);
+  const [title, setTitle] = useState("");
+  const [content, setContent] = useState("");
+
+  const handleSubmit = () => {
+    if (!title.trim() || !content.trim()) {
+      showToast("Please fill in all fields", "error");
+      return;
+    }
+
+    addReview({
+      movieId,
+      userId: "me",
+      userName: "You",
+      userAvatar: "https://randomuser.me/api/portraits/men/32.jpg",
+      rating,
+      title,
+      content,
+      likes: 0,
+      isLiked: false,
+    });
+
+    showToast("Review submitted successfully!", "success");
+    setTitle("");
+    setContent("");
+    setRating(5);
+    onClose();
+  };
+
+  return (
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+      <View style={{ flex: 1, justifyContent: "flex-end" }}>
+        <TouchableOpacity
+          style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.5)" }}
+          activeOpacity={1}
+          onPress={onClose}
+        />
+        <Animated.View
+          entering={FadeInDown.springify()}
+          style={{
+            backgroundColor: isDark ? "#1e293b" : "#ffffff",
+            borderTopLeftRadius: 24,
+            borderTopRightRadius: 24,
+            paddingBottom: 40,
+            maxHeight: height * 0.7,
+          }}
+        >
+          {/* Header */}
+          <View style={{
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+            padding: 20,
+            borderBottomWidth: 1,
+            borderBottomColor: theme.border,
+          }}>
+            <Text style={{ fontSize: 20, fontWeight: "800", color: theme.text }}>Write a Review</Text>
+            <TouchableOpacity onPress={onClose}>
+              <Ionicons name="close" size={24} color={theme.textSecondary} />
+            </TouchableOpacity>
+          </View>
+
+          <ScrollView style={{ padding: 20 }}>
+            {/* Rating */}
+            <View style={{ marginBottom: 24 }}>
+              <Text style={{ color: theme.text, fontWeight: "600", fontSize: 15, marginBottom: 12 }}>
+                Your Rating
+              </Text>
+              <View style={{ flexDirection: "row", justifyContent: "center", gap: 8 }}>
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <TouchableOpacity
+                    key={i}
+                    onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      setRating(i + 1);
+                    }}
+                  >
+                    <Ionicons
+                      name={i < rating ? "star" : "star-outline"}
+                      size={36}
+                      color={Colors.star}
+                    />
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
+            {/* Title */}
+            <View style={{ marginBottom: 20 }}>
+              <Text style={{ color: theme.text, fontWeight: "600", fontSize: 15, marginBottom: 8 }}>
+                Review Title
+              </Text>
+              <TextInput
+                value={title}
+                onChangeText={setTitle}
+                placeholder="Summarize your review..."
+                placeholderTextColor={theme.textMuted}
+                style={{
+                  backgroundColor: isDark ? "rgba(30, 41, 59, 0.8)" : "rgba(241, 245, 249, 0.9)",
+                  borderRadius: 12,
+                  padding: 16,
+                  fontSize: 15,
+                  color: theme.text,
+                }}
+              />
+            </View>
+
+            {/* Content */}
+            <View style={{ marginBottom: 24 }}>
+              <Text style={{ color: theme.text, fontWeight: "600", fontSize: 15, marginBottom: 8 }}>
+                Your Review
+              </Text>
+              <TextInput
+                value={content}
+                onChangeText={setContent}
+                placeholder="Share your thoughts about this movie..."
+                placeholderTextColor={theme.textMuted}
+                multiline
+                numberOfLines={5}
+                textAlignVertical="top"
+                style={{
+                  backgroundColor: isDark ? "rgba(30, 41, 59, 0.8)" : "rgba(241, 245, 249, 0.9)",
+                  borderRadius: 12,
+                  padding: 16,
+                  fontSize: 15,
+                  color: theme.text,
+                  minHeight: 120,
+                }}
+              />
+            </View>
+
+            {/* Submit Button */}
+            <TouchableOpacity activeOpacity={0.9} onPress={handleSubmit}>
+              <LinearGradient
+                colors={[Colors.primary, Colors.primaryDark]}
+                style={{
+                  paddingVertical: 16,
+                  borderRadius: 16,
+                  alignItems: "center",
+                }}
+              >
+                <Text style={{ color: "white", fontWeight: "700", fontSize: 16 }}>Submit Review</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          </ScrollView>
+        </Animated.View>
+      </View>
+    </Modal>
+  );
+};
 
 export default function ReviewsScreen() {
   const { theme, isDark } = useTheme();
   const router = useRouter();
   const params = useLocalSearchParams();
-  const movieId = Number(params.id) || 1;
+  const movieId = Number(params.id);
+  const { getReviewsForMovie, toggleReviewLike } = useApp();
+  const [showWriteModal, setShowWriteModal] = useState(false);
 
-  const [newReview, setNewReview] = useState("");
-
-  // Get movie info
-  const movie = ALL_MOVIES.find((m) => m.id === movieId) || ALL_MOVIES[0];
-  const reviews = generateReviews(movieId);
+  const movie = ALL_MOVIES.find((m) => m.id === movieId);
+  const reviews = getReviewsForMovie(movieId);
 
   // Calculate average rating
-  const avgRating = reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length;
+  const avgRating = reviews.length > 0
+    ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)
+    : "N/A";
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.background }}>
@@ -285,189 +346,145 @@ export default function ReviewsScreen() {
       />
 
       {/* Header */}
-      <Animated.View
-        entering={FadeInDown.springify()}
-        style={{ paddingHorizontal: 20, paddingTop: 56, paddingBottom: 16 }}
-      >
-        <View style={{ flexDirection: "row", alignItems: "center" }}>
+      <Animated.View entering={FadeInDown.springify()} style={{ paddingHorizontal: 20, paddingTop: 56, paddingBottom: 20 }}>
+        <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 20 }}>
           <TouchableOpacity
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
               router.back();
             }}
             style={{
-              width: 44,
-              height: 44,
-              borderRadius: 22,
+              width: 44, height: 44, borderRadius: 22,
               backgroundColor: isDark ? "rgba(30, 41, 59, 0.8)" : "rgba(226, 232, 240, 0.8)",
-              alignItems: "center",
-              justifyContent: "center",
-              marginRight: 16,
+              alignItems: "center", justifyContent: "center", marginRight: 16,
             }}
           >
             <Ionicons name="arrow-back" size={24} color={theme.text} />
           </TouchableOpacity>
           <View style={{ flex: 1 }}>
             <Text style={{ color: theme.text, fontSize: 24, fontWeight: "900" }}>Reviews</Text>
-            <Text style={{ color: theme.textSecondary, fontSize: 14, marginTop: 2 }} numberOfLines={1}>
-              {movie.title}
-            </Text>
+            {movie && (
+              <Text style={{ color: theme.textSecondary, fontSize: 14, marginTop: 2 }} numberOfLines={1}>
+                {movie.title}
+              </Text>
+            )}
+          </View>
+        </View>
+
+        {/* Stats */}
+        <View style={{
+          flexDirection: "row",
+          backgroundColor: isDark ? "rgba(30, 41, 59, 0.6)" : theme.card,
+          borderRadius: 20,
+          padding: 16,
+          borderWidth: isDark ? 0 : 1,
+          borderColor: theme.border,
+        }}>
+          <View style={{ flex: 1, alignItems: "center", borderRightWidth: 1, borderRightColor: theme.border }}>
+            <Text style={{ color: theme.text, fontSize: 32, fontWeight: "900" }}>{avgRating}</Text>
+            <View style={{ flexDirection: "row", marginTop: 4 }}>
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Ionicons
+                  key={i}
+                  name={i < Math.round(Number(avgRating)) ? "star" : "star-outline"}
+                  size={14}
+                  color={Colors.star}
+                />
+              ))}
+            </View>
+            <Text style={{ color: theme.textSecondary, fontSize: 12, marginTop: 4 }}>Average Rating</Text>
+          </View>
+          <View style={{ flex: 1, alignItems: "center" }}>
+            <Text style={{ color: theme.text, fontSize: 32, fontWeight: "900" }}>{reviews.length}</Text>
+            <Text style={{ color: theme.textSecondary, fontSize: 12, marginTop: 4 }}>Total Reviews</Text>
           </View>
         </View>
       </Animated.View>
 
+      {/* Reviews List */}
       <ScrollView
+        style={{ flex: 1, paddingHorizontal: 20 }}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 100 }}
       >
-        {/* Rating Summary */}
-        <Animated.View
-          entering={FadeInDown.delay(100).springify()}
-          style={{
-            marginHorizontal: 20,
-            marginBottom: 24,
-            padding: 20,
-            backgroundColor: isDark ? "rgba(30, 41, 59, 0.8)" : theme.card,
-            borderRadius: 24,
-            borderWidth: isDark ? 0 : 1,
-            borderColor: theme.border,
-          }}
-        >
-          <View style={{ flexDirection: "row", alignItems: "flex-start" }}>
-            {/* Average Rating */}
-            <View style={{ alignItems: "center", marginRight: 24 }}>
-              <Text style={{ color: theme.text, fontSize: 48, fontWeight: "900" }}>
-                {avgRating.toFixed(1)}
-              </Text>
-              <View style={{ flexDirection: "row", marginTop: 4, marginBottom: 4 }}>
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <Ionicons
-                    key={star}
-                    name={star <= Math.round(avgRating / 2) ? "star" : "star-outline"}
-                    size={16}
-                    color={Colors.star}
-                    style={{ marginHorizontal: 1 }}
-                  />
-                ))}
-              </View>
-              <Text style={{ color: theme.textSecondary, fontSize: 12 }}>
-                {reviews.length} reviews
-              </Text>
-            </View>
-
-            {/* Rating Distribution */}
-            <View style={{ flex: 1 }}>
-              <RatingBar label="5" percentage={45} theme={theme} />
-              <RatingBar label="4" percentage={30} theme={theme} />
-              <RatingBar label="3" percentage={15} theme={theme} />
-              <RatingBar label="2" percentage={7} theme={theme} />
-              <RatingBar label="1" percentage={3} theme={theme} />
-            </View>
-          </View>
-        </Animated.View>
-
-        {/* Write Review */}
-        <Animated.View
-          entering={FadeInDown.delay(150).springify()}
-          style={{
-            marginHorizontal: 20,
-            marginBottom: 24,
-            padding: 16,
-            backgroundColor: isDark ? "rgba(30, 41, 59, 0.8)" : theme.card,
-            borderRadius: 20,
-            borderWidth: isDark ? 0 : 1,
-            borderColor: theme.border,
-          }}
-        >
-          <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 12 }}>
-            <Image
-              source={{ uri: "https://randomuser.me/api/portraits/men/32.jpg" }}
-              style={{ width: 40, height: 40, borderRadius: 20 }}
-              contentFit="cover"
-            />
-            <Text style={{ color: theme.text, fontWeight: "600", marginLeft: 12 }}>
-              Write a review
-            </Text>
-          </View>
-          <TextInput
-            value={newReview}
-            onChangeText={setNewReview}
-            placeholder="Share your thoughts about this movie..."
-            placeholderTextColor={theme.textMuted}
-            multiline
-            numberOfLines={3}
-            style={{
-              backgroundColor: isDark ? theme.backgroundTertiary : theme.backgroundSecondary,
-              borderRadius: 12,
-              padding: 12,
-              color: theme.text,
-              fontSize: 14,
-              minHeight: 80,
-              textAlignVertical: "top",
-            }}
-          />
-          <TouchableOpacity
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-              setNewReview("");
-            }}
-            style={{ marginTop: 12 }}
-          >
-            <LinearGradient
-              colors={[Colors.primary, Colors.primaryDark]}
-              style={{
-                paddingVertical: 12,
-                borderRadius: 12,
-                alignItems: "center",
-              }}
-            >
-              <Text style={{ color: "white", fontWeight: "700" }}>Submit Review</Text>
-            </LinearGradient>
-          </TouchableOpacity>
-        </Animated.View>
-
-        {/* Reviews List */}
-        <View style={{ paddingHorizontal: 20 }}>
-          <Animated.View
-            entering={FadeIn.delay(200)}
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "space-between",
-              marginBottom: 16,
-            }}
-          >
-            <Text style={{ color: theme.text, fontSize: 18, fontWeight: "800" }}>
-              All Reviews
-            </Text>
-            <TouchableOpacity
-              onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                gap: 4,
-                backgroundColor: theme.card,
-                paddingHorizontal: 12,
-                paddingVertical: 6,
-                borderRadius: 12,
-              }}
-            >
-              <Text style={{ color: theme.textSecondary, fontSize: 13 }}>Most Helpful</Text>
-              <Ionicons name="chevron-down" size={16} color={theme.textSecondary} />
-            </TouchableOpacity>
-          </Animated.View>
-
-          {reviews.map((review, index) => (
+        {reviews.length > 0 ? (
+          reviews.map((review, index) => (
             <ReviewCard
               key={review.id}
               review={review}
               index={index}
-              theme={theme}
-              isDark={isDark}
+              onLike={() => toggleReviewLike(review.id)}
             />
-          ))}
-        </View>
+          ))
+        ) : (
+          <Animated.View
+            entering={FadeIn.delay(200)}
+            style={{ alignItems: "center", paddingTop: 60 }}
+          >
+            <View style={{
+              width: 100, height: 100, borderRadius: 50,
+              backgroundColor: isDark ? "rgba(30, 41, 59, 0.6)" : theme.card,
+              alignItems: "center", justifyContent: "center", marginBottom: 20,
+            }}>
+              <Ionicons name="chatbubble-outline" size={48} color={theme.textMuted} />
+            </View>
+            <Text style={{ color: theme.text, fontSize: 20, fontWeight: "700", marginBottom: 8 }}>
+              No reviews yet
+            </Text>
+            <Text style={{ color: theme.textSecondary, fontSize: 14, textAlign: "center", paddingHorizontal: 40 }}>
+              Be the first to share your thoughts about this movie!
+            </Text>
+          </Animated.View>
+        )}
       </ScrollView>
+
+      {/* Write Review Button */}
+      <Animated.View
+        entering={FadeInDown.delay(300)}
+        style={{
+          position: "absolute",
+          bottom: 0,
+          left: 0,
+          right: 0,
+          paddingHorizontal: 20,
+          paddingVertical: 16,
+          paddingBottom: 32,
+          backgroundColor: isDark ? "rgba(2, 6, 23, 0.95)" : "rgba(255, 255, 255, 0.95)",
+          borderTopWidth: 1,
+          borderTopColor: theme.border,
+        }}
+      >
+        <TouchableOpacity
+          activeOpacity={0.9}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            setShowWriteModal(true);
+          }}
+        >
+          <LinearGradient
+            colors={[Colors.primary, Colors.primaryDark]}
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "center",
+              paddingVertical: 16,
+              borderRadius: 16,
+            }}
+          >
+            <Ionicons name="create-outline" size={22} color="white" />
+            <Text style={{ color: "white", fontWeight: "700", fontSize: 16, marginLeft: 8 }}>
+              Write a Review
+            </Text>
+          </LinearGradient>
+        </TouchableOpacity>
+      </Animated.View>
+
+      {/* Write Review Modal */}
+      <WriteReviewModal
+        visible={showWriteModal}
+        onClose={() => setShowWriteModal(false)}
+        movieId={movieId}
+      />
     </View>
   );
 }

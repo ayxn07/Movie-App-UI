@@ -8,7 +8,6 @@ import { StatusBar } from "expo-status-bar";
 import React, { useMemo } from "react";
 import { Dimensions, Text, TouchableOpacity, View } from "react-native";
 import Animated, {
-  FadeIn,
   FadeInDown,
   FadeInUp,
   useAnimatedStyle,
@@ -16,7 +15,7 @@ import Animated, {
   withSpring,
 } from "react-native-reanimated";
 
-import { ALL_MOVIES, Colors, GENRES } from "@/constants/data";
+import { Colors, MOVIES, TOP_RATED, TRENDING } from "@/constants/data";
 import { ThemeColors, useTheme } from "@/context";
 import { Movie } from "@/types";
 
@@ -25,16 +24,27 @@ const CARD_WIDTH = (width - 48) / 2;
 
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 
+// Configuration for different see all types
+const SEEALL_CONFIG: Record<string, { title: string; icon: string; data: Movie[] }> = {
+  popular: { title: "Popular This Week", icon: "trending-up", data: MOVIES },
+  top10: { title: "Top 10 This Week", icon: "trophy", data: TOP_RATED },
+  trending: { title: "Trending Now", icon: "flame", data: TRENDING },
+};
+
 // Movie Grid Card Component
 const MovieGridCard = ({
   movie,
   index,
   theme,
+  isDark,
+  showRank,
   onPress,
 }: {
   movie: Movie;
   index: number;
   theme: ThemeColors;
+  isDark: boolean;
+  showRank: boolean;
   onPress: () => void;
 }) => {
   const scale = useSharedValue(1);
@@ -79,6 +89,15 @@ const MovieGridCard = ({
               <Ionicons name="star" size={10} color={Colors.star} />
               <Text style={{ color: "#fbbf24", fontSize: 12, fontWeight: "700", marginLeft: 4 }}>{movie.rating}</Text>
             </View>
+            {/* Rank Badge */}
+            {showRank && (
+              <View style={{
+                position: "absolute", bottom: 12, left: 12,
+                backgroundColor: theme.primary, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12,
+              }}>
+                <Text style={{ color: "white", fontSize: 14, fontWeight: "900" }}>#{index + 1}</Text>
+              </View>
+            )}
           </View>
           <View style={{ padding: 12 }}>
             <Text style={{ color: theme.text, fontWeight: "700", fontSize: 14 }} numberOfLines={1}>
@@ -96,21 +115,14 @@ const MovieGridCard = ({
   );
 };
 
-export default function GenreScreen() {
+export default function SeeAllScreen() {
   const { theme, isDark } = useTheme();
   const router = useRouter();
   const params = useLocalSearchParams();
-  const genreName = params.name as string;
+  const type = params.type as string;
 
-  // Find genre config
-  const genreConfig = GENRES.find((g) => g.name.toLowerCase() === genreName?.toLowerCase());
-
-  // Filter movies by genre
-  const filteredMovies = useMemo(() => {
-    return ALL_MOVIES.filter((movie) => 
-      movie.genre.toLowerCase() === genreName?.toLowerCase()
-    );
-  }, [genreName]);
+  const config = SEEALL_CONFIG[type] || SEEALL_CONFIG.popular;
+  const showRank = type === "top10";
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.background }}>
@@ -139,68 +151,42 @@ export default function GenreScreen() {
             <Ionicons name="arrow-back" size={24} color={theme.text} />
           </TouchableOpacity>
           <View style={{ flex: 1 }}>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-              {genreConfig && (
-                <LinearGradient
-                  colors={genreConfig.colors}
-                  style={{
-                    width: 44, height: 44, borderRadius: 14,
-                    alignItems: "center", justifyContent: "center",
-                  }}
-                >
-                  <Ionicons name={genreConfig.icon as keyof typeof Ionicons.glyphMap} size={24} color="white" />
-                </LinearGradient>
-              )}
-              <View>
-                <Text style={{ color: theme.text, fontSize: 28, fontWeight: "900" }}>{genreName}</Text>
-                <Text style={{ color: theme.textSecondary, fontSize: 14, marginTop: 2 }}>
-                  {filteredMovies.length} movies
-                </Text>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+              <View style={{
+                width: 36, height: 36, borderRadius: 10,
+                backgroundColor: `${theme.primary}20`, alignItems: "center", justifyContent: "center",
+              }}>
+                <Ionicons name={config.icon as keyof typeof Ionicons.glyphMap} size={20} color={theme.primary} />
               </View>
+              <Text style={{ color: theme.text, fontSize: 24, fontWeight: "900" }}>{config.title}</Text>
             </View>
           </View>
         </View>
+        <Text style={{ color: theme.textSecondary, fontSize: 14, marginTop: 12, marginLeft: 60 }}>
+          {config.data.length} movies
+        </Text>
       </Animated.View>
 
       {/* Movies Grid */}
       <View style={{ flex: 1, paddingHorizontal: 16 }}>
-        {filteredMovies.length > 0 ? (
-          <FlashList
-            data={filteredMovies}
-            numColumns={2}
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ paddingBottom: 100 }}
-            renderItem={({ item, index }) => (
-              <MovieGridCard
-                movie={item}
-                index={index}
-                theme={theme}
-                onPress={() => router.push(`/movie/${item.id}`)}
-              />
-            )}
-            keyExtractor={(item) => item.id.toString()}
-            estimatedItemSize={270}
-          />
-        ) : (
-          <Animated.View
-            entering={FadeIn.delay(200)}
-            style={{ flex: 1, alignItems: "center", justifyContent: "center" }}
-          >
-            <View style={{
-              width: 100, height: 100, borderRadius: 50,
-              backgroundColor: isDark ? "rgba(30, 41, 59, 0.6)" : theme.card,
-              alignItems: "center", justifyContent: "center", marginBottom: 20,
-            }}>
-              <Ionicons name="film-outline" size={48} color={theme.textMuted} />
-            </View>
-            <Text style={{ color: theme.text, fontSize: 20, fontWeight: "700", marginBottom: 8 }}>
-              No movies found
-            </Text>
-            <Text style={{ color: theme.textSecondary, fontSize: 14, textAlign: "center", paddingHorizontal: 40 }}>
-              We couldn't find any movies in this genre. Check back later!
-            </Text>
-          </Animated.View>
-        )}
+        <FlashList
+          data={config.data}
+          numColumns={2}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: 100 }}
+          renderItem={({ item, index }) => (
+            <MovieGridCard
+              movie={item}
+              index={index}
+              theme={theme}
+              isDark={isDark}
+              showRank={showRank}
+              onPress={() => router.push(`/movie/${item.id}`)}
+            />
+          )}
+          keyExtractor={(item) => item.id.toString()}
+          estimatedItemSize={270}
+        />
       </View>
     </View>
   );

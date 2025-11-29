@@ -8,7 +8,7 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 
-import { ThemeProvider, useTheme } from "@/context";
+import { ThemeProvider, AppProvider, useTheme } from "@/context";
 import "./global.css";
 
 // Suppress SafeAreaView deprecation warnings emitted by some libraries
@@ -193,7 +193,9 @@ function RootLayoutContent() {
 export default function RootLayout() {
   return (
     <ThemeProvider>
-      <RootLayoutContent />
+      <AppProvider>
+        <RootLayoutContent />
+      </AppProvider>
     </ThemeProvider>
   );
 }

@@ -237,8 +237,17 @@ export const FEATURED_MOVIE: Movie = {
   description: "Deadpool is offered a place in the Marvel Cinematic Universe by the TVA, but instead recruits a variant of Wolverine to save his universe from extinction.",
 };
 
+// Now Playing Movies (for carousel)
+export const NOW_PLAYING: Movie[] = [
+  FEATURED_MOVIE,
+  MOVIES[0], // Dune: Part Two
+  MOVIES[1], // Oppenheimer
+  TRENDING[1], // Spider-Man: No Way Home
+  TOP_RATED[0], // The Dark Knight
+];
+
 // All movies combined for explore screen
-export const ALL_MOVIES: Movie[] = [...MOVIES, ...TRENDING, ...TOP_RATED];
+export const ALL_MOVIES: Movie[] = [...MOVIES, ...TRENDING, ...TOP_RATED, FEATURED_MOVIE];
 
 // ============================================================================
 // REAL CAST DATA - Actual actors for each movie
