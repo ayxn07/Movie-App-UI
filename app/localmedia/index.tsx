@@ -31,7 +31,7 @@ import { useApp, useTheme } from "@/context";
 const { width } = Dimensions.get("window");
 
 // Helper function to format duration
-const formatDuration = (durationInSeconds: number | undefined): string => {
+const formatDuration = (durationInSeconds: number | null | undefined): string => {
   if (!durationInSeconds || durationInSeconds <= 0) return "Unknown";
   const minutes = Math.floor(durationInSeconds / 60);
   const seconds = Math.floor(durationInSeconds % 60);
@@ -39,7 +39,7 @@ const formatDuration = (durationInSeconds: number | undefined): string => {
 };
 
 // Helper function to format file size
-const formatFileSize = (sizeInBytes: number | undefined): string => {
+const formatFileSize = (sizeInBytes: number | null | undefined): string => {
   if (!sizeInBytes || sizeInBytes <= 0) return "Unknown";
   return `${Math.round(sizeInBytes / 1024 / 1024)} MB`;
 };
