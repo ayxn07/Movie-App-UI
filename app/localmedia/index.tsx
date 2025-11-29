@@ -61,7 +61,7 @@ interface LocalMedia {
   addedAt: Date;
 }
 
-// Audio Player Modal Component
+// Audio Player Modal Component with Enhanced UI
 const AudioPlayerModal = ({
   visible,
   media,
@@ -71,12 +71,15 @@ const AudioPlayerModal = ({
   media: LocalMedia | null;
   onClose: () => void;
 }) => {
-  const { isDark } = useTheme();
+  useTheme();
   const [sound, setSound] = useState<Audio.Sound | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [position, setPosition] = useState(0);
   const [duration, setDuration] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLiked, setIsLiked] = useState(false);
+  const [volume, setVolume] = useState(1);
+  const [showVolumeSlider, setShowVolumeSlider] = useState(false);
 
   const onPlaybackStatusUpdate = useCallback((status: AVPlaybackStatus) => {
     if (status.isLoaded) {
@@ -134,6 +137,7 @@ const AudioPlayerModal = ({
         loadedSound.unloadAsync();
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible, media?.uri, onPlaybackStatusUpdate]);
 
   const handlePlayPause = async () => {
@@ -151,6 +155,26 @@ const AudioPlayerModal = ({
     if (!sound || duration === 0) return;
     const seekPosition = value * duration;
     await sound.setPositionAsync(seekPosition);
+  };
+
+  const handleVolumeChange = async (newVolume: number) => {
+    if (!sound) return;
+    setVolume(newVolume);
+    await sound.setVolumeAsync(newVolume);
+  };
+
+  const handleSkipBackward = async () => {
+    if (!sound) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const newPosition = Math.max(0, position - 15000); // Skip back 15 seconds
+    await sound.setPositionAsync(newPosition);
+  };
+
+  const handleSkipForward = async () => {
+    if (!sound) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const newPosition = Math.min(duration, position + 15000); // Skip forward 15 seconds
+    await sound.setPositionAsync(newPosition);
   };
 
   const handleClose = async () => {
@@ -183,7 +207,8 @@ const AudioPlayerModal = ({
           style={{ flex: 1 }}
         >
           {/* Header */}
-          <View
+          <Animated.View
+            entering={FadeInDown.duration(400)}
             style={{
               flexDirection: "row",
               alignItems: "center",
@@ -206,60 +231,222 @@ const AudioPlayerModal = ({
             >
               <Ionicons name="chevron-down" size={26} color="white" />
             </TouchableOpacity>
-            <Text style={{ color: "white", fontSize: 16, fontWeight: "600" }}>
-              Now Playing
-            </Text>
-            <View style={{ width: 44 }} />
-          </View>
-
-          {/* Album Art Placeholder */}
-          <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-            <View
+            <View style={{ alignItems: "center" }}>
+              <Text style={{ color: "rgba(255,255,255,0.7)", fontSize: 12, fontWeight: "600" }}>
+                NOW PLAYING
+              </Text>
+              <Text style={{ color: "white", fontSize: 14, fontWeight: "700", marginTop: 2 }}>
+                Local Audio
+              </Text>
+            </View>
+            <TouchableOpacity
+              onPress={() => setShowVolumeSlider(!showVolumeSlider)}
               style={{
-                width: screenWidth * 0.75,
-                height: screenWidth * 0.75,
-                borderRadius: 20,
-                backgroundColor: isDark ? "#1e293b" : "#e2e8f0",
+                width: 44,
+                height: 44,
+                borderRadius: 22,
+                backgroundColor: "rgba(255,255,255,0.1)",
                 alignItems: "center",
                 justifyContent: "center",
-                shadowColor: "#000",
-                shadowOffset: { width: 0, height: 10 },
-                shadowOpacity: 0.5,
-                shadowRadius: 20,
-                elevation: 10,
               }}
             >
+              <Ionicons 
+                name={volume === 0 ? "volume-mute" : volume < 0.5 ? "volume-low" : "volume-high"} 
+                size={22} 
+                color="white" 
+              />
+            </TouchableOpacity>
+          </Animated.View>
+
+          {/* Volume Slider (conditionally shown) */}
+          {showVolumeSlider && (
+            <Animated.View
+              entering={FadeIn.duration(200)}
+              style={{
+                paddingHorizontal: 30,
+                paddingVertical: 16,
+                backgroundColor: "rgba(255,255,255,0.05)",
+                marginHorizontal: 20,
+                borderRadius: 16,
+                marginBottom: 10,
+              }}
+            >
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+                <Ionicons name="volume-low" size={20} color="rgba(255,255,255,0.6)" />
+                <View style={{ flex: 1, height: 4, backgroundColor: "rgba(255,255,255,0.2)", borderRadius: 2 }}>
+                  <View
+                    style={{
+                      height: "100%",
+                      width: `${volume * 100}%`,
+                      backgroundColor: Colors.primary,
+                      borderRadius: 2,
+                    }}
+                  />
+                </View>
+                <Ionicons name="volume-high" size={20} color="rgba(255,255,255,0.6)" />
+              </View>
+              <View style={{ flexDirection: "row", justifyContent: "space-around", marginTop: 12 }}>
+                {[0, 0.25, 0.5, 0.75, 1].map((v) => (
+                  <TouchableOpacity
+                    key={v}
+                    onPress={() => handleVolumeChange(v)}
+                    style={{
+                      paddingHorizontal: 12,
+                      paddingVertical: 6,
+                      borderRadius: 8,
+                      backgroundColor: Math.abs(volume - v) < 0.1 ? Colors.primary : "rgba(255,255,255,0.1)",
+                    }}
+                  >
+                    <Text style={{ color: "white", fontSize: 12, fontWeight: "600" }}>
+                      {Math.round(v * 100)}%
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </Animated.View>
+          )}
+
+          {/* Album Art with Animated Glow */}
+          <Animated.View 
+            entering={FadeInUp.delay(100).duration(500)}
+            style={{ flex: 1, alignItems: "center", justifyContent: "center" }}
+          >
+            <View
+              style={{
+                width: screenWidth * 0.8,
+                height: screenWidth * 0.8,
+                borderRadius: screenWidth * 0.4,
+                backgroundColor: "#1e293b",
+                alignItems: "center",
+                justifyContent: "center",
+                shadowColor: Colors.primary,
+                shadowOffset: { width: 0, height: 0 },
+                shadowOpacity: isPlaying ? 0.6 : 0.2,
+                shadowRadius: isPlaying ? 30 : 10,
+                elevation: isPlaying ? 20 : 8,
+              }}
+            >
+              {/* Outer Ring */}
+              <View
+                style={{
+                  position: "absolute",
+                  width: screenWidth * 0.8,
+                  height: screenWidth * 0.8,
+                  borderRadius: screenWidth * 0.4,
+                  borderWidth: 3,
+                  borderColor: isPlaying ? Colors.primary : "rgba(139, 92, 246, 0.3)",
+                }}
+              />
+              {/* Inner Ring */}
+              <View
+                style={{
+                  position: "absolute",
+                  width: screenWidth * 0.65,
+                  height: screenWidth * 0.65,
+                  borderRadius: screenWidth * 0.325,
+                  borderWidth: 1,
+                  borderColor: "rgba(255,255,255,0.1)",
+                }}
+              />
               {media.thumbnail ? (
                 <Image
                   source={{ uri: media.thumbnail }}
-                  style={{ width: "100%", height: "100%", borderRadius: 20 }}
+                  style={{ width: screenWidth * 0.5, height: screenWidth * 0.5, borderRadius: screenWidth * 0.25 }}
                   contentFit="cover"
                 />
               ) : (
-                <Ionicons name="musical-notes" size={80} color={Colors.primary} />
+                <View
+                  style={{
+                    width: screenWidth * 0.5,
+                    height: screenWidth * 0.5,
+                    borderRadius: screenWidth * 0.25,
+                    backgroundColor: "rgba(139, 92, 246, 0.2)",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <Ionicons name="musical-notes" size={80} color={Colors.primary} />
+                </View>
               )}
+              {/* Center Dot */}
+              <View
+                style={{
+                  position: "absolute",
+                  width: 12,
+                  height: 12,
+                  borderRadius: 6,
+                  backgroundColor: "#0f172a",
+                }}
+              />
             </View>
-          </View>
+            
+            {/* Waveform Visualization (decorative) */}
+            {isPlaying && (
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "flex-end",
+                  justifyContent: "center",
+                  height: 40,
+                  marginTop: 20,
+                  gap: 3,
+                }}
+              >
+                {[...Array(15)].map((_, i) => (
+                  <View
+                    key={i}
+                    style={{
+                      width: 4,
+                      height: 10 + Math.sin(i * 0.5 + (position / 1000)) * 20,
+                      backgroundColor: Colors.primary,
+                      borderRadius: 2,
+                      opacity: 0.6 + Math.sin(i * 0.3) * 0.4,
+                    }}
+                  />
+                ))}
+              </View>
+            )}
+          </Animated.View>
 
           {/* Song Info */}
-          <View style={{ paddingHorizontal: 30 }}>
-            <Text
-              style={{ color: "white", fontSize: 24, fontWeight: "800", textAlign: "center" }}
-              numberOfLines={2}
-            >
-              {media.name}
-            </Text>
-            <Text style={{ color: "rgba(255,255,255,0.6)", fontSize: 16, marginTop: 8, textAlign: "center" }}>
-              Local File
-            </Text>
-          </View>
+          <Animated.View 
+            entering={FadeInUp.delay(200).duration(400)}
+            style={{ paddingHorizontal: 30 }}
+          >
+            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+              <View style={{ flex: 1 }}>
+                <Text
+                  style={{ color: "white", fontSize: 24, fontWeight: "900" }}
+                  numberOfLines={2}
+                >
+                  {media.name.replace(/\.[^/.]+$/, "")}
+                </Text>
+                <Text style={{ color: "rgba(255,255,255,0.6)", fontSize: 16, marginTop: 6 }}>
+                  {media.size} • Local File
+                </Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                  setIsLiked(!isLiked);
+                }}
+                style={{ padding: 8 }}
+              >
+                <Ionicons
+                  name={isLiked ? "heart" : "heart-outline"}
+                  size={28}
+                  color={isLiked ? Colors.secondary : "white"}
+                />
+              </TouchableOpacity>
+            </View>
+          </Animated.View>
 
           {/* Progress Bar */}
-          <View style={{ paddingHorizontal: 30, marginTop: 40 }}>
+          <View style={{ paddingHorizontal: 30, marginTop: 30 }}>
             <View
               style={{
                 height: 6,
-                backgroundColor: "rgba(255,255,255,0.2)",
+                backgroundColor: "rgba(255,255,255,0.15)",
                 borderRadius: 3,
                 overflow: "hidden",
               }}
@@ -269,32 +456,48 @@ const AudioPlayerModal = ({
                   height: "100%",
                   width: `${progress * 100}%`,
                   backgroundColor: Colors.primary,
+                  borderRadius: 3,
                 }}
               />
             </View>
-            <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: 8 }}>
-              <Text style={{ color: "rgba(255,255,255,0.6)", fontSize: 12 }}>
+            <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: 10 }}>
+              <Text style={{ color: "rgba(255,255,255,0.7)", fontSize: 13, fontWeight: "600" }}>
                 {formatTime(position)}
               </Text>
-              <Text style={{ color: "rgba(255,255,255,0.6)", fontSize: 12 }}>
-                {formatTime(duration)}
+              <Text style={{ color: "rgba(255,255,255,0.7)", fontSize: 13, fontWeight: "600" }}>
+                -{formatTime(duration - position)}
               </Text>
             </View>
           </View>
 
           {/* Controls */}
-          <View
+          <Animated.View
+            entering={FadeInUp.delay(300).duration(400)}
             style={{
               flexDirection: "row",
               alignItems: "center",
               justifyContent: "center",
-              paddingVertical: 40,
-              paddingBottom: 80,
-              gap: 30,
+              paddingVertical: 30,
+              gap: 20,
             }}
           >
             <TouchableOpacity
-              onPress={() => handleSeek(Math.max(0, progress - 0.1))}
+              onPress={handleSkipBackward}
+              style={{
+                width: 52,
+                height: 52,
+                borderRadius: 26,
+                backgroundColor: "rgba(255,255,255,0.1)",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Ionicons name="play-back" size={24} color="white" />
+              <Text style={{ color: "rgba(255,255,255,0.5)", fontSize: 9, position: "absolute", bottom: 6 }}>15</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => handleSeek(Math.max(0, progress - 0.05))}
               style={{
                 width: 56,
                 height: 56,
@@ -304,7 +507,7 @@ const AudioPlayerModal = ({
                 justifyContent: "center",
               }}
             >
-              <Ionicons name="play-back" size={26} color="white" />
+              <Ionicons name="play-skip-back" size={26} color="white" />
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -317,17 +520,22 @@ const AudioPlayerModal = ({
                 backgroundColor: Colors.primary,
                 alignItems: "center",
                 justifyContent: "center",
+                shadowColor: Colors.primary,
+                shadowOffset: { width: 0, height: 6 },
+                shadowOpacity: 0.5,
+                shadowRadius: 12,
+                elevation: 8,
               }}
             >
               {isLoading ? (
                 <Ionicons name="hourglass" size={36} color="white" />
               ) : (
-                <Ionicons name={isPlaying ? "pause" : "play"} size={36} color="white" />
+                <Ionicons name={isPlaying ? "pause" : "play"} size={36} color="white" style={{ marginLeft: isPlaying ? 0 : 4 }} />
               )}
             </TouchableOpacity>
 
             <TouchableOpacity
-              onPress={() => handleSeek(Math.min(1, progress + 0.1))}
+              onPress={() => handleSeek(Math.min(1, progress + 0.05))}
               style={{
                 width: 56,
                 height: 56,
@@ -337,7 +545,50 @@ const AudioPlayerModal = ({
                 justifyContent: "center",
               }}
             >
-              <Ionicons name="play-forward" size={26} color="white" />
+              <Ionicons name="play-skip-forward" size={26} color="white" />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={handleSkipForward}
+              style={{
+                width: 52,
+                height: 52,
+                borderRadius: 26,
+                backgroundColor: "rgba(255,255,255,0.1)",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Ionicons name="play-forward" size={24} color="white" />
+              <Text style={{ color: "rgba(255,255,255,0.5)", fontSize: 9, position: "absolute", bottom: 6 }}>15</Text>
+            </TouchableOpacity>
+          </Animated.View>
+
+          {/* Bottom Actions */}
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "space-around",
+              paddingHorizontal: 40,
+              paddingBottom: 50,
+            }}
+          >
+            <TouchableOpacity style={{ alignItems: "center" }}>
+              <Ionicons name="share-outline" size={22} color="rgba(255,255,255,0.7)" />
+              <Text style={{ color: "rgba(255,255,255,0.5)", fontSize: 10, marginTop: 4 }}>Share</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={{ alignItems: "center" }}>
+              <Ionicons name="repeat" size={22} color="rgba(255,255,255,0.7)" />
+              <Text style={{ color: "rgba(255,255,255,0.5)", fontSize: 10, marginTop: 4 }}>Repeat</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={{ alignItems: "center" }}>
+              <Ionicons name="shuffle" size={22} color="rgba(255,255,255,0.7)" />
+              <Text style={{ color: "rgba(255,255,255,0.5)", fontSize: 10, marginTop: 4 }}>Shuffle</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={{ alignItems: "center" }}>
+              <Ionicons name="list" size={22} color="rgba(255,255,255,0.7)" />
+              <Text style={{ color: "rgba(255,255,255,0.5)", fontSize: 10, marginTop: 4 }}>Queue</Text>
             </TouchableOpacity>
           </View>
         </LinearGradient>
@@ -346,7 +597,7 @@ const AudioPlayerModal = ({
   );
 };
 
-// Video Player Modal Component
+// Video Player Modal Component with Enhanced UI
 const VideoPlayerModal = ({
   visible,
   media,
@@ -362,16 +613,20 @@ const VideoPlayerModal = ({
   const [position, setPosition] = useState(0);
   const [duration, setDuration] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [isMuted, setIsMuted] = useState(false);
+  const [playbackSpeed, setPlaybackSpeed] = useState(1);
+  const [showSpeedMenu, setShowSpeedMenu] = useState(false);
+  const [isLocked, setIsLocked] = useState(false);
 
   useEffect(() => {
     let timeout: ReturnType<typeof setTimeout>;
-    if (showControls && isPlaying) {
+    if (showControls && isPlaying && !showSpeedMenu) {
       timeout = setTimeout(() => {
         setShowControls(false);
-      }, 3000);
+      }, 4000);
     }
     return () => clearTimeout(timeout);
-  }, [showControls, isPlaying]);
+  }, [showControls, isPlaying, showSpeedMenu]);
 
   const onPlaybackStatusUpdate = (status: AVPlaybackStatus) => {
     if (status.isLoaded) {
@@ -383,7 +638,7 @@ const VideoPlayerModal = ({
   };
 
   const handlePlayPause = async () => {
-    if (!videoRef.current) return;
+    if (!videoRef.current || isLocked) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
     if (isPlaying) {
@@ -394,17 +649,36 @@ const VideoPlayerModal = ({
   };
 
   const handleSeek = async (forward: boolean) => {
-    if (!videoRef.current) return;
+    if (!videoRef.current || isLocked) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     const seekAmount = 10000; // 10 seconds
     const newPosition = forward ? position + seekAmount : position - seekAmount;
     await videoRef.current.setPositionAsync(Math.max(0, Math.min(duration, newPosition)));
   };
 
+  const handleToggleMute = async () => {
+    if (!videoRef.current || isLocked) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    await videoRef.current.setIsMutedAsync(!isMuted);
+    setIsMuted(!isMuted);
+  };
+
+  const handleSpeedChange = async (speed: number) => {
+    if (!videoRef.current) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    await videoRef.current.setRateAsync(speed, true);
+    setPlaybackSpeed(speed);
+    setShowSpeedMenu(false);
+  };
+
   const formatTime = (millis: number) => {
     const totalSeconds = Math.floor(millis / 1000);
-    const minutes = Math.floor(totalSeconds / 60);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
     const seconds = totalSeconds % 60;
+    if (hours > 0) {
+      return `${hours}:${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+    }
     return `${minutes}:${seconds.toString().padStart(2, "0")}`;
   };
 
@@ -412,13 +686,15 @@ const VideoPlayerModal = ({
 
   if (!media) return null;
 
+  const speedOptions = [0.5, 0.75, 1, 1.25, 1.5, 2];
+
   return (
     <Modal visible={visible} transparent={false} animationType="slide" onRequestClose={onClose}>
       <View style={{ flex: 1, backgroundColor: "#000" }}>
         <StatusBar style="light" hidden />
         <TouchableOpacity
           activeOpacity={1}
-          onPress={() => setShowControls(!showControls)}
+          onPress={() => !isLocked && setShowControls(!showControls)}
           style={{ flex: 1 }}
         >
           <Video
@@ -428,6 +704,8 @@ const VideoPlayerModal = ({
             resizeMode={ResizeMode.CONTAIN}
             shouldPlay={true}
             isLooping={false}
+            isMuted={isMuted}
+            rate={playbackSpeed}
             onPlaybackStatusUpdate={onPlaybackStatusUpdate}
           />
 
@@ -442,9 +720,51 @@ const VideoPlayerModal = ({
                 bottom: 0,
                 alignItems: "center",
                 justifyContent: "center",
+                backgroundColor: "rgba(0,0,0,0.5)",
               }}
             >
-              <Ionicons name="hourglass" size={48} color={Colors.primary} />
+              <View
+                style={{
+                  width: 80,
+                  height: 80,
+                  borderRadius: 40,
+                  backgroundColor: "rgba(139, 92, 246, 0.2)",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Ionicons name="hourglass" size={40} color={Colors.primary} />
+              </View>
+              <Text style={{ color: "white", marginTop: 16, fontSize: 14 }}>Loading video...</Text>
+            </View>
+          )}
+
+          {/* Lock Screen Indicator */}
+          {isLocked && !showControls && (
+            <View
+              style={{
+                position: "absolute",
+                top: 60,
+                left: 20,
+              }}
+            >
+              <TouchableOpacity
+                onPress={() => {
+                  setShowControls(true);
+                }}
+                style={{
+                  backgroundColor: "rgba(0,0,0,0.6)",
+                  paddingHorizontal: 16,
+                  paddingVertical: 8,
+                  borderRadius: 20,
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 6,
+                }}
+              >
+                <Ionicons name="lock-closed" size={16} color="white" />
+                <Text style={{ color: "white", fontSize: 12 }}>Tap to unlock</Text>
+              </TouchableOpacity>
             </View>
           )}
 
@@ -465,6 +785,7 @@ const VideoPlayerModal = ({
                 style={{
                   flexDirection: "row",
                   alignItems: "center",
+                  justifyContent: "space-between",
                   paddingHorizontal: 20,
                   paddingTop: 50,
                   paddingBottom: 30,
@@ -476,84 +797,227 @@ const VideoPlayerModal = ({
                     width: 44,
                     height: 44,
                     borderRadius: 22,
-                    backgroundColor: "rgba(255,255,255,0.2)",
+                    backgroundColor: "rgba(255,255,255,0.15)",
                     alignItems: "center",
                     justifyContent: "center",
                   }}
                 >
                   <Ionicons name="arrow-back" size={24} color="white" />
                 </TouchableOpacity>
-                <Text
-                  style={{
-                    flex: 1,
-                    color: "white",
-                    fontSize: 16,
-                    fontWeight: "600",
-                    marginLeft: 16,
-                  }}
-                  numberOfLines={1}
-                >
-                  {media.name}
-                </Text>
+                <View style={{ flex: 1, marginHorizontal: 16 }}>
+                  <Text
+                    style={{
+                      color: "white",
+                      fontSize: 16,
+                      fontWeight: "700",
+                    }}
+                    numberOfLines={1}
+                  >
+                    {media.name.replace(/\.[^/.]+$/, "")}
+                  </Text>
+                  <Text style={{ color: "rgba(255,255,255,0.6)", fontSize: 12, marginTop: 2 }}>
+                    {media.size} • {media.duration || "Local Video"}
+                  </Text>
+                </View>
+                <View style={{ flexDirection: "row", gap: 8 }}>
+                  <TouchableOpacity
+                    onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      setIsLocked(!isLocked);
+                      if (!isLocked) {
+                        setShowControls(false);
+                      }
+                    }}
+                    style={{
+                      width: 44,
+                      height: 44,
+                      borderRadius: 22,
+                      backgroundColor: isLocked ? Colors.primary : "rgba(255,255,255,0.15)",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Ionicons name={isLocked ? "lock-closed" : "lock-open"} size={20} color="white" />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={handleToggleMute}
+                    style={{
+                      width: 44,
+                      height: 44,
+                      borderRadius: 22,
+                      backgroundColor: "rgba(255,255,255,0.15)",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Ionicons name={isMuted ? "volume-mute" : "volume-high"} size={20} color="white" />
+                  </TouchableOpacity>
+                </View>
               </LinearGradient>
 
-              {/* Center Controls */}
-              <View
-                style={{
-                  flex: 1,
-                  flexDirection: "row",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 40,
-                }}
-              >
-                <TouchableOpacity onPress={() => handleSeek(false)}>
-                  <Ionicons name="play-back" size={36} color="white" />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={handlePlayPause}
+              {/* Speed Menu */}
+              {showSpeedMenu && !isLocked && (
+                <View
                   style={{
-                    width: 80,
-                    height: 80,
-                    borderRadius: 40,
-                    backgroundColor: Colors.primary,
-                    alignItems: "center",
-                    justifyContent: "center",
+                    position: "absolute",
+                    top: 110,
+                    right: 20,
+                    backgroundColor: "rgba(0,0,0,0.9)",
+                    borderRadius: 16,
+                    padding: 8,
+                    minWidth: 100,
                   }}
                 >
-                  <Ionicons name={isPlaying ? "pause" : "play"} size={36} color="white" />
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => handleSeek(true)}>
-                  <Ionicons name="play-forward" size={36} color="white" />
-                </TouchableOpacity>
-              </View>
+                  <Text style={{ color: "rgba(255,255,255,0.6)", fontSize: 12, fontWeight: "600", paddingHorizontal: 12, paddingBottom: 8 }}>
+                    Playback Speed
+                  </Text>
+                  {speedOptions.map((speed) => (
+                    <TouchableOpacity
+                      key={speed}
+                      onPress={() => handleSpeedChange(speed)}
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        paddingVertical: 10,
+                        paddingHorizontal: 12,
+                        backgroundColor: playbackSpeed === speed ? "rgba(139, 92, 246, 0.3)" : "transparent",
+                        borderRadius: 8,
+                      }}
+                    >
+                      <Text style={{
+                        color: playbackSpeed === speed ? Colors.primary : "white",
+                        fontSize: 14,
+                        fontWeight: playbackSpeed === speed ? "700" : "500",
+                      }}>
+                        {speed}x
+                      </Text>
+                      {playbackSpeed === speed && (
+                        <Ionicons name="checkmark" size={18} color={Colors.primary} />
+                      )}
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+
+              {/* Center Controls */}
+              {!isLocked && (
+                <View
+                  style={{
+                    flex: 1,
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 50,
+                  }}
+                >
+                  <TouchableOpacity 
+                    onPress={() => handleSeek(false)}
+                    style={{
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Ionicons name="play-back" size={40} color="white" />
+                    <Text style={{ color: "rgba(255,255,255,0.7)", fontSize: 11, marginTop: 4 }}>10s</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={handlePlayPause}
+                    style={{
+                      width: 88,
+                      height: 88,
+                      borderRadius: 44,
+                      backgroundColor: Colors.primary,
+                      alignItems: "center",
+                      justifyContent: "center",
+                      shadowColor: Colors.primary,
+                      shadowOffset: { width: 0, height: 6 },
+                      shadowOpacity: 0.5,
+                      shadowRadius: 12,
+                      elevation: 8,
+                    }}
+                  >
+                    <Ionicons name={isPlaying ? "pause" : "play"} size={40} color="white" style={{ marginLeft: isPlaying ? 0 : 4 }} />
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    onPress={() => handleSeek(true)}
+                    style={{
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Ionicons name="play-forward" size={40} color="white" />
+                    <Text style={{ color: "rgba(255,255,255,0.7)", fontSize: 11, marginTop: 4 }}>10s</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
 
               {/* Bottom Controls */}
               <LinearGradient
                 colors={["transparent", "rgba(0,0,0,0.8)"]}
-                style={{ paddingHorizontal: 20, paddingBottom: 40, paddingTop: 30 }}
+                style={{ paddingHorizontal: 20, paddingBottom: 50, paddingTop: 30 }}
               >
                 {/* Progress Bar */}
                 <View
                   style={{
-                    height: 4,
-                    backgroundColor: "rgba(255,255,255,0.3)",
-                    borderRadius: 2,
+                    height: 6,
+                    backgroundColor: "rgba(255,255,255,0.2)",
+                    borderRadius: 3,
                     overflow: "hidden",
-                    marginBottom: 8,
+                    marginBottom: 12,
                   }}
                 >
+                  {/* Buffer indicator */}
+                  <View
+                    style={{
+                      position: "absolute",
+                      height: "100%",
+                      width: `${Math.min(progress * 100 + 10, 100)}%`,
+                      backgroundColor: "rgba(255,255,255,0.3)",
+                      borderRadius: 3,
+                    }}
+                  />
                   <View
                     style={{
                       height: "100%",
                       width: `${progress * 100}%`,
                       backgroundColor: Colors.primary,
+                      borderRadius: 3,
+                    }}
+                  />
+                  {/* Seek thumb */}
+                  <View
+                    style={{
+                      position: "absolute",
+                      left: `${progress * 100}%`,
+                      top: -4,
+                      width: 14,
+                      height: 14,
+                      borderRadius: 7,
+                      backgroundColor: Colors.primary,
+                      marginLeft: -7,
                     }}
                   />
                 </View>
-                <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-                  <Text style={{ color: "white", fontSize: 12 }}>{formatTime(position)}</Text>
-                  <Text style={{ color: "white", fontSize: 12 }}>{formatTime(duration)}</Text>
+                <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+                  <Text style={{ color: "white", fontSize: 13, fontWeight: "600" }}>{formatTime(position)}</Text>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 16 }}>
+                    <TouchableOpacity
+                      onPress={() => !isLocked && setShowSpeedMenu(!showSpeedMenu)}
+                      style={{
+                        paddingHorizontal: 12,
+                        paddingVertical: 6,
+                        backgroundColor: "rgba(255,255,255,0.15)",
+                        borderRadius: 8,
+                      }}
+                    >
+                      <Text style={{ color: "white", fontSize: 13, fontWeight: "600" }}>{playbackSpeed}x</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={{ padding: 4 }}>
+                      <Ionicons name="expand" size={22} color="white" />
+                    </TouchableOpacity>
+                  </View>
+                  <Text style={{ color: "white", fontSize: 13, fontWeight: "600" }}>-{formatTime(duration - position)}</Text>
                 </View>
               </LinearGradient>
             </View>
@@ -795,12 +1259,14 @@ const UploadModal = ({
   onUploadVideo,
   onUploadAudio,
   onScanDownloads,
+  onYouTubeSearch,
 }: {
   visible: boolean;
   onClose: () => void;
   onUploadVideo: () => void;
   onUploadAudio: () => void;
   onScanDownloads: () => void;
+  onYouTubeSearch: () => void;
 }) => {
   const { theme, isDark } = useTheme();
 
@@ -975,6 +1441,7 @@ const UploadModal = ({
               backgroundColor: isDark ? "rgba(30, 41, 59, 0.6)" : theme.card,
               borderRadius: 16,
               padding: 20,
+              marginBottom: 12,
               borderWidth: isDark ? 0 : 1,
               borderColor: theme.border,
             }}
@@ -1001,6 +1468,54 @@ const UploadModal = ({
             </View>
             <Ionicons name="chevron-forward" size={22} color={theme.textMuted} />
           </TouchableOpacity>
+
+          {/* YouTube Search Option */}
+          <TouchableOpacity
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              onYouTubeSearch();
+            }}
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              backgroundColor: isDark ? "rgba(30, 41, 59, 0.6)" : theme.card,
+              borderRadius: 16,
+              padding: 20,
+              borderWidth: 2,
+              borderColor: Colors.danger,
+            }}
+          >
+            <View
+              style={{
+                width: 56,
+                height: 56,
+                borderRadius: 16,
+                backgroundColor: `${Colors.danger}20`,
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Ionicons name="logo-youtube" size={28} color={Colors.danger} />
+            </View>
+            <View style={{ flex: 1, marginLeft: 16 }}>
+              <Text style={{ color: theme.text, fontWeight: "700", fontSize: 17 }}>
+                YouTube Search
+              </Text>
+              <Text style={{ color: theme.textSecondary, fontSize: 13, marginTop: 4 }}>
+                Search and download videos/music
+              </Text>
+            </View>
+            <View
+              style={{
+                backgroundColor: Colors.danger,
+                paddingHorizontal: 8,
+                paddingVertical: 4,
+                borderRadius: 8,
+              }}
+            >
+              <Text style={{ color: "white", fontSize: 10, fontWeight: "700" }}>NEW</Text>
+            </View>
+          </TouchableOpacity>
         </Animated.View>
       </View>
     </Modal>
@@ -1023,7 +1538,13 @@ export default function LocalMediaScreen() {
   // Request media library permissions on mount
   useEffect(() => {
     (async () => {
-      await MediaLibrary.requestPermissionsAsync();
+      // Request permissions with granular options to avoid audio permission issues on Android 13+
+      try {
+        await MediaLibrary.requestPermissionsAsync(false, ["video", "photo"]);
+      } catch {
+        // Fallback to basic permission request if granular fails
+        await MediaLibrary.requestPermissionsAsync();
+      }
     })();
   }, []);
 
@@ -1036,7 +1557,16 @@ export default function LocalMediaScreen() {
     setShowUploadModal(false);
 
     try {
-      const permission = await MediaLibrary.requestPermissionsAsync();
+      // Request permissions with granular options - only request video and photo permissions
+      // This avoids the AUDIO permission issue on Android 13+
+      let permission;
+      try {
+        permission = await MediaLibrary.requestPermissionsAsync(false, ["video", "photo"]);
+      } catch {
+        // Fallback to basic permission request if granular fails
+        permission = await MediaLibrary.requestPermissionsAsync();
+      }
+      
       if (permission.status !== "granted") {
         Alert.alert(
           "Permission Required",
@@ -1058,12 +1588,17 @@ export default function LocalMediaScreen() {
         sortBy: [[MediaLibrary.SortBy.modificationTime, false]],
       });
 
-      // Get audio files
-      const audioAssets = await MediaLibrary.getAssetsAsync({
-        mediaType: MediaLibrary.MediaType.audio,
-        first: 100,
-        sortBy: [[MediaLibrary.SortBy.modificationTime, false]],
-      });
+      // Get audio files - wrapped in try/catch as audio permissions may not be granted
+      let audioAssets = { assets: [] as MediaLibrary.Asset[] };
+      try {
+        audioAssets = await MediaLibrary.getAssetsAsync({
+          mediaType: MediaLibrary.MediaType.audio,
+          first: 100,
+          sortBy: [[MediaLibrary.SortBy.modificationTime, false]],
+        });
+      } catch (audioError) {
+        console.log("Audio access not available:", audioError);
+      }
 
       const newMediaItems: LocalMedia[] = [];
 
@@ -1139,7 +1674,7 @@ export default function LocalMediaScreen() {
         setLocalMedia((prev) => [newMedia, ...prev]);
         showToast("Video added successfully!", "success");
       }
-    } catch (error) {
+    } catch {
       showToast("Failed to upload video", "error");
     }
   };
@@ -1166,7 +1701,7 @@ export default function LocalMediaScreen() {
         setLocalMedia((prev) => [newMedia, ...prev]);
         showToast("Audio added successfully!", "success");
       }
-    } catch (error) {
+    } catch {
       showToast("Failed to upload audio", "error");
     }
   };
@@ -1404,6 +1939,11 @@ export default function LocalMediaScreen() {
         onUploadVideo={handleUploadVideo}
         onUploadAudio={handleUploadAudio}
         onScanDownloads={scanDownloadsFolder}
+        onYouTubeSearch={() => {
+          setShowUploadModal(false);
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+          router.push("/youtube");
+        }}
       />
 
       {/* Audio Player Modal */}

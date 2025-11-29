@@ -7,6 +7,7 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from "react-native-reanimated";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { ThemeProvider, AppProvider, useTheme } from "@/context";
 import "./global.css";
@@ -15,6 +16,7 @@ import "./global.css";
 LogBox.ignoreLogs([
   "SafeAreaView has been deprecated",
   "Please use 'react-native-safe-area-context' instead",
+  "[expo-av]: Expo AV has been deprecated",
 ]);
 
 function RootLayoutContent() {
@@ -304,6 +306,16 @@ function RootLayoutContent() {
               contentStyle: { backgroundColor: theme.background },
             }} 
           />
+          <Stack.Screen 
+            name="youtube/index" 
+            options={{ 
+              headerShown: false, 
+              presentation: "card",
+              animation: "slide_from_right",
+              animationDuration: 200,
+              contentStyle: { backgroundColor: theme.background },
+            }} 
+          />
         </Stack>
       </Animated.View>
     </View>
@@ -312,10 +324,12 @@ function RootLayoutContent() {
 
 export default function RootLayout() {
   return (
-    <ThemeProvider>
-      <AppProvider>
-        <RootLayoutContent />
-      </AppProvider>
-    </ThemeProvider>
+    <SafeAreaProvider>
+      <ThemeProvider>
+        <AppProvider>
+          <RootLayoutContent />
+        </AppProvider>
+      </ThemeProvider>
+    </SafeAreaProvider>
   );
 }
