@@ -1,10 +1,11 @@
 import { Ionicons } from "@expo/vector-icons";
+import { Audio, AVPlaybackStatus } from "expo-av";
 import { Image } from "expo-image";
 import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import {
   Dimensions,
   ScrollView,
@@ -19,17 +20,13 @@ import Animated, {
   FadeIn,
   FadeInDown,
   FadeInUp,
-  FadeOut,
-  SlideInDown,
   SlideInUp,
-  interpolate,
   useAnimatedStyle,
   useSharedValue,
   withRepeat,
   withSequence,
   withSpring,
   withTiming,
-  Extrapolation,
 } from "react-native-reanimated";
 
 import { Colors } from "@/constants/data";
@@ -37,7 +34,8 @@ import { useApp, useTheme } from "@/context";
 
 const { width, height } = Dimensions.get("window");
 
-// Sample song data with lyrics
+// Sample song data with lyrics and audio URLs
+// Demo audio from SoundHelix - in production, use actual music streaming URLs
 const SONGS = [
   {
     id: "1",
@@ -47,6 +45,8 @@ const SONGS = [
     duration: 200, // seconds
     cover: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800",
     colors: ["#1a1a2e", "#16213e", "#0f3460"],
+    // Demo audio URL - replace with actual streaming URL in production
+    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
     lyrics: [
       { time: 0, text: "♪ Instrumental ♪" },
       { time: 15, text: "Verse 1 begins..." },
@@ -69,6 +69,7 @@ const SONGS = [
     duration: 203,
     cover: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800",
     colors: ["#2d1b69", "#5a189a", "#9d4edd"],
+    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
     lyrics: [
       { time: 0, text: "♪ Intro ♪" },
       { time: 15, text: "The journey starts..." },
@@ -84,6 +85,7 @@ const SONGS = [
     duration: 215,
     cover: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=800",
     colors: ["#0d1b2a", "#1b263b", "#415a77"],
+    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
     lyrics: [
       { time: 0, text: "♪ Intro ♪" },
       { time: 20, text: "Memories fade..." },
@@ -500,7 +502,7 @@ const QueueItem = ({
 };
 
 export default function MusicPlayerScreen() {
-  const { theme, isDark } = useTheme();
+  const { isDark } = useTheme();
   const router = useRouter();
   const params = useLocalSearchParams();
   const songId = params.id as string;
@@ -509,7 +511,7 @@ export default function MusicPlayerScreen() {
   const [currentSongIndex, setCurrentSongIndex] = useState(
     SONGS.findIndex((s) => s.id === songId) || 0
   );
-  const [isPlaying, setIsPlaying] = useState(true);
+  const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
   const [isShuffled, setIsShuffled] = useState(false);
@@ -518,28 +520,91 @@ export default function MusicPlayerScreen() {
   const [showQueue, setShowQueue] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
   const [showVinyl, setShowVinyl] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const currentSong = SONGS[currentSongIndex];
   const lyricsScrollRef = useRef<ScrollView>(null);
+  const soundRef = useRef<Audio.Sound | null>(null);
 
-  // Simulate playback progress
+  // Load and play audio when song changes
   useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (isPlaying) {
-      interval = setInterval(() => {
-        setCurrentTime((prev) => {
-          const newTime = prev + 1;
-          if (newTime >= currentSong.duration) {
-            handleNext();
-            return 0;
-          }
-          setProgress(newTime / currentSong.duration);
-          return newTime;
+    let isMounted = true;
+
+    const loadAndPlayAudio = async () => {
+      try {
+        setIsLoading(true);
+
+        // Unload previous sound if exists
+        if (soundRef.current) {
+          await soundRef.current.unloadAsync();
+          soundRef.current = null;
+        }
+
+        // Set audio mode
+        await Audio.setAudioModeAsync({
+          allowsRecordingIOS: false,
+          playsInSilentModeIOS: true,
+          shouldDuckAndroid: true,
+          staysActiveInBackground: true,
         });
-      }, 1000);
+
+        // Load new sound
+        const { sound } = await Audio.Sound.createAsync(
+          { uri: currentSong.audioUrl },
+          { shouldPlay: true },
+          onPlaybackStatusUpdate
+        );
+
+        if (isMounted) {
+          soundRef.current = sound;
+          setIsPlaying(true);
+          setIsLoading(false);
+        } else {
+          // Component unmounted, clean up
+          await sound.unloadAsync();
+        }
+      } catch (error) {
+        console.error("Error loading audio:", error);
+        if (isMounted) {
+          setIsLoading(false);
+          showToast("Failed to load audio", "error");
+        }
+      }
+    };
+
+    loadAndPlayAudio();
+
+    return () => {
+      isMounted = false;
+      if (soundRef.current) {
+        soundRef.current.unloadAsync();
+      }
+    };
+  }, [currentSongIndex]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (soundRef.current) {
+        soundRef.current.unloadAsync();
+      }
+    };
+  }, []);
+
+  const onPlaybackStatusUpdate = useCallback((status: AVPlaybackStatus) => {
+    if (status.isLoaded) {
+      const positionSeconds = (status.positionMillis || 0) / 1000;
+      const durationSeconds = (status.durationMillis || 1) / 1000;
+      setCurrentTime(positionSeconds);
+      setProgress(durationSeconds > 0 ? positionSeconds / durationSeconds : 0);
+      setIsPlaying(status.isPlaying);
+
+      // Handle song completion
+      if (status.didJustFinish && !status.isLooping) {
+        handleNext();
+      }
     }
-    return () => clearInterval(interval);
-  }, [isPlaying, currentSong.duration]);
+  }, [repeatMode, isShuffled]);
 
   // Auto scroll lyrics
   useEffect(() => {
@@ -559,30 +624,39 @@ export default function MusicPlayerScreen() {
     }
   }, [currentTime, showLyrics, currentSong.lyrics]);
 
-  const handlePlayPause = () => {
+  const handlePlayPause = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    setIsPlaying(!isPlaying);
-  };
+    if (!soundRef.current) return;
 
-  const handleNext = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    if (repeatMode === "one") {
-      setCurrentTime(0);
-      setProgress(0);
-    } else if (isShuffled) {
-      setCurrentSongIndex(Math.floor(Math.random() * SONGS.length));
-      setCurrentTime(0);
-      setProgress(0);
+    if (isPlaying) {
+      await soundRef.current.pauseAsync();
     } else {
-      setCurrentSongIndex((prev) => (prev + 1) % SONGS.length);
-      setCurrentTime(0);
-      setProgress(0);
+      await soundRef.current.playAsync();
     }
   };
 
-  const handlePrevious = () => {
+  const handleNext = useCallback(async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (repeatMode === "one") {
+      if (soundRef.current) {
+        await soundRef.current.setPositionAsync(0);
+        await soundRef.current.playAsync();
+      }
+    } else if (isShuffled) {
+      setCurrentSongIndex(Math.floor(Math.random() * SONGS.length));
+    } else {
+      setCurrentSongIndex((prev) => (prev + 1) % SONGS.length);
+    }
+    setCurrentTime(0);
+    setProgress(0);
+  }, [repeatMode, isShuffled]);
+
+  const handlePrevious = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (currentTime > 3) {
+      if (soundRef.current) {
+        await soundRef.current.setPositionAsync(0);
+      }
       setCurrentTime(0);
       setProgress(0);
     } else {
@@ -592,11 +666,13 @@ export default function MusicPlayerScreen() {
     }
   };
 
-  const handleSeek = (value: number) => {
-    if (currentSong.duration <= 0) return; // Prevent division by zero
-    const newTime = value * currentSong.duration;
-    setCurrentTime(newTime);
-    setProgress(value);
+  const handleSeek = async (value: number) => {
+    if (!soundRef.current) return;
+    const status = await soundRef.current.getStatusAsync();
+    if (status.isLoaded && status.durationMillis) {
+      const newPosition = value * status.durationMillis;
+      await soundRef.current.setPositionAsync(newPosition);
+    }
   };
 
   const handleShuffle = () => {
