@@ -263,7 +263,7 @@ export default function HomeScreen() {
                     <TouchableOpacity
                       onPress={() => {
                         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                        // Voice search functionality can be added here
+                        setShowSearchModal(true);
                       }}
                       style={{
                         width: 40,
@@ -276,18 +276,25 @@ export default function HomeScreen() {
                     >
                       <Ionicons name="mic" size={18} color={Colors.secondary} />
                     </TouchableOpacity>
-                    <LinearGradient
-                      colors={[Colors.primary, Colors.primaryDark]}
-                      style={{ 
-                        width: 40,
-                        height: 40,
-                        borderRadius: 12,
-                        alignItems: "center",
-                        justifyContent: "center",
+                    <TouchableOpacity
+                      onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        setShowSearchModal(true);
                       }}
                     >
-                      <Ionicons name="options" size={18} color="white" />
-                    </LinearGradient>
+                      <LinearGradient
+                        colors={[Colors.primary, Colors.primaryDark]}
+                        style={{ 
+                          width: 40,
+                          height: 40,
+                          borderRadius: 12,
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <Ionicons name="options" size={18} color="white" />
+                      </LinearGradient>
+                    </TouchableOpacity>
                   </View>
                 </LinearGradient>
               </View>
