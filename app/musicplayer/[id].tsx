@@ -33,64 +33,22 @@ import Animated, {
 } from "react-native-reanimated";
 
 import { Colors } from "@/constants/data";
+import { SONGS as MUSIC_SONGS, getSongById } from "@/constants/musicData";
 import { useApp, useTheme } from "@/context";
 
 const { width, height } = Dimensions.get("window");
 
-// Sample song data with lyrics
-const SONGS = [
-  {
-    id: "1",
-    title: "Blinding Lights",
-    artist: "The Weeknd",
-    album: "After Hours",
-    duration: 200, // seconds
-    cover: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800",
-    colors: ["#1a1a2e", "#16213e", "#0f3460"],
-    lyrics: [
-      { time: 0, text: "♪ Instrumental ♪" },
-      { time: 15, text: "Verse 1 begins..." },
-      { time: 30, text: "The rhythm flows..." },
-      { time: 45, text: "Emotions rise..." },
-      { time: 60, text: "♪ Chorus ♪" },
-      { time: 75, text: "The beat drops..." },
-      { time: 90, text: "Feel the music..." },
-      { time: 105, text: "♪ Bridge ♪" },
-      { time: 120, text: "Intensity builds..." },
-      { time: 135, text: "Final verse..." },
-      { time: 150, text: "♪ Outro ♪" },
-    ],
-  },
-  {
-    id: "2",
-    title: "Levitating",
-    artist: "Dua Lipa",
-    album: "Future Nostalgia",
-    duration: 203,
-    cover: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800",
-    colors: ["#2d1b69", "#5a189a", "#9d4edd"],
-    lyrics: [
-      { time: 0, text: "♪ Intro ♪" },
-      { time: 15, text: "The journey starts..." },
-      { time: 30, text: "Rising higher..." },
-      { time: 45, text: "♪ Chorus ♪" },
-    ],
-  },
-  {
-    id: "3",
-    title: "Save Your Tears",
-    artist: "The Weeknd",
-    album: "After Hours",
-    duration: 215,
-    cover: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=800",
-    colors: ["#0d1b2a", "#1b263b", "#415a77"],
-    lyrics: [
-      { time: 0, text: "♪ Intro ♪" },
-      { time: 20, text: "Memories fade..." },
-      { time: 40, text: "Emotions swell..." },
-    ],
-  },
-];
+// Use the enhanced music data
+const SONGS = MUSIC_SONGS.map(song => ({
+  id: song.id,
+  title: song.title,
+  artist: song.artist,
+  album: song.album,
+  duration: song.duration,
+  cover: song.cover,
+  colors: song.colors,
+  lyrics: song.lyrics,
+}));
 
 // Equalizer Bar Component
 const EqualizerBar = ({ isPlaying, delay }: { isPlaying: boolean; delay: number }) => {
@@ -954,7 +912,7 @@ export default function MusicPlayerScreen() {
         <TouchableOpacity
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            setShowLyrics(true);
+            router.push(`/lyrics/${currentSong.id}`);
           }}
           style={{ alignItems: "center" }}
         >
