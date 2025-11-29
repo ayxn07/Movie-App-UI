@@ -5,9 +5,10 @@ import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import {
   Dimensions,
+  Keyboard,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -23,6 +24,7 @@ import Animated, {
   FadeInRight,
   FadeInUp,
 } from "react-native-reanimated";
+import EmojiPicker from "rn-emoji-keyboard";
 
 import { Colors } from "@/constants/data";
 import { ChatMessage, useApp, useTheme } from "@/context";
@@ -178,6 +180,36 @@ export default function ChatScreen() {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [showImagePreview, setShowImagePreview] = useState(false);
   const [showAttachMenu, setShowAttachMenu] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+
+  // Handle keyboard events
+  useEffect(() => {
+    const keyboardWillShow = Keyboard.addListener(
+      Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow",
+      () => {
+        setTimeout(() => {
+          scrollViewRef.current?.scrollToEnd({ animated: true });
+        }, 100);
+      }
+    );
+
+    const keyboardWillHide = Keyboard.addListener(
+      Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide",
+      () => {
+        setKeyboardHeight(0);
+      // Nothing to do here
+      }
+    );
+
+    return () => {
+      keyboardWillShow.remove();
+      keyboardWillHide.remove();
+    };
+  }, []);
+
+  const handleEmojiSelected = (emoji: { emoji: string }) => {
+    setInputText((prev) => prev + emoji.emoji);
+  };
 
   const friend = friends.find((f) => f.id === friendId);
   const messages = getMessagesForFriend(friendId);
@@ -265,8 +297,8 @@ export default function ChatScreen() {
   return (
     <KeyboardAvoidingView
       style={{ flex: 1, backgroundColor: theme.background }}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 25}
     >
       <StatusBar style={isDark ? "light" : "dark"} />
 
@@ -329,10 +361,22 @@ export default function ChatScreen() {
             </Text>
           </View>
 
-          <TouchableOpacity style={{ padding: 8 }}>
+          <TouchableOpacity 
+            style={{ padding: 8 }}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.push(`/videocall/${friendId}`);
+            }}
+          >
             <Ionicons name="videocam-outline" size={24} color={theme.primary} />
           </TouchableOpacity>
-          <TouchableOpacity style={{ padding: 8 }}>
+          <TouchableOpacity 
+            style={{ padding: 8 }}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.push(`/voicecall/${friendId}`);
+            }}
+          >
             <Ionicons name="call-outline" size={22} color={theme.primary} />
           </TouchableOpacity>
         </View>
@@ -345,6 +389,7 @@ export default function ChatScreen() {
         contentContainerStyle={{ paddingTop: 20, paddingBottom: 20 }}
         showsVerticalScrollIndicator={false}
         onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: false })}
+        keyboardShouldPersistTaps="handled"
       >
         {messages.length > 0 ? (
           messages.map((message, index) => (
@@ -383,7 +428,7 @@ export default function ChatScreen() {
         style={{
           paddingHorizontal: 20,
           paddingVertical: 12,
-          paddingBottom: 32,
+          paddingBottom: Platform.OS === "ios" ? 32 : 16,
           backgroundColor: isDark ? "rgba(2, 6, 23, 0.95)" : "rgba(255, 255, 255, 0.95)",
           borderTopWidth: 1,
           borderTopColor: theme.border,
@@ -395,6 +440,7 @@ export default function ChatScreen() {
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
               setShowAttachMenu(!showAttachMenu);
+              setShowEmojiPicker(false);
             }}
             style={{
               width: 44, height: 44, borderRadius: 22,
@@ -433,7 +479,15 @@ export default function ChatScreen() {
                 paddingVertical: 4,
               }}
             />
-            <TouchableOpacity style={{ padding: 4 }}>
+            <TouchableOpacity 
+              style={{ padding: 4 }}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                Keyboard.dismiss();
+                setShowEmojiPicker(true);
+                setShowAttachMenu(false);
+              }}
+            >
               <Ionicons name="happy-outline" size={22} color={theme.textSecondary} />
             </TouchableOpacity>
           </View>
@@ -518,6 +572,31 @@ export default function ChatScreen() {
           setPreviewImage(null);
         }}
         onSend={handleSendImage}
+      />
+
+      {/* Emoji Picker */}
+      <EmojiPicker
+        onEmojiSelected={handleEmojiSelected}
+        open={showEmojiPicker}
+        onClose={() => setShowEmojiPicker(false)}
+        theme={{
+          backdrop: isDark ? "rgba(0,0,0,0.7)" : "rgba(0,0,0,0.5)",
+          knob: isDark ? "#475569" : "#cbd5e1",
+          container: isDark ? "#1e293b" : "#ffffff",
+          header: isDark ? "#f1f5f9" : "#1e293b",
+          category: {
+            icon: isDark ? "#94a3b8" : "#64748b",
+            iconActive: theme.primary,
+            container: isDark ? "#1e293b" : "#ffffff",
+            containerActive: `${theme.primary}20`,
+          },
+          search: {
+            text: isDark ? "#f1f5f9" : "#1e293b",
+            placeholder: isDark ? "#64748b" : "#94a3b8",
+            icon: isDark ? "#94a3b8" : "#64748b",
+            background: isDark ? "#334155" : "#f1f5f9",
+          },
+        }}
       />
     </KeyboardAvoidingView>
   );
