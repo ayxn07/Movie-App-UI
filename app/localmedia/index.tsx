@@ -160,8 +160,10 @@ const YouTubeSearchModal = ({
 
   const handlePlayInYouTube = useCallback((result: YouTubeSearchResult) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    // In production, this would use the actual YouTube video ID
-    Linking.openURL("https://www.youtube.com").catch(() => {
+    // Open YouTube search with the result title
+    // In production, this would use actual YouTube video IDs from API
+    const searchQuery = encodeURIComponent(result.title);
+    Linking.openURL(`https://www.youtube.com/results?search_query=${searchQuery}`).catch(() => {
       showToast("Could not open YouTube", "error");
     });
   }, [showToast]);
@@ -500,6 +502,16 @@ interface LocalMedia {
   addedAt: Date;
 }
 
+// Helper to safely get file size from AssetInfo (may not have fileSize in all versions)
+const getAssetFileSize = (assetInfo: MediaLibrary.AssetInfo): number => {
+  // Try to access fileSize property which may exist in some versions
+  const maybeFileSize = (assetInfo as Record<string, unknown>).fileSize;
+  if (typeof maybeFileSize === "number") {
+    return maybeFileSize;
+  }
+  return 0;
+};
+
 // Audio Player Modal Component - Enhanced UI
 const AudioPlayerModal = ({
   visible,
@@ -828,13 +840,14 @@ const AudioPlayerModal = ({
                 marginTop: 24,
                 gap: 3,
               }}>
-                {[0, 100, 200, 300, 400, 300, 200, 100, 0].map((delay, index) => (
+                {/* Predefined heights for consistent equalizer animation */}
+                {[12, 20, 28, 16, 24, 18, 26, 14, 22].map((barHeight, index) => (
                   <Animated.View
                     key={index}
-                    entering={FadeIn.delay(delay)}
+                    entering={FadeIn.delay(index * 50)}
                     style={{
                       width: 4,
-                      height: 8 + Math.random() * 20,
+                      height: barHeight,
                       backgroundColor: Colors.primary,
                       borderRadius: 2,
                     }}
@@ -1027,7 +1040,7 @@ const AudioPlayerModal = ({
               }}
             >
               <Ionicons
-                name={repeatMode === "one" ? "repeat" : "repeat"}
+                name={repeatMode === "off" ? "repeat-outline" : "repeat"}
                 size={22}
                 color={repeatMode !== "off" ? Colors.primary : "white"}
               />
@@ -2168,7 +2181,7 @@ export default function LocalMediaScreen() {
           name: asset.filename,
           type: "video",
           uri: assetInfo.localUri || asset.uri,
-          size: formatFileSize((assetInfo as unknown as { fileSize?: number }).fileSize || 0),
+          size: formatFileSize(getAssetFileSize(assetInfo)),
           duration: formatDuration(asset.duration),
           thumbnail: asset.uri,
           addedAt: new Date(asset.modificationTime),
@@ -2183,7 +2196,7 @@ export default function LocalMediaScreen() {
           name: asset.filename,
           type: "audio",
           uri: assetInfo.localUri || asset.uri,
-          size: formatFileSize((assetInfo as unknown as { fileSize?: number }).fileSize || 0),
+          size: formatFileSize(getAssetFileSize(assetInfo)),
           duration: formatDuration(asset.duration),
           addedAt: new Date(asset.modificationTime),
         });

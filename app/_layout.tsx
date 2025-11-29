@@ -11,10 +11,26 @@ import Animated, {
 import { ThemeProvider, AppProvider, useTheme } from "@/context";
 import "./global.css";
 
-// Suppress SafeAreaView deprecation warnings emitted by some libraries
+/**
+ * Warning Suppressions:
+ * 
+ * 1. SafeAreaView deprecation: The warning about SafeAreaView being deprecated comes from
+ *    third-party libraries. This app already uses 'react-native-safe-area-context' which
+ *    is the recommended alternative. The warning is suppressed as it's coming from
+ *    dependencies, not from our direct usage.
+ * 
+ * 2. expo-av deprecation: Will be removed in SDK 54. Consider migrating to 'expo-audio'
+ *    and 'expo-video' packages when upgrading to SDK 54+.
+ * 
+ * 3. Media Library permissions: Expo Go has limited media library access. For full
+ *    functionality, create a development build. The expo-media-library plugin has been
+ *    configured in app.json to request appropriate permissions.
+ */
 LogBox.ignoreLogs([
   "SafeAreaView has been deprecated",
   "Please use 'react-native-safe-area-context' instead",
+  "[expo-av]: Expo AV has been deprecated",
+  "Due to changes in Androids permission requirements",
 ]);
 
 function RootLayoutContent() {
