@@ -468,15 +468,56 @@ export default function SongsScreen() {
               </Text>
             </View>
             <TouchableOpacity
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push("/youtubesearch");
+              }}
               style={{
                 width: 44, height: 44, borderRadius: 22,
                 backgroundColor: isDark ? "rgba(30, 41, 59, 0.8)" : "rgba(226, 232, 240, 0.8)",
                 alignItems: "center", justifyContent: "center",
               }}
             >
-              <Ionicons name="search" size={22} color={theme.text} />
+              <Ionicons name="logo-youtube" size={22} color="#ef4444" />
             </TouchableOpacity>
           </View>
+
+          {/* YouTube Search Banner */}
+          <TouchableOpacity
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              router.push("/youtubesearch");
+            }}
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              backgroundColor: isDark ? "rgba(239, 68, 68, 0.15)" : "rgba(239, 68, 68, 0.1)",
+              borderRadius: 16,
+              padding: 14,
+              marginBottom: 16,
+              borderWidth: 1,
+              borderColor: "rgba(239, 68, 68, 0.2)",
+            }}
+          >
+            <View
+              style={{
+                width: 44, height: 44, borderRadius: 12,
+                backgroundColor: "rgba(239, 68, 68, 0.2)",
+                alignItems: "center", justifyContent: "center",
+              }}
+            >
+              <Ionicons name="logo-youtube" size={24} color="#ef4444" />
+            </View>
+            <View style={{ flex: 1, marginLeft: 14 }}>
+              <Text style={{ color: theme.text, fontWeight: "700", fontSize: 15 }}>
+                Search YouTube
+              </Text>
+              <Text style={{ color: theme.textSecondary, fontSize: 13, marginTop: 2 }}>
+                Find and download songs & soundtracks
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={22} color="#ef4444" />
+          </TouchableOpacity>
         </Animated.View>
 
         {/* Genre Pills */}
