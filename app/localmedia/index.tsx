@@ -1,12 +1,14 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Image } from "expo-image";
+import { Audio, Video, ResizeMode, AVPlaybackStatus } from "expo-av";
 import * as DocumentPicker from "expo-document-picker";
 import * as Haptics from "expo-haptics";
+import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
+import * as MediaLibrary from "expo-media-library";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useRef, useEffect } from "react";
 import {
   Alert,
   Dimensions,
@@ -28,7 +30,7 @@ import Animated, {
 import { Colors } from "@/constants/data";
 import { useApp, useTheme } from "@/context";
 
-const { width } = Dimensions.get("window");
+const { width: screenWidth } = Dimensions.get("window");
 
 // Helper function to format duration
 const formatDuration = (durationInSeconds: number | null | undefined): string => {
@@ -56,49 +58,508 @@ interface LocalMedia {
   addedAt: Date;
 }
 
-// Sample local media data (simulated)
-const SAMPLE_LOCAL_MEDIA: LocalMedia[] = [
-  {
-    id: "local1",
-    name: "My Vacation Video.mp4",
-    type: "video",
-    uri: "file://local/vacation.mp4",
-    size: "245 MB",
-    duration: "12:34",
-    thumbnail: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400",
-    addedAt: new Date(Date.now() - 1000 * 60 * 60 * 24),
-  },
-  {
-    id: "local2",
-    name: "Birthday Party.mp4",
-    type: "video",
-    uri: "file://local/birthday.mp4",
-    size: "512 MB",
-    duration: "25:10",
-    thumbnail: "https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=400",
-    addedAt: new Date(Date.now() - 1000 * 60 * 60 * 48),
-  },
-  {
-    id: "local3",
-    name: "Favorite Song.mp3",
-    type: "audio",
-    uri: "file://local/song.mp3",
-    size: "8.5 MB",
-    duration: "3:45",
-    thumbnail: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400",
-    addedAt: new Date(Date.now() - 1000 * 60 * 60 * 72),
-  },
-  {
-    id: "local4",
-    name: "Podcast Episode.mp3",
-    type: "audio",
-    uri: "file://local/podcast.mp3",
-    size: "45 MB",
-    duration: "48:22",
-    thumbnail: "https://images.unsplash.com/photo-1478737270239-2f02b77fc618?w=400",
-    addedAt: new Date(Date.now() - 1000 * 60 * 60 * 96),
-  },
-];
+// Audio Player Modal Component
+const AudioPlayerModal = ({
+  visible,
+  media,
+  onClose,
+}: {
+  visible: boolean;
+  media: LocalMedia | null;
+  onClose: () => void;
+}) => {
+  const { isDark } = useTheme();
+  const [sound, setSound] = useState<Audio.Sound | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [position, setPosition] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const onPlaybackStatusUpdate = useCallback((status: AVPlaybackStatus) => {
+    if (status.isLoaded) {
+      setPosition(status.positionMillis || 0);
+      setDuration(status.durationMillis || 0);
+      setIsPlaying(status.isPlaying);
+    }
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+    let loadedSound: Audio.Sound | null = null;
+
+    const loadAudio = async () => {
+      if (!visible || !media) return;
+
+      try {
+        setIsLoading(true);
+        await Audio.setAudioModeAsync({
+          allowsRecordingIOS: false,
+          playsInSilentModeIOS: true,
+          shouldDuckAndroid: true,
+          staysActiveInBackground: true,
+        });
+
+        const { sound: newSound } = await Audio.Sound.createAsync(
+          { uri: media.uri },
+          { shouldPlay: true },
+          onPlaybackStatusUpdate
+        );
+
+        loadedSound = newSound;
+
+        if (isMounted) {
+          setSound(newSound);
+          setIsPlaying(true);
+          setIsLoading(false);
+        } else {
+          // Component was unmounted during loading, clean up
+          await newSound.unloadAsync();
+        }
+      } catch (error) {
+        console.error("Error loading audio:", error);
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    loadAudio();
+
+    return () => {
+      isMounted = false;
+      if (loadedSound) {
+        loadedSound.unloadAsync();
+      }
+    };
+  }, [visible, media?.uri, onPlaybackStatusUpdate]);
+
+  const handlePlayPause = async () => {
+    if (!sound) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+    if (isPlaying) {
+      await sound.pauseAsync();
+    } else {
+      await sound.playAsync();
+    }
+  };
+
+  const handleSeek = async (value: number) => {
+    if (!sound || duration === 0) return;
+    const seekPosition = value * duration;
+    await sound.setPositionAsync(seekPosition);
+  };
+
+  const handleClose = async () => {
+    if (sound) {
+      await sound.unloadAsync();
+      setSound(null);
+    }
+    setIsPlaying(false);
+    setPosition(0);
+    setDuration(0);
+    onClose();
+  };
+
+  const formatTime = (millis: number) => {
+    const totalSeconds = Math.floor(millis / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+  };
+
+  const progress = duration > 0 ? position / duration : 0;
+
+  if (!media) return null;
+
+  return (
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={handleClose}>
+      <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.95)" }}>
+        <LinearGradient
+          colors={["#1e1b4b", "#0f172a", "#020617"]}
+          style={{ flex: 1 }}
+        >
+          {/* Header */}
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "space-between",
+              paddingHorizontal: 20,
+              paddingTop: 60,
+              paddingBottom: 20,
+            }}
+          >
+            <TouchableOpacity
+              onPress={handleClose}
+              style={{
+                width: 44,
+                height: 44,
+                borderRadius: 22,
+                backgroundColor: "rgba(255,255,255,0.1)",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Ionicons name="chevron-down" size={26} color="white" />
+            </TouchableOpacity>
+            <Text style={{ color: "white", fontSize: 16, fontWeight: "600" }}>
+              Now Playing
+            </Text>
+            <View style={{ width: 44 }} />
+          </View>
+
+          {/* Album Art Placeholder */}
+          <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+            <View
+              style={{
+                width: screenWidth * 0.75,
+                height: screenWidth * 0.75,
+                borderRadius: 20,
+                backgroundColor: isDark ? "#1e293b" : "#e2e8f0",
+                alignItems: "center",
+                justifyContent: "center",
+                shadowColor: "#000",
+                shadowOffset: { width: 0, height: 10 },
+                shadowOpacity: 0.5,
+                shadowRadius: 20,
+                elevation: 10,
+              }}
+            >
+              {media.thumbnail ? (
+                <Image
+                  source={{ uri: media.thumbnail }}
+                  style={{ width: "100%", height: "100%", borderRadius: 20 }}
+                  contentFit="cover"
+                />
+              ) : (
+                <Ionicons name="musical-notes" size={80} color={Colors.primary} />
+              )}
+            </View>
+          </View>
+
+          {/* Song Info */}
+          <View style={{ paddingHorizontal: 30 }}>
+            <Text
+              style={{ color: "white", fontSize: 24, fontWeight: "800", textAlign: "center" }}
+              numberOfLines={2}
+            >
+              {media.name}
+            </Text>
+            <Text style={{ color: "rgba(255,255,255,0.6)", fontSize: 16, marginTop: 8, textAlign: "center" }}>
+              Local File
+            </Text>
+          </View>
+
+          {/* Progress Bar */}
+          <View style={{ paddingHorizontal: 30, marginTop: 40 }}>
+            <View
+              style={{
+                height: 6,
+                backgroundColor: "rgba(255,255,255,0.2)",
+                borderRadius: 3,
+                overflow: "hidden",
+              }}
+            >
+              <View
+                style={{
+                  height: "100%",
+                  width: `${progress * 100}%`,
+                  backgroundColor: Colors.primary,
+                }}
+              />
+            </View>
+            <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: 8 }}>
+              <Text style={{ color: "rgba(255,255,255,0.6)", fontSize: 12 }}>
+                {formatTime(position)}
+              </Text>
+              <Text style={{ color: "rgba(255,255,255,0.6)", fontSize: 12 }}>
+                {formatTime(duration)}
+              </Text>
+            </View>
+          </View>
+
+          {/* Controls */}
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "center",
+              paddingVertical: 40,
+              paddingBottom: 80,
+              gap: 30,
+            }}
+          >
+            <TouchableOpacity
+              onPress={() => handleSeek(Math.max(0, progress - 0.1))}
+              style={{
+                width: 56,
+                height: 56,
+                borderRadius: 28,
+                backgroundColor: "rgba(255,255,255,0.1)",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Ionicons name="play-back" size={26} color="white" />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={handlePlayPause}
+              disabled={isLoading}
+              style={{
+                width: 80,
+                height: 80,
+                borderRadius: 40,
+                backgroundColor: Colors.primary,
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              {isLoading ? (
+                <Ionicons name="hourglass" size={36} color="white" />
+              ) : (
+                <Ionicons name={isPlaying ? "pause" : "play"} size={36} color="white" />
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => handleSeek(Math.min(1, progress + 0.1))}
+              style={{
+                width: 56,
+                height: 56,
+                borderRadius: 28,
+                backgroundColor: "rgba(255,255,255,0.1)",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Ionicons name="play-forward" size={26} color="white" />
+            </TouchableOpacity>
+          </View>
+        </LinearGradient>
+      </View>
+    </Modal>
+  );
+};
+
+// Video Player Modal Component
+const VideoPlayerModal = ({
+  visible,
+  media,
+  onClose,
+}: {
+  visible: boolean;
+  media: LocalMedia | null;
+  onClose: () => void;
+}) => {
+  const videoRef = useRef<Video>(null);
+  const [isPlaying, setIsPlaying] = useState(true);
+  const [showControls, setShowControls] = useState(true);
+  const [position, setPosition] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    let timeout: ReturnType<typeof setTimeout>;
+    if (showControls && isPlaying) {
+      timeout = setTimeout(() => {
+        setShowControls(false);
+      }, 3000);
+    }
+    return () => clearTimeout(timeout);
+  }, [showControls, isPlaying]);
+
+  const onPlaybackStatusUpdate = (status: AVPlaybackStatus) => {
+    if (status.isLoaded) {
+      setPosition(status.positionMillis || 0);
+      setDuration(status.durationMillis || 0);
+      setIsPlaying(status.isPlaying);
+      setIsLoading(false);
+    }
+  };
+
+  const handlePlayPause = async () => {
+    if (!videoRef.current) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+    if (isPlaying) {
+      await videoRef.current.pauseAsync();
+    } else {
+      await videoRef.current.playAsync();
+    }
+  };
+
+  const handleSeek = async (forward: boolean) => {
+    if (!videoRef.current) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const seekAmount = 10000; // 10 seconds
+    const newPosition = forward ? position + seekAmount : position - seekAmount;
+    await videoRef.current.setPositionAsync(Math.max(0, Math.min(duration, newPosition)));
+  };
+
+  const formatTime = (millis: number) => {
+    const totalSeconds = Math.floor(millis / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+  };
+
+  const progress = duration > 0 ? position / duration : 0;
+
+  if (!media) return null;
+
+  return (
+    <Modal visible={visible} transparent={false} animationType="slide" onRequestClose={onClose}>
+      <View style={{ flex: 1, backgroundColor: "#000" }}>
+        <StatusBar style="light" hidden />
+        <TouchableOpacity
+          activeOpacity={1}
+          onPress={() => setShowControls(!showControls)}
+          style={{ flex: 1 }}
+        >
+          <Video
+            ref={videoRef}
+            source={{ uri: media.uri }}
+            style={{ flex: 1 }}
+            resizeMode={ResizeMode.CONTAIN}
+            shouldPlay={true}
+            isLooping={false}
+            onPlaybackStatusUpdate={onPlaybackStatusUpdate}
+          />
+
+          {/* Loading Indicator */}
+          {isLoading && (
+            <View
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Ionicons name="hourglass" size={48} color={Colors.primary} />
+            </View>
+          )}
+
+          {/* Controls Overlay */}
+          {showControls && (
+            <View
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+              }}
+            >
+              {/* Top Bar */}
+              <LinearGradient
+                colors={["rgba(0,0,0,0.8)", "transparent"]}
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  paddingHorizontal: 20,
+                  paddingTop: 50,
+                  paddingBottom: 30,
+                }}
+              >
+                <TouchableOpacity
+                  onPress={onClose}
+                  style={{
+                    width: 44,
+                    height: 44,
+                    borderRadius: 22,
+                    backgroundColor: "rgba(255,255,255,0.2)",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <Ionicons name="arrow-back" size={24} color="white" />
+                </TouchableOpacity>
+                <Text
+                  style={{
+                    flex: 1,
+                    color: "white",
+                    fontSize: 16,
+                    fontWeight: "600",
+                    marginLeft: 16,
+                  }}
+                  numberOfLines={1}
+                >
+                  {media.name}
+                </Text>
+              </LinearGradient>
+
+              {/* Center Controls */}
+              <View
+                style={{
+                  flex: 1,
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 40,
+                }}
+              >
+                <TouchableOpacity onPress={() => handleSeek(false)}>
+                  <Ionicons name="play-back" size={36} color="white" />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={handlePlayPause}
+                  style={{
+                    width: 80,
+                    height: 80,
+                    borderRadius: 40,
+                    backgroundColor: Colors.primary,
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <Ionicons name={isPlaying ? "pause" : "play"} size={36} color="white" />
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => handleSeek(true)}>
+                  <Ionicons name="play-forward" size={36} color="white" />
+                </TouchableOpacity>
+              </View>
+
+              {/* Bottom Controls */}
+              <LinearGradient
+                colors={["transparent", "rgba(0,0,0,0.8)"]}
+                style={{ paddingHorizontal: 20, paddingBottom: 40, paddingTop: 30 }}
+              >
+                {/* Progress Bar */}
+                <View
+                  style={{
+                    height: 4,
+                    backgroundColor: "rgba(255,255,255,0.3)",
+                    borderRadius: 2,
+                    overflow: "hidden",
+                    marginBottom: 8,
+                  }}
+                >
+                  <View
+                    style={{
+                      height: "100%",
+                      width: `${progress * 100}%`,
+                      backgroundColor: Colors.primary,
+                    }}
+                  />
+                </View>
+                <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+                  <Text style={{ color: "white", fontSize: 12 }}>{formatTime(position)}</Text>
+                  <Text style={{ color: "white", fontSize: 12 }}>{formatTime(duration)}</Text>
+                </View>
+              </LinearGradient>
+            </View>
+          )}
+        </TouchableOpacity>
+      </View>
+    </Modal>
+  );
+};
 
 // Media Item Component
 const MediaItem = ({
@@ -330,11 +791,13 @@ const UploadModal = ({
   onClose,
   onUploadVideo,
   onUploadAudio,
+  onScanDownloads,
 }: {
   visible: boolean;
   onClose: () => void;
   onUploadVideo: () => void;
   onUploadAudio: () => void;
+  onScanDownloads: () => void;
 }) => {
   const { theme, isDark } = useTheme();
 
@@ -374,8 +837,48 @@ const UploadModal = ({
               textAlign: "center",
             }}
           >
-            Upload Media
+            Add Media
           </Text>
+
+          {/* Scan Downloads Option */}
+          <TouchableOpacity
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              onScanDownloads();
+            }}
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              backgroundColor: isDark ? "rgba(30, 41, 59, 0.6)" : theme.card,
+              borderRadius: 16,
+              padding: 20,
+              marginBottom: 12,
+              borderWidth: 2,
+              borderColor: Colors.primary,
+            }}
+          >
+            <View
+              style={{
+                width: 56,
+                height: 56,
+                borderRadius: 16,
+                backgroundColor: `${Colors.primary}20`,
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Ionicons name="folder-open" size={28} color={Colors.primary} />
+            </View>
+            <View style={{ flex: 1, marginLeft: 16 }}>
+              <Text style={{ color: theme.text, fontWeight: "700", fontSize: 17 }}>
+                Scan Downloads Folder
+              </Text>
+              <Text style={{ color: theme.textSecondary, fontSize: 13, marginTop: 4 }}>
+                Find media files from your Downloads
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={22} color={Colors.primary} />
+          </TouchableOpacity>
 
           {/* Video Upload Option */}
           <TouchableOpacity
@@ -506,24 +1009,107 @@ export default function LocalMediaScreen() {
   const router = useRouter();
   const { showToast } = useApp();
 
-  const [localMedia, setLocalMedia] = useState<LocalMedia[]>(SAMPLE_LOCAL_MEDIA);
+  const [localMedia, setLocalMedia] = useState<LocalMedia[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [activeFilter, setActiveFilter] = useState<"all" | "video" | "audio">("all");
+  const [selectedMedia, setSelectedMedia] = useState<LocalMedia | null>(null);
+  const [showAudioPlayer, setShowAudioPlayer] = useState(false);
+  const [showVideoPlayer, setShowVideoPlayer] = useState(false);
+
+  // Request media library permissions on mount
+  useEffect(() => {
+    (async () => {
+      await MediaLibrary.requestPermissionsAsync();
+    })();
+  }, []);
 
   const filteredMedia = localMedia.filter((media) => {
     if (activeFilter === "all") return true;
     return media.type === activeFilter;
   });
 
-  const onRefresh = useCallback(() => {
-    setRefreshing(true);
-    // Simulate refresh
-    setTimeout(() => {
-      setRefreshing(false);
-      showToast("Library refreshed", "info");
-    }, 1000);
+  const scanDownloadsFolder = useCallback(async () => {
+    setShowUploadModal(false);
+
+    try {
+      const permission = await MediaLibrary.requestPermissionsAsync();
+      if (permission.status !== "granted") {
+        Alert.alert(
+          "Permission Required",
+          "Please grant access to your media library to scan for media files.",
+          [
+            { text: "Cancel", style: "cancel" },
+            { text: "Settings", onPress: () => {} },
+          ]
+        );
+        return;
+      }
+
+      showToast("Scanning for media files...", "info");
+
+      // Get video files
+      const videoAssets = await MediaLibrary.getAssetsAsync({
+        mediaType: MediaLibrary.MediaType.video,
+        first: 100,
+        sortBy: [[MediaLibrary.SortBy.modificationTime, false]],
+      });
+
+      // Get audio files
+      const audioAssets = await MediaLibrary.getAssetsAsync({
+        mediaType: MediaLibrary.MediaType.audio,
+        first: 100,
+        sortBy: [[MediaLibrary.SortBy.modificationTime, false]],
+      });
+
+      const newMediaItems: LocalMedia[] = [];
+
+      // Process video files
+      for (const asset of videoAssets.assets) {
+        const assetInfo = await MediaLibrary.getAssetInfoAsync(asset);
+        newMediaItems.push({
+          id: asset.id,
+          name: asset.filename,
+          type: "video",
+          uri: assetInfo.localUri || asset.uri,
+          size: formatFileSize(assetInfo.fileSize || 0),
+          duration: formatDuration(asset.duration),
+          thumbnail: asset.uri,
+          addedAt: new Date(asset.modificationTime),
+        });
+      }
+
+      // Process audio files
+      for (const asset of audioAssets.assets) {
+        const assetInfo = await MediaLibrary.getAssetInfoAsync(asset);
+        newMediaItems.push({
+          id: asset.id,
+          name: asset.filename,
+          type: "audio",
+          uri: assetInfo.localUri || asset.uri,
+          size: formatFileSize(assetInfo.fileSize || 0),
+          duration: formatDuration(asset.duration),
+          addedAt: new Date(asset.modificationTime),
+        });
+      }
+
+      if (newMediaItems.length > 0) {
+        setLocalMedia(newMediaItems);
+        showToast(`Found ${newMediaItems.length} media files!`, "success");
+      } else {
+        showToast("No media files found in your library", "info");
+      }
+    } catch (error) {
+      console.error("Error scanning downloads:", error);
+      showToast("Failed to scan media files", "error");
+    }
   }, [showToast]);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await scanDownloadsFolder();
+    setRefreshing(false);
+  }, [scanDownloadsFolder]);
 
   const handleUploadVideo = async () => {
     setShowUploadModal(false);
@@ -589,12 +1175,11 @@ export default function LocalMediaScreen() {
 
   const handlePlayMedia = (media: LocalMedia) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setSelectedMedia(media);
     if (media.type === "video") {
-      showToast(`Playing: ${media.name}`, "info");
-      // In a real app, navigate to video player with the local URI
+      setShowVideoPlayer(true);
     } else {
-      showToast(`Playing: ${media.name}`, "info");
-      // In a real app, navigate to audio player with the local URI
+      setShowAudioPlayer(true);
     }
   };
 
@@ -815,6 +1400,27 @@ export default function LocalMediaScreen() {
         onClose={() => setShowUploadModal(false)}
         onUploadVideo={handleUploadVideo}
         onUploadAudio={handleUploadAudio}
+        onScanDownloads={scanDownloadsFolder}
+      />
+
+      {/* Audio Player Modal */}
+      <AudioPlayerModal
+        visible={showAudioPlayer}
+        media={selectedMedia}
+        onClose={() => {
+          setShowAudioPlayer(false);
+          setSelectedMedia(null);
+        }}
+      />
+
+      {/* Video Player Modal */}
+      <VideoPlayerModal
+        visible={showVideoPlayer}
+        media={selectedMedia}
+        onClose={() => {
+          setShowVideoPlayer(false);
+          setSelectedMedia(null);
+        }}
       />
     </View>
   );

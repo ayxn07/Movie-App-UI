@@ -1,11 +1,11 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Image } from "expo-image";
+import { Video, ResizeMode, AVPlaybackStatus } from "expo-av";
 import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import * as ScreenOrientation from "expo-screen-orientation";
 import { StatusBar } from "expo-status-bar";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import {
   Dimensions,
   Text,
@@ -27,6 +27,16 @@ import Animated, {
 } from "react-native-reanimated";
 
 import { ALL_MOVIES, Colors, MOVIE_CAST_DATA } from "@/constants/data";
+
+// Sample video URLs for demo purposes
+const SAMPLE_VIDEO_URLS: Record<number, string> = {
+  // Using Big Buck Bunny as a sample video for all movies
+  1: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+  2: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
+  3: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+  4: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
+  5: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4",
+};
 
 // Control Button Component
 const ControlButton = ({
@@ -125,23 +135,29 @@ export default function PlayerScreen() {
 
   const movie = ALL_MOVIES.find((m) => m.id === movieId);
   const movieData = MOVIE_CAST_DATA[movieId];
+  
+  // Get video URL - use sample video or fall back to first sample
+  const videoUrl = SAMPLE_VIDEO_URLS[movieId] || SAMPLE_VIDEO_URLS[1];
 
   const [isPlaying, setIsPlaying] = useState(true);
   const [showControls, setShowControls] = useState(true);
   const [progress, setProgress] = useState(0);
   const [currentTime, setCurrentTime] = useState("00:00");
+  const [totalDuration, setTotalDuration] = useState("00:00");
   const [isMuted, setIsMuted] = useState(false);
   const [isLandscape, setIsLandscape] = useState(false);
   const [showQualityMenu, setShowQualityMenu] = useState(false);
   const [selectedQuality, setSelectedQuality] = useState("1080p");
-  const [screenDimensions, setScreenDimensions] = useState(Dimensions.get("window"));
+  const [isLoading, setIsLoading] = useState(true);
+  const [positionMillis, setPositionMillis] = useState(0);
+  const [durationMillis, setDurationMillis] = useState(0);
 
+  const videoRef = useRef<Video>(null);
   const playPulse = useSharedValue(1);
 
   // Handle screen orientation changes
   useEffect(() => {
     const subscription = Dimensions.addEventListener("change", ({ window }) => {
-      setScreenDimensions(window);
       setIsLandscape(window.width > window.height);
     });
 
@@ -166,27 +182,29 @@ export default function PlayerScreen() {
     }
   };
 
-  // Simulate video progress
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (isPlaying) {
-      interval = setInterval(() => {
-        setProgress((prev) => {
-          if (prev >= 100) {
-            setIsPlaying(false);
-            return 100;
-          }
-          const newProgress = prev + 0.1;
-          const totalSeconds = Math.floor(newProgress * 1.66 * 60); // Simulated 166 min movie
-          const minutes = Math.floor(totalSeconds / 60);
-          const seconds = totalSeconds % 60;
-          setCurrentTime(`${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`);
-          return newProgress;
-        });
-      }, 100);
+  const formatTime = (millis: number) => {
+    const totalSeconds = Math.floor(millis / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+  };
+
+  const onPlaybackStatusUpdate = useCallback((status: AVPlaybackStatus) => {
+    if (status.isLoaded) {
+      setIsLoading(false);
+      setIsPlaying(status.isPlaying);
+      setPositionMillis(status.positionMillis || 0);
+      setDurationMillis(status.durationMillis || 0);
+      
+      if (status.durationMillis && status.durationMillis > 0) {
+        setProgress((status.positionMillis || 0) / status.durationMillis * 100);
+        setCurrentTime(formatTime(status.positionMillis || 0));
+        setTotalDuration(formatTime(status.durationMillis));
+      }
+    } else {
+      setIsLoading(true);
     }
-    return () => clearInterval(interval);
-  }, [isPlaying]);
+  }, []);
 
   // Auto-hide controls
   useEffect(() => {
@@ -209,32 +227,47 @@ export default function PlayerScreen() {
       -1,
       true
     );
-  }, []);
+  }, [playPulse]);
 
   const pulseStyle = useAnimatedStyle(() => ({
     transform: [{ scale: isPlaying ? 1 : playPulse.value }],
   }));
 
-  const handlePlayPause = () => {
+  const handlePlayPause = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    setIsPlaying(!isPlaying);
+    if (!videoRef.current) return;
+    
+    if (isPlaying) {
+      await videoRef.current.pauseAsync();
+    } else {
+      await videoRef.current.playAsync();
+    }
     setShowControls(true);
   };
 
-  const handleSkipForward = () => {
+  const handleSkipForward = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setProgress((prev) => Math.min(100, prev + 5));
+    if (!videoRef.current) return;
+    
+    const newPosition = Math.min(durationMillis, positionMillis + 10000); // Skip 10 seconds
+    await videoRef.current.setPositionAsync(newPosition);
     setShowControls(true);
   };
 
-  const handleSkipBackward = () => {
+  const handleSkipBackward = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setProgress((prev) => Math.max(0, prev - 5));
+    if (!videoRef.current) return;
+    
+    const newPosition = Math.max(0, positionMillis - 10000); // Back 10 seconds
+    await videoRef.current.setPositionAsync(newPosition);
     setShowControls(true);
   };
 
-  const handleToggleMute = () => {
+  const handleToggleMute = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (!videoRef.current) return;
+    
+    await videoRef.current.setIsMutedAsync(!isMuted);
     setIsMuted(!isMuted);
   };
 
@@ -264,22 +297,43 @@ export default function PlayerScreen() {
     <View style={{ flex: 1, backgroundColor: "#000" }}>
       <StatusBar style="light" hidden />
 
-      {/* Video Background (Simulated) */}
+      {/* Video Player */}
       <TouchableOpacity
         activeOpacity={1}
         onPress={handleTapScreen}
         style={{ flex: 1 }}
       >
-        <Image
-          source={{ uri: movie.image }}
-          style={{ width: "100%", height: "100%" }}
-          contentFit="cover"
+        <Video
+          ref={videoRef}
+          source={{ uri: videoUrl }}
+          style={{ flex: 1 }}
+          resizeMode={ResizeMode.CONTAIN}
+          shouldPlay={true}
+          isLooping={false}
+          isMuted={isMuted}
+          onPlaybackStatusUpdate={onPlaybackStatusUpdate}
+          posterSource={{ uri: movie.image }}
+          usePoster={true}
         />
-        <LinearGradient
-          colors={["rgba(0,0,0,0.6)", "transparent", "rgba(0,0,0,0.6)"]}
-          locations={[0, 0.5, 1]}
-          style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}
-        />
+
+        {/* Loading Indicator */}
+        {isLoading && (
+          <View
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              alignItems: "center",
+              justifyContent: "center",
+              backgroundColor: "rgba(0,0,0,0.5)",
+            }}
+          >
+            <Ionicons name="hourglass" size={48} color={Colors.primary} />
+            <Text style={{ color: "white", marginTop: 12 }}>Loading video...</Text>
+          </View>
+        )}
 
         {/* Controls Overlay */}
         {showControls && (
@@ -294,6 +348,12 @@ export default function PlayerScreen() {
               bottom: 0,
             }}
           >
+            <LinearGradient
+              colors={["rgba(0,0,0,0.7)", "transparent", "rgba(0,0,0,0.7)"]}
+              locations={[0, 0.5, 1]}
+              style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}
+            />
+
             {/* Top Controls */}
             <Animated.View
               entering={FadeInDown.duration(300)}
@@ -459,7 +519,7 @@ export default function PlayerScreen() {
               <ProgressBar
                 progress={progress}
                 currentTime={currentTime}
-                totalTime={movie.duration.replace("h ", ":").replace("m", "")}
+                totalTime={totalDuration}
               />
 
               <View style={{
@@ -501,28 +561,6 @@ export default function PlayerScreen() {
               </View>
             </Animated.View>
           </Animated.View>
-        )}
-
-        {/* Loading/Buffering Indicator (shown briefly when video loads) */}
-        {progress === 0 && (
-          <View style={{
-            position: "absolute",
-            top: "50%",
-            left: "50%",
-            marginTop: -25,
-            marginLeft: -25,
-          }}>
-            <Animated.View
-              style={[{
-                width: 50,
-                height: 50,
-                borderRadius: 25,
-                borderWidth: 3,
-                borderColor: "transparent",
-                borderTopColor: Colors.primary,
-              }]}
-            />
-          </View>
         )}
       </TouchableOpacity>
     </View>
