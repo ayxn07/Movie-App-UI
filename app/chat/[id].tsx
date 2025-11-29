@@ -196,8 +196,7 @@ export default function ChatScreen() {
     const keyboardWillHide = Keyboard.addListener(
       Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide",
       () => {
-        setKeyboardHeight(0);
-      // Nothing to do here
+        // Keyboard hidden - no action needed
       }
     );
 

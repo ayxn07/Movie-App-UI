@@ -6,7 +6,6 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useEffect, useState } from "react";
 import {
-  Dimensions,
   Text,
   TouchableOpacity,
   View,
@@ -25,7 +24,8 @@ import Animated, {
 import { Colors } from "@/constants/data";
 import { useApp, useTheme } from "@/context";
 
-const { width, height } = Dimensions.get("window");
+// Rotation angle for end call icon (rotates phone icon to look like hanging up)
+const END_CALL_ICON_ROTATION = "135deg";
 
 // Animated Ring Component
 const AnimatedRing = ({ delay, size }: { delay: number; size: number }) => {
@@ -386,7 +386,7 @@ export default function VoiceCallScreen() {
               justifyContent: "center",
             }}
           >
-            <Ionicons name="call" size={32} color="white" style={{ transform: [{ rotate: "135deg" }] }} />
+            <Ionicons name="call" size={32} color="white" style={{ transform: [{ rotate: END_CALL_ICON_ROTATION }] }} />
           </LinearGradient>
           <Text
             style={{

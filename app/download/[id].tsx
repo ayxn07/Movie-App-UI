@@ -4,9 +4,8 @@ import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
-  Dimensions,
   ScrollView,
   Text,
   TouchableOpacity,
@@ -21,8 +20,6 @@ import Animated, {
 
 import { ALL_MOVIES, Colors } from "@/constants/data";
 import { useApp, useTheme } from "@/context";
-
-const { width } = Dimensions.get("window");
 
 // Quality options with file sizes
 const QUALITY_OPTIONS = [
@@ -66,21 +63,34 @@ export default function DownloadScreen() {
   const [selectedSubtitle, setSelectedSubtitle] = useState("en");
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState(0);
+  const downloadIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const movie = ALL_MOVIES.find((m) => m.id === movieId);
   const selectedQualityData = QUALITY_OPTIONS.find((q) => q.id === selectedQuality);
   const selectedLanguageData = LANGUAGE_OPTIONS.find((l) => l.code === selectedLanguage);
   const selectedSubtitleData = SUBTITLE_OPTIONS.find((s) => s.code === selectedSubtitle);
 
+  // Cleanup interval on unmount
+  useEffect(() => {
+    return () => {
+      if (downloadIntervalRef.current) {
+        clearInterval(downloadIntervalRef.current);
+      }
+    };
+  }, []);
+
   const handleDownload = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     setIsDownloading(true);
 
     // Simulate download progress
-    const interval = setInterval(() => {
+    downloadIntervalRef.current = setInterval(() => {
       setDownloadProgress((prev) => {
         if (prev >= 100) {
-          clearInterval(interval);
+          if (downloadIntervalRef.current) {
+            clearInterval(downloadIntervalRef.current);
+            downloadIntervalRef.current = null;
+          }
           setIsDownloading(false);
           showToast("Download complete!", "success");
           return 100;
