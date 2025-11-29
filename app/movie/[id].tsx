@@ -304,6 +304,15 @@ export default function MovieDetailScreen() {
   const selectedSubtitleData = SUBTITLES.find((s) => s.code === selectedSubtitle);
   const selectedQualityData = QUALITY_OPTIONS.find((q) => q.value === selectedQuality);
 
+  // Download size lookup for better readability
+  const DOWNLOAD_SIZE_MAP: Record<string, string> = {
+    "4k": "4.2 GB",
+    "1080p": "2.1 GB",
+    "720p": "1.2 GB",
+    "480p": "600 MB",
+  };
+  const estimatedDownloadSize = DOWNLOAD_SIZE_MAP[downloadQuality] || "1.2 GB";
+
   // Handle movie not found
   if (!movie) {
     return (
@@ -1026,7 +1035,7 @@ export default function MovieDetailScreen() {
                 <Ionicons name="folder" size={24} color={theme.primary} />
                 <View style={{ flex: 1, marginLeft: 12 }}>
                   <Text style={{ color: theme.text, fontSize: 14, fontWeight: "600" }}>
-                    Estimated Size: {downloadQuality === "4k" ? "4.2 GB" : downloadQuality === "1080p" ? "2.1 GB" : downloadQuality === "720p" ? "1.2 GB" : "600 MB"}
+                    Estimated Size: {estimatedDownloadSize}
                   </Text>
                   <Text style={{ color: theme.textSecondary, fontSize: 12, marginTop: 2 }}>
                     Available: 24.5 GB

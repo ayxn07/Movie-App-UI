@@ -399,6 +399,9 @@ const QueueSongItem = ({
   );
 };
 
+// Get the currently playing song from queue
+const currentSong = PLAYLIST_QUEUE.find(s => s.isPlaying) || PLAYLIST_QUEUE[0];
+
 // Mini Player Component
 const MiniPlayer = ({ onPress }: { onPress: () => void }) => {
   const { theme, isDark } = useTheme();
@@ -460,7 +463,7 @@ const MiniPlayer = ({ onPress }: { onPress: () => void }) => {
               }}
             >
               <Image
-                source={{ uri: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=200" }}
+                source={{ uri: currentSong.cover }}
                 style={{ width: "100%", height: "100%" }}
                 contentFit="cover"
               />
@@ -469,10 +472,10 @@ const MiniPlayer = ({ onPress }: { onPress: () => void }) => {
             {/* Song Info */}
             <View style={{ flex: 1 }}>
               <Text style={{ color: theme.text, fontSize: 15, fontWeight: "700" }}>
-                Blinding Lights
+                {currentSong.title}
               </Text>
               <Text style={{ color: theme.textSecondary, fontSize: 13, marginTop: 2 }}>
-                The Weeknd
+                {currentSong.artist}
               </Text>
             </View>
 

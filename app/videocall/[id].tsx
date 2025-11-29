@@ -357,6 +357,7 @@ export default function VideoCallScreen() {
                 smallVideoScale.value = withSpring(1);
               }}
             >
+              {/* Current user's video preview - same avatar used in profile */}
               <Image
                 source={{ uri: "https://randomuser.me/api/portraits/men/32.jpg" }}
                 style={{ width: "100%", height: "100%" }}
