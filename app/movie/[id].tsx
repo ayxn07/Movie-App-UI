@@ -295,6 +295,10 @@ export default function MovieDetailScreen() {
   const [showLanguageModal, setShowLanguageModal] = useState(false);
   const [showSubtitleModal, setShowSubtitleModal] = useState(false);
   const [showQualityModal, setShowQualityModal] = useState(false);
+  const [showDownloadModal, setShowDownloadModal] = useState(false);
+  const [downloadLanguage, setDownloadLanguage] = useState("en");
+  const [downloadSubtitle, setDownloadSubtitle] = useState("en");
+  const [downloadQuality, setDownloadQuality] = useState("1080p");
 
   const selectedLanguageData = LANGUAGES.find((l) => l.code === selectedLanguage);
   const selectedSubtitleData = SUBTITLES.find((s) => s.code === selectedSubtitle);
@@ -507,7 +511,7 @@ export default function MovieDetailScreen() {
           >
             <ActionButton icon="download-outline" label="Download" onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              router.push("/category/downloads");
+              setShowDownloadModal(true);
             }} theme={theme} isDark={isDark} />
             <ActionButton icon="add" label="My List" onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -833,6 +837,233 @@ export default function MovieDetailScreen() {
         theme={theme}
         isDark={isDark}
       />
+
+      {/* Download Modal */}
+      <Modal visible={showDownloadModal} transparent animationType="fade" onRequestClose={() => setShowDownloadModal(false)}>
+        <View style={{ flex: 1, justifyContent: "flex-end" }}>
+          <TouchableOpacity
+            style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.5)" }}
+            activeOpacity={1}
+            onPress={() => setShowDownloadModal(false)}
+          />
+          <Animated.View
+            entering={FadeInDown.springify()}
+            style={{
+              backgroundColor: isDark ? "#1e293b" : "#ffffff",
+              borderTopLeftRadius: 24,
+              borderTopRightRadius: 24,
+              paddingBottom: 40,
+            }}
+          >
+            {/* Header */}
+            <View style={{
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "center",
+              padding: 20,
+              borderBottomWidth: 1,
+              borderBottomColor: theme.border,
+            }}>
+              <Text style={{ fontSize: 22, fontWeight: "900", color: theme.text }}>Download Movie</Text>
+              <TouchableOpacity onPress={() => setShowDownloadModal(false)}>
+                <Ionicons name="close" size={24} color={theme.textSecondary} />
+              </TouchableOpacity>
+            </View>
+
+            {/* Movie Info */}
+            <View style={{
+              flexDirection: "row",
+              padding: 20,
+              alignItems: "center",
+            }}>
+              <Image
+                source={{ uri: movie?.image }}
+                style={{ width: 80, height: 120, borderRadius: 12 }}
+                contentFit="cover"
+              />
+              <View style={{ flex: 1, marginLeft: 16 }}>
+                <Text style={{ color: theme.text, fontSize: 18, fontWeight: "700" }}>{movie?.title}</Text>
+                <Text style={{ color: theme.textSecondary, fontSize: 14, marginTop: 4 }}>{movie?.duration} • {movie?.year}</Text>
+                <View style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  marginTop: 8,
+                }}>
+                  <Ionicons name="star" size={14} color={Colors.star} />
+                  <Text style={{ color: Colors.star, fontSize: 14, fontWeight: "600", marginLeft: 4 }}>{movie?.rating}</Text>
+                </View>
+              </View>
+            </View>
+
+            {/* Download Options */}
+            <ScrollView style={{ maxHeight: 300 }}>
+              {/* Quality Selection */}
+              <View style={{ paddingHorizontal: 20, marginBottom: 16 }}>
+                <Text style={{ color: theme.textSecondary, fontSize: 14, fontWeight: "600", marginBottom: 12 }}>
+                  Video Quality
+                </Text>
+                <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10 }}>
+                  {QUALITY_OPTIONS.map((option) => (
+                    <TouchableOpacity
+                      key={option.value}
+                      onPress={() => setDownloadQuality(option.value)}
+                      style={{
+                        paddingHorizontal: 16,
+                        paddingVertical: 10,
+                        borderRadius: 12,
+                        backgroundColor: downloadQuality === option.value 
+                          ? theme.primary 
+                          : isDark ? "rgba(30, 41, 59, 0.8)" : theme.card,
+                        borderWidth: downloadQuality === option.value ? 0 : 1,
+                        borderColor: theme.border,
+                      }}
+                    >
+                      <Text style={{
+                        color: downloadQuality === option.value ? "white" : theme.text,
+                        fontWeight: "600",
+                        fontSize: 14,
+                      }}>
+                        {option.label}
+                      </Text>
+                      {option.badge && (
+                        <Text style={{
+                          color: downloadQuality === option.value ? "white" : theme.primary,
+                          fontSize: 10,
+                          fontWeight: "700",
+                          marginTop: 2,
+                        }}>
+                          {option.badge}
+                        </Text>
+                      )}
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+
+              {/* Language Selection */}
+              <View style={{ paddingHorizontal: 20, marginBottom: 16 }}>
+                <Text style={{ color: theme.textSecondary, fontSize: 14, fontWeight: "600", marginBottom: 12 }}>
+                  Audio Language
+                </Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                  <View style={{ flexDirection: "row", gap: 10 }}>
+                    {LANGUAGES.slice(0, 6).map((lang) => (
+                      <TouchableOpacity
+                        key={lang.code}
+                        onPress={() => setDownloadLanguage(lang.code)}
+                        style={{
+                          paddingHorizontal: 16,
+                          paddingVertical: 10,
+                          borderRadius: 12,
+                          backgroundColor: downloadLanguage === lang.code 
+                            ? theme.primary 
+                            : isDark ? "rgba(30, 41, 59, 0.8)" : theme.card,
+                          borderWidth: downloadLanguage === lang.code ? 0 : 1,
+                          borderColor: theme.border,
+                          flexDirection: "row",
+                          alignItems: "center",
+                        }}
+                      >
+                        <Text style={{ fontSize: 18, marginRight: 8 }}>{lang.flag}</Text>
+                        <Text style={{
+                          color: downloadLanguage === lang.code ? "white" : theme.text,
+                          fontWeight: "600",
+                          fontSize: 14,
+                        }}>
+                          {lang.name}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </ScrollView>
+              </View>
+
+              {/* Subtitle Selection */}
+              <View style={{ paddingHorizontal: 20, marginBottom: 16 }}>
+                <Text style={{ color: theme.textSecondary, fontSize: 14, fontWeight: "600", marginBottom: 12 }}>
+                  Subtitles
+                </Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                  <View style={{ flexDirection: "row", gap: 10 }}>
+                    {SUBTITLES.map((sub) => (
+                      <TouchableOpacity
+                        key={sub.code}
+                        onPress={() => setDownloadSubtitle(sub.code)}
+                        style={{
+                          paddingHorizontal: 16,
+                          paddingVertical: 10,
+                          borderRadius: 12,
+                          backgroundColor: downloadSubtitle === sub.code 
+                            ? theme.primary 
+                            : isDark ? "rgba(30, 41, 59, 0.8)" : theme.card,
+                          borderWidth: downloadSubtitle === sub.code ? 0 : 1,
+                          borderColor: theme.border,
+                        }}
+                      >
+                        <Text style={{
+                          color: downloadSubtitle === sub.code ? "white" : theme.text,
+                          fontWeight: "600",
+                          fontSize: 14,
+                        }}>
+                          {sub.name}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </ScrollView>
+              </View>
+
+              {/* Storage Info */}
+              <View style={{
+                marginHorizontal: 20,
+                padding: 16,
+                borderRadius: 16,
+                backgroundColor: isDark ? "rgba(30, 41, 59, 0.6)" : theme.card,
+                flexDirection: "row",
+                alignItems: "center",
+                marginBottom: 16,
+              }}>
+                <Ionicons name="folder" size={24} color={theme.primary} />
+                <View style={{ flex: 1, marginLeft: 12 }}>
+                  <Text style={{ color: theme.text, fontSize: 14, fontWeight: "600" }}>
+                    Estimated Size: {downloadQuality === "4k" ? "4.2 GB" : downloadQuality === "1080p" ? "2.1 GB" : downloadQuality === "720p" ? "1.2 GB" : "600 MB"}
+                  </Text>
+                  <Text style={{ color: theme.textSecondary, fontSize: 12, marginTop: 2 }}>
+                    Available: 24.5 GB
+                  </Text>
+                </View>
+              </View>
+            </ScrollView>
+
+            {/* Download Button */}
+            <View style={{ paddingHorizontal: 20, paddingTop: 16 }}>
+              <TouchableOpacity
+                onPress={() => {
+                  Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                  setShowDownloadModal(false);
+                  // In a real app, this would start the download
+                }}
+              >
+                <LinearGradient
+                  colors={[Colors.primary, Colors.primaryDark]}
+                  style={{
+                    paddingVertical: 16,
+                    borderRadius: 16,
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <Ionicons name="download" size={20} color="white" />
+                  <Text style={{ color: "white", fontSize: 16, fontWeight: "700", marginLeft: 8 }}>
+                    Start Download
+                  </Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            </View>
+          </Animated.View>
+        </View>
+      </Modal>
     </View>
   );
 }

@@ -49,6 +49,7 @@ const SettingsItem = ({
   delay = 0,
   theme,
   customRight,
+  onPress,
 }: {
   icon: string;
   label: string;
@@ -59,16 +60,23 @@ const SettingsItem = ({
   delay?: number;
   theme: ThemeColors;
   customRight?: React.ReactNode;
+  onPress?: () => void;
 }) => (
   <Animated.View entering={FadeInRight.delay(delay).springify()}>
     <TouchableOpacity
       className="flex-row items-center justify-between py-4"
       style={{ borderBottomWidth: 1, borderBottomColor: theme.border }}
       disabled={hasToggle || !!customRight}
+      onPress={() => {
+        if (onPress) {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          onPress();
+        }
+      }}
     >
       <View className="flex-row items-center gap-4">
         <View className="w-10 h-10 rounded-full items-center justify-center" style={{ backgroundColor: theme.backgroundTertiary }}>
-          <Ionicons name={icon as any} size={20} color={theme.primary} />
+          <Ionicons name={icon as keyof typeof Ionicons.glyphMap} size={20} color={theme.primary} />
         </View>
         <Text className="font-semibold text-base" style={{ color: theme.text }}>{label}</Text>
       </View>
@@ -273,6 +281,7 @@ export default function ProfileScreen() {
               value="English"
               delay={450}
               theme={theme}
+              onPress={() => router.push("/profile/language")}
             />
             <SettingsItem
               icon="moon"
@@ -299,26 +308,63 @@ export default function ProfileScreen() {
               value="Free"
               delay={550}
               theme={theme}
+              onPress={() => router.push("/profile/subscription")}
             />
             <SettingsItem
               icon="shield-checkmark"
               label="Privacy & Security"
               delay={600}
               theme={theme}
+              onPress={() => router.push("/profile/privacy")}
             />
             <SettingsItem
               icon="help-circle"
               label="Help & Support"
               delay={650}
               theme={theme}
+              onPress={() => router.push("/profile/help")}
             />
             <SettingsItem
               icon="information-circle"
               label="About"
               delay={700}
               theme={theme}
+              onPress={() => router.push("/profile/about")}
             />
           </View>
+        </Animated.View>
+
+        {/* Music Section */}
+        <Animated.View
+          entering={FadeInDown.delay(700).springify()}
+          className="px-5 mt-6"
+        >
+          <Text className="text-sm font-bold uppercase mb-4" style={{ color: theme.textSecondary }}>
+            Entertainment
+          </Text>
+          <TouchableOpacity
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.push("/songs");
+            }}
+            className="rounded-2xl overflow-hidden"
+          >
+            <LinearGradient
+              colors={["#ec4899", "#8b5cf6"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              className="p-4 flex-row items-center"
+            >
+              <View className="w-12 h-12 rounded-full bg-white/20 items-center justify-center mr-4">
+                <Ionicons name="musical-notes" size={24} color="white" />
+              </View>
+              <View className="flex-1">
+                <Text className="text-white text-lg font-bold">Discover Music</Text>
+                <Text className="text-white/80 text-sm">Explore songs and playlists</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={24} color="white" />
+            </LinearGradient>
+          </TouchableOpacity>
         </Animated.View>
 
         {/* Logout Button */}

@@ -185,13 +185,30 @@ export default function FriendsScreen() {
             </Text>
           </View>
           <TouchableOpacity
+            onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)}
             style={{
-              width: 44, height: 44, borderRadius: 22,
-              backgroundColor: theme.primary,
-              alignItems: "center", justifyContent: "center",
+              flexDirection: "row",
+              alignItems: "center",
+              paddingHorizontal: 16,
+              paddingVertical: 10,
+              borderRadius: 20,
+              overflow: "hidden",
             }}
           >
-            <Ionicons name="person-add" size={20} color="white" />
+            <LinearGradient
+              colors={[Colors.primary, Colors.primaryDark]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+              }}
+            />
+            <Ionicons name="person-add" size={18} color="white" />
+            <Text style={{ color: "white", fontWeight: "700", fontSize: 14, marginLeft: 6 }}>Add</Text>
           </TouchableOpacity>
         </View>
 
