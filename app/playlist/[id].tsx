@@ -410,7 +410,7 @@ export default function PlaylistDetailScreen() {
               Recommended
             </Text>
             <Text style={{ color: theme.textSecondary, fontSize: 14, marginBottom: 16 }}>
-              Based on what's in this playlist
+              Based on what&apos;s in this playlist
             </Text>
             {SONGS.filter((s) => !playlist.songs.includes(s.id)).slice(0, 3).map((song, index) => (
               <Animated.View key={song.id} entering={FadeInRight.delay(index * 60).springify()}>
