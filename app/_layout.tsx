@@ -184,6 +184,106 @@ function RootLayoutContent() {
               contentStyle: { backgroundColor: theme.background },
             }} 
           />
+          <Stack.Screen 
+            name="voicecall/[id]" 
+            options={{ 
+              headerShown: false, 
+              presentation: "fullScreenModal",
+              animation: "slide_from_bottom",
+              animationDuration: 200,
+              contentStyle: { backgroundColor: "#0f172a" },
+            }} 
+          />
+          <Stack.Screen 
+            name="videocall/[id]" 
+            options={{ 
+              headerShown: false, 
+              presentation: "fullScreenModal",
+              animation: "slide_from_bottom",
+              animationDuration: 200,
+              contentStyle: { backgroundColor: "#000000" },
+            }} 
+          />
+          <Stack.Screen 
+            name="profile/language" 
+            options={{ 
+              headerShown: false, 
+              presentation: "card",
+              animation: "slide_from_right",
+              animationDuration: 200,
+              contentStyle: { backgroundColor: theme.background },
+            }} 
+          />
+          <Stack.Screen 
+            name="profile/subscription" 
+            options={{ 
+              headerShown: false, 
+              presentation: "card",
+              animation: "slide_from_right",
+              animationDuration: 200,
+              contentStyle: { backgroundColor: theme.background },
+            }} 
+          />
+          <Stack.Screen 
+            name="profile/privacy" 
+            options={{ 
+              headerShown: false, 
+              presentation: "card",
+              animation: "slide_from_right",
+              animationDuration: 200,
+              contentStyle: { backgroundColor: theme.background },
+            }} 
+          />
+          <Stack.Screen 
+            name="profile/help" 
+            options={{ 
+              headerShown: false, 
+              presentation: "card",
+              animation: "slide_from_right",
+              animationDuration: 200,
+              contentStyle: { backgroundColor: theme.background },
+            }} 
+          />
+          <Stack.Screen 
+            name="profile/about" 
+            options={{ 
+              headerShown: false, 
+              presentation: "card",
+              animation: "slide_from_right",
+              animationDuration: 200,
+              contentStyle: { backgroundColor: theme.background },
+            }} 
+          />
+          <Stack.Screen 
+            name="download/[id]" 
+            options={{ 
+              headerShown: false, 
+              presentation: "card",
+              animation: "slide_from_right",
+              animationDuration: 200,
+              contentStyle: { backgroundColor: theme.background },
+            }} 
+          />
+          <Stack.Screen 
+            name="songs/index" 
+            options={{ 
+              headerShown: false, 
+              presentation: "card",
+              animation: "slide_from_right",
+              animationDuration: 200,
+              contentStyle: { backgroundColor: theme.background },
+            }} 
+          />
+          <Stack.Screen 
+            name="addfriend/index" 
+            options={{ 
+              headerShown: false, 
+              presentation: "card",
+              animation: "slide_from_right",
+              animationDuration: 200,
+              contentStyle: { backgroundColor: theme.background },
+            }} 
+          />
         </Stack>
       </Animated.View>
     </View>

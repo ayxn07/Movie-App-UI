@@ -185,6 +185,10 @@ export default function FriendsScreen() {
             </Text>
           </View>
           <TouchableOpacity
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.push("/addfriend");
+            }}
             style={{
               width: 44, height: 44, borderRadius: 22,
               backgroundColor: theme.primary,

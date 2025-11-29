@@ -507,7 +507,7 @@ export default function MovieDetailScreen() {
           >
             <ActionButton icon="download-outline" label="Download" onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              router.push("/category/downloads");
+              router.push(`/download/${movie.id}`);
             }} theme={theme} isDark={isDark} />
             <ActionButton icon="add" label="My List" onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
