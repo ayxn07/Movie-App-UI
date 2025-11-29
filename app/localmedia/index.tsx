@@ -30,6 +30,20 @@ import { useApp, useTheme } from "@/context";
 
 const { width } = Dimensions.get("window");
 
+// Helper function to format duration
+const formatDuration = (durationInSeconds: number | undefined): string => {
+  if (!durationInSeconds || durationInSeconds <= 0) return "Unknown";
+  const minutes = Math.floor(durationInSeconds / 60);
+  const seconds = Math.floor(durationInSeconds % 60);
+  return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+};
+
+// Helper function to format file size
+const formatFileSize = (sizeInBytes: number | undefined): string => {
+  if (!sizeInBytes || sizeInBytes <= 0) return "Unknown";
+  return `${Math.round(sizeInBytes / 1024 / 1024)} MB`;
+};
+
 // Local media types
 interface LocalMedia {
   id: string;
@@ -528,8 +542,8 @@ export default function LocalMediaScreen() {
           name: asset.fileName || "Video.mp4",
           type: "video",
           uri: asset.uri,
-          size: asset.fileSize ? `${Math.round(asset.fileSize / 1024 / 1024)} MB` : "Unknown",
-          duration: asset.duration ? `${Math.floor(asset.duration / 60)}:${Math.floor(asset.duration % 60).toString().padStart(2, "0")}` : "Unknown",
+          size: formatFileSize(asset.fileSize),
+          duration: formatDuration(asset.duration),
           thumbnail: asset.uri,
           addedAt: new Date(),
         };
@@ -557,7 +571,7 @@ export default function LocalMediaScreen() {
           name: asset.name || "Audio.mp3",
           type: "audio",
           uri: asset.uri,
-          size: asset.size ? `${Math.round(asset.size / 1024 / 1024)} MB` : "Unknown",
+          size: formatFileSize(asset.size),
           addedAt: new Date(),
         };
         setLocalMedia((prev) => [newMedia, ...prev]);

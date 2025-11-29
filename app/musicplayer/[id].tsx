@@ -155,6 +155,10 @@ const VinylRecord = ({ isPlaying, coverImage }: { isPlaying: boolean; coverImage
 
   useEffect(() => {
     if (isPlaying) {
+      // Reset rotation when it gets too large to prevent overflow
+      if (rotation.value > 3600) {
+        rotation.value = rotation.value % 360;
+      }
       rotation.value = withRepeat(
         withTiming(rotation.value + 360, { duration: 10000, easing: Easing.linear }),
         -1,
@@ -589,6 +593,7 @@ export default function MusicPlayerScreen() {
   };
 
   const handleSeek = (value: number) => {
+    if (currentSong.duration <= 0) return; // Prevent division by zero
     const newTime = value * currentSong.duration;
     setCurrentTime(newTime);
     setProgress(value);

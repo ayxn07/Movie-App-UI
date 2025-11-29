@@ -31,7 +31,7 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 
-import { ALL_MOVIES, Colors, GENRES, TRENDING, SERIES } from "@/constants/data";
+import { ALL_MOVIES, Colors, GENRES, TRENDING } from "@/constants/data";
 import { ThemeColors, useTheme } from "@/context";
 import { Genre, Movie } from "@/types";
 
