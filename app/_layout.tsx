@@ -304,6 +304,16 @@ function RootLayoutContent() {
               contentStyle: { backgroundColor: theme.background },
             }} 
           />
+          <Stack.Screen 
+            name="youtubesearch/index" 
+            options={{ 
+              headerShown: false, 
+              presentation: "card",
+              animation: "slide_from_right",
+              animationDuration: 200,
+              contentStyle: { backgroundColor: theme.background },
+            }} 
+          />
         </Stack>
       </Animated.View>
     </View>
