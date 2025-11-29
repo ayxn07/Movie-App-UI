@@ -77,7 +77,6 @@ const ProgressBar = ({
   progress,
   currentTime,
   totalTime,
-  onSeek,
 }: {
   progress: number;
   currentTime: string;
@@ -88,18 +87,7 @@ const ProgressBar = ({
     <View style={{ width: "100%", paddingHorizontal: 20 }}>
       <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 8 }}>
         <Text style={{ color: "white", fontSize: 12, fontWeight: "600" }}>{currentTime}</Text>
-        <TouchableOpacity 
-          style={{ flex: 1, marginHorizontal: 12 }}
-          onPress={(e) => {
-            if (onSeek) {
-              const { locationX, width } = e.nativeEvent as unknown as { locationX: number; width: number };
-              if (width > 0) {
-                const seekProgress = locationX / width;
-                onSeek(Math.max(0, Math.min(1, seekProgress)));
-              }
-            }
-          }}
-        >
+        <View style={{ flex: 1, marginHorizontal: 12 }}>
           <View style={{
             height: 4,
             backgroundColor: "rgba(255,255,255,0.3)",
@@ -113,7 +101,7 @@ const ProgressBar = ({
               borderRadius: 2,
             }} />
           </View>
-        </TouchableOpacity>
+        </View>
         <Text style={{ color: "white", fontSize: 12, fontWeight: "600" }}>{totalTime}</Text>
       </View>
     </View>
@@ -133,7 +121,6 @@ export default function LocalVideoPlayerScreen() {
   const [progress, setProgress] = useState(0);
   const [currentTime, setCurrentTime] = useState("00:00");
   const [totalTime, setTotalTime] = useState("00:00");
-  const [totalDuration, setTotalDuration] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
   const [isLandscape, setIsLandscape] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -178,7 +165,6 @@ export default function LocalVideoPlayerScreen() {
       setIsPlaying(status.isPlaying);
       
       if (status.durationMillis) {
-        setTotalDuration(status.durationMillis);
         setTotalTime(formatTime(status.durationMillis));
         const progressPercent = ((status.positionMillis || 0) / status.durationMillis) * 100;
         setProgress(progressPercent);
@@ -250,13 +236,6 @@ export default function LocalVideoPlayerScreen() {
     if (videoRef.current) {
       await videoRef.current.setIsMutedAsync(!isMuted);
       setIsMuted(!isMuted);
-    }
-  };
-
-  const handleSeek = async (seekProgress: number) => {
-    if (videoRef.current && totalDuration > 0) {
-      const newPosition = seekProgress * totalDuration;
-      await videoRef.current.setPositionAsync(newPosition);
     }
   };
 
@@ -439,7 +418,6 @@ export default function LocalVideoPlayerScreen() {
                 progress={progress}
                 currentTime={currentTime}
                 totalTime={totalTime}
-                onSeek={handleSeek}
               />
 
               <View style={{

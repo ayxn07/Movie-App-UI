@@ -579,7 +579,7 @@ export default function LocalAudioPlayerScreen() {
         />
         <ControlButton icon="play-forward" onPress={handleSkipForward} size={32} />
         <ControlButton
-          icon={repeatMode === "one" ? "repeat-outline" : "repeat"}
+          icon="repeat"
           onPress={handleRepeat}
           isActive={repeatMode !== "off"}
           size={24}

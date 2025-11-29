@@ -561,32 +561,38 @@ export default function LocalMediaScreen() {
       // Process video assets
       for (const asset of videoAssets.assets) {
         const assetInfo = await MediaLibrary.getAssetInfoAsync(asset);
-        newMedia.push({
-          id: asset.id,
-          name: asset.filename,
-          type: "video",
-          uri: assetInfo.localUri || asset.uri,
-          size: "Unknown",
-          duration: formatDuration(asset.duration),
-          thumbnail: asset.uri,
-          addedAt: new Date(asset.creationTime),
-          isFromDevice: true,
-        });
+        // Only include assets with valid localUri for playback
+        if (assetInfo.localUri) {
+          newMedia.push({
+            id: asset.id,
+            name: asset.filename,
+            type: "video",
+            uri: assetInfo.localUri,
+            size: "Unknown",
+            duration: formatDuration(asset.duration),
+            thumbnail: asset.uri,
+            addedAt: new Date(asset.creationTime),
+            isFromDevice: true,
+          });
+        }
       }
 
       // Process audio assets
       for (const asset of audioAssets.assets) {
         const assetInfo = await MediaLibrary.getAssetInfoAsync(asset);
-        newMedia.push({
-          id: asset.id,
-          name: asset.filename,
-          type: "audio",
-          uri: assetInfo.localUri || asset.uri,
-          size: "Unknown",
-          duration: formatDuration(asset.duration),
-          addedAt: new Date(asset.creationTime),
-          isFromDevice: true,
-        });
+        // Only include assets with valid localUri for playback
+        if (assetInfo.localUri) {
+          newMedia.push({
+            id: asset.id,
+            name: asset.filename,
+            type: "audio",
+            uri: assetInfo.localUri,
+            size: "Unknown",
+            duration: formatDuration(asset.duration),
+            addedAt: new Date(asset.creationTime),
+            isFromDevice: true,
+          });
+        }
       }
 
       // Merge with existing media (avoid duplicates)
