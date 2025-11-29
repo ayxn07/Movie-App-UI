@@ -24,7 +24,8 @@ import Animated, {
 } from "react-native-reanimated";
 
 import { ALL_MOVIES, Colors, MOVIE_CAST_DATA, type CastMember } from "@/constants/data";
-import { ThemeColors, useTheme } from "@/context";
+import { ThemeColors, useApp, useTheme } from "@/context";
+import { Share } from "react-native";
 
 const { height } = Dimensions.get("window");
 
@@ -504,10 +505,29 @@ export default function MovieDetailScreen() {
               borderRadius: 20,
             }}
           >
-            <ActionButton icon="download-outline" label="Download" onPress={() => {}} theme={theme} isDark={isDark} />
-            <ActionButton icon="add" label="My List" onPress={() => {}} theme={theme} isDark={isDark} />
-            <ActionButton icon="share-social-outline" label="Share" onPress={() => {}} theme={theme} isDark={isDark} />
-            <ActionButton icon="chatbubble-outline" label="Reviews" onPress={() => {}} theme={theme} isDark={isDark} />
+            <ActionButton icon="download-outline" label="Download" onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.push("/category/downloads");
+            }} theme={theme} isDark={isDark} />
+            <ActionButton icon="add" label="My List" onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.push("/mylist");
+            }} theme={theme} isDark={isDark} />
+            <ActionButton icon="share-social-outline" label="Share" onPress={async () => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              try {
+                await Share.share({
+                  message: `Check out ${movie.title} on MoviesHub! 🎬`,
+                  title: movie.title,
+                });
+              } catch (error) {
+                console.log(error);
+              }
+            }} theme={theme} isDark={isDark} />
+            <ActionButton icon="chatbubble-outline" label="Reviews" onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.push(`/reviews/${movie.id}`);
+            }} theme={theme} isDark={isDark} />
           </Animated.View>
 
           {/* Playback Settings */}

@@ -157,6 +157,19 @@ export default function HomeScreen() {
               <TouchableOpacity 
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  router.push("/friends");
+                }}
+                style={{ 
+                  width: 44, height: 44, borderRadius: 22, 
+                  backgroundColor: isDark ? "rgba(30, 41, 59, 0.8)" : "rgba(226, 232, 240, 0.8)",
+                  alignItems: "center", justifyContent: "center" 
+                }}
+              >
+                <Ionicons name="people-outline" size={22} color={theme.text} />
+              </TouchableOpacity>
+              <TouchableOpacity 
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                   router.push("/notifications");
                 }}
                 style={{ 
@@ -169,7 +182,10 @@ export default function HomeScreen() {
                 <View style={{ position: "absolute", top: 8, right: 8, width: 10, height: 10, backgroundColor: theme.danger, borderRadius: 5 }} />
               </TouchableOpacity>
               <TouchableOpacity 
-                onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  router.push("/(tabs)/profile");
+                }}
                 style={{ width: 44, height: 44, borderRadius: 22, overflow: "hidden", borderWidth: 2, borderColor: theme.primary }}
               >
                 <Image

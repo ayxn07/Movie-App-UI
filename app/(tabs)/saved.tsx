@@ -1,9 +1,11 @@
 import { Ionicons } from "@expo/vector-icons";
 import { FlashList } from "@shopify/flash-list";
 import { Image } from "expo-image";
+import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
+import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import React, { useState } from "react";
+import React from "react";
 import { Dimensions, Text, TouchableOpacity, View } from "react-native";
 import Animated, {
     FadeIn,
@@ -16,26 +18,27 @@ import Animated, {
     withSpring,
 } from "react-native-reanimated";
 
-import { Colors, MOVIES, TRENDING } from "@/constants/data";
-import { ThemeColors, useTheme } from "@/context";
+import { Colors } from "@/constants/data";
+import { ThemeColors, useApp, useTheme } from "@/context";
 import { Movie } from "@/types";
 
 const { width } = Dimensions.get("window");
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
-
-// Initial saved movies
-const INITIAL_SAVED = [...MOVIES.slice(0, 3), ...TRENDING.slice(0, 2)];
 
 // Saved Movie Card with swipe delete animation
 const SavedMovieCard = ({
   movie,
   index,
   onRemove,
+  onPress,
+  onPlay,
   theme,
 }: {
   movie: Movie;
   index: number;
   onRemove: () => void;
+  onPress: () => void;
+  onPlay: () => void;
   theme: ThemeColors;
 }) => {
   const scale = useSharedValue(1);
@@ -63,6 +66,7 @@ const SavedMovieCard = ({
         style={animatedStyle}
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
+        onPress={onPress}
         activeOpacity={1}
       >
         <View className="flex-row rounded-3xl overflow-hidden" style={{ backgroundColor: theme.card }}>
@@ -101,7 +105,7 @@ const SavedMovieCard = ({
 
             {/* Action Buttons */}
             <View className="flex-row items-center gap-3 mt-3">
-              <TouchableOpacity className="flex-1">
+              <TouchableOpacity className="flex-1" onPress={onPlay}>
                 <LinearGradient
                   colors={[Colors.primary, Colors.primaryDark]}
                   className="py-2.5 rounded-xl flex-row items-center justify-center"
@@ -111,7 +115,10 @@ const SavedMovieCard = ({
                 </LinearGradient>
               </TouchableOpacity>
               <TouchableOpacity
-                onPress={onRemove}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                  onRemove();
+                }}
                 className="w-10 h-10 rounded-xl bg-red-500/20 items-center justify-center"
               >
                 <Ionicons name="trash-outline" size={18} color={Colors.danger} />
@@ -126,10 +133,12 @@ const SavedMovieCard = ({
 
 export default function SavedScreen() {
   const { theme, isDark } = useTheme();
-  const [savedMovies, setSavedMovies] = useState<Movie[]>(INITIAL_SAVED);
+  const router = useRouter();
+  const { myList, removeFromMyList, showToast } = useApp();
 
-  const handleRemove = (movieId: number) => {
-    setSavedMovies((prev) => prev.filter((m) => m.id !== movieId));
+  const handleRemove = (movieId: number, movieTitle: string) => {
+    removeFromMyList(movieId);
+    showToast(`Removed "${movieTitle}" from My List`, "info");
   };
 
   return (
@@ -148,7 +157,7 @@ export default function SavedScreen() {
           <View>
             <Text className="text-3xl font-black" style={{ color: theme.text }}>My List</Text>
             <Text className="text-sm mt-1" style={{ color: theme.textSecondary }}>
-              {savedMovies.length} saved movies
+              {myList.length} saved movies
             </Text>
           </View>
           <TouchableOpacity className="w-11 h-11 rounded-full items-center justify-center" style={{ backgroundColor: theme.card }}>
@@ -159,19 +168,28 @@ export default function SavedScreen() {
 
       {/* Saved Movies List */}
       <View className="flex-1 px-5">
-        {savedMovies.length > 0 ? (
+        {myList.length > 0 ? (
           <FlashList
-            data={savedMovies}
+            data={myList}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{ paddingBottom: 100 }}
             renderItem={({ item, index }) => (
               <SavedMovieCard
                 movie={item}
                 index={index}
-                onRemove={() => handleRemove(item.id)}
+                onRemove={() => handleRemove(item.id, item.title)}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  router.push(`/movie/${item.id}`);
+                }}
+                onPlay={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+                  router.push(`/player/${item.id}`);
+                }}
                 theme={theme}
               />
             )}
+            estimatedItemSize={180}
             keyExtractor={(item) => item.id.toString()}
           />
         ) : (
@@ -186,7 +204,13 @@ export default function SavedScreen() {
             <Text className="text-center px-10" style={{ color: theme.textSecondary }}>
               Start adding movies to your list by tapping the bookmark icon
             </Text>
-            <TouchableOpacity className="mt-6">
+            <TouchableOpacity 
+              className="mt-6"
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push("/(tabs)");
+              }}
+            >
               <LinearGradient
                 colors={[Colors.primary, Colors.primaryDark]}
                 className="px-8 py-3 rounded-full"

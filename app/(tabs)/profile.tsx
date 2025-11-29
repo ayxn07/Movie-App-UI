@@ -1,6 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
+import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
+import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React from "react";
 import { ScrollView, Switch, Text, TouchableOpacity, View } from "react-native";
@@ -123,6 +125,7 @@ const SubscriptionBanner = () => (
 
 export default function ProfileScreen() {
   const { theme, isDark } = useTheme();
+  const router = useRouter();
   const [notifications, setNotifications] = React.useState(true);
   const [downloads, setDownloads] = React.useState(false);
 
@@ -182,7 +185,59 @@ export default function ProfileScreen() {
         {/* Stats */}
         <ProfileStats theme={theme} />
 
-        {/* Subscription Banner */}
+        {/* Quick Access Section */}
+        <Animated.View
+          entering={FadeInDown.delay(250).springify()}
+          className="px-5 mb-6"
+        >
+          <Text className="text-sm font-bold uppercase mb-4" style={{ color: theme.textSecondary }}>
+            Quick Access
+          </Text>
+          <View className="flex-row justify-between gap-3">
+            <TouchableOpacity
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push("/friends");
+              }}
+              className="flex-1 rounded-2xl p-4 items-center"
+              style={{ backgroundColor: theme.card }}
+            >
+              <View className="w-12 h-12 rounded-full bg-blue-500/20 items-center justify-center mb-2">
+                <Ionicons name="people" size={24} color="#3b82f6" />
+              </View>
+              <Text className="font-bold text-sm" style={{ color: theme.text }}>Friends</Text>
+              <Text className="text-xs mt-1" style={{ color: theme.textSecondary }}>Chat & Share</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push("/mylist");
+              }}
+              className="flex-1 rounded-2xl p-4 items-center"
+              style={{ backgroundColor: theme.card }}
+            >
+              <View className="w-12 h-12 rounded-full bg-violet-500/20 items-center justify-center mb-2">
+                <Ionicons name="bookmark" size={24} color={theme.primary} />
+              </View>
+              <Text className="font-bold text-sm" style={{ color: theme.text }}>My List</Text>
+              <Text className="text-xs mt-1" style={{ color: theme.textSecondary }}>Saved Movies</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push("/category/downloads");
+              }}
+              className="flex-1 rounded-2xl p-4 items-center"
+              style={{ backgroundColor: theme.card }}
+            >
+              <View className="w-12 h-12 rounded-full bg-green-500/20 items-center justify-center mb-2">
+                <Ionicons name="download" size={24} color="#22c55e" />
+              </View>
+              <Text className="font-bold text-sm" style={{ color: theme.text }}>Downloads</Text>
+              <Text className="text-xs mt-1" style={{ color: theme.textSecondary }}>Offline</Text>
+            </TouchableOpacity>
+          </View>
+        </Animated.View>
         <SubscriptionBanner />
 
         {/* Settings Section */}
