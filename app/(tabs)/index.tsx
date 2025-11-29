@@ -196,25 +196,66 @@ export default function HomeScreen() {
             </View>
           </Animated.View>
 
-          {/* Search Bar */}
+          {/* Search Bar - Enhanced Design */}
           <Animated.View entering={FadeInDown.delay(100).springify()}>
             <TouchableOpacity
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 setShowSearchModal(true);
               }}
+              activeOpacity={0.9}
               style={{
-                marginTop: 20, flexDirection: "row", alignItems: "center",
-                backgroundColor: isDark ? "rgba(30, 41, 59, 0.6)" : "rgba(241, 245, 249, 0.9)",
-                borderRadius: 16, paddingHorizontal: 16, paddingVertical: 16,
-                borderWidth: isDark ? 0 : 1, borderColor: theme.border,
+                marginTop: 20,
               }}
             >
-              <Ionicons name="search" size={20} color={theme.textSecondary} />
-              <Text style={{ color: theme.textMuted, marginLeft: 12, flex: 1 }}>Search movies, series...</Text>
-              <View style={{ backgroundColor: theme.primary, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12 }}>
-                <Ionicons name="options" size={16} color="white" />
-              </View>
+              <LinearGradient
+                colors={isDark 
+                  ? ["rgba(139, 92, 246, 0.15)", "rgba(236, 72, 153, 0.08)"]
+                  : ["rgba(139, 92, 246, 0.08)", "rgba(236, 72, 153, 0.05)"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  borderRadius: 20,
+                  paddingHorizontal: 18,
+                  paddingVertical: 14,
+                  borderWidth: 1,
+                  borderColor: isDark ? "rgba(139, 92, 246, 0.3)" : "rgba(139, 92, 246, 0.2)",
+                }}
+              >
+                <View style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 12,
+                  backgroundColor: isDark ? "rgba(139, 92, 246, 0.2)" : "rgba(139, 92, 246, 0.15)",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  marginRight: 14,
+                }}>
+                  <Ionicons name="search" size={20} color={theme.primary} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ color: theme.textMuted, fontSize: 15, fontWeight: "500" }}>
+                    Search movies, series...
+                  </Text>
+                  <Text style={{ color: theme.textMuted, fontSize: 11, marginTop: 2, opacity: 0.7 }}>
+                    Over 10,000+ titles available
+                  </Text>
+                </View>
+                <View style={{
+                  backgroundColor: theme.primary,
+                  paddingHorizontal: 14,
+                  paddingVertical: 10,
+                  borderRadius: 14,
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 4,
+                }}>
+                  <Ionicons name="mic" size={14} color="white" />
+                  <Ionicons name="options" size={14} color="white" />
+                </View>
+              </LinearGradient>
             </TouchableOpacity>
           </Animated.View>
         </Animated.View>
@@ -222,7 +263,7 @@ export default function HomeScreen() {
         {/* Quick Actions */}
         <Animated.View
           entering={FadeInDown.delay(150).springify()}
-          style={{ flexDirection: "row", justifyContent: "space-around", paddingHorizontal: 20, marginBottom: 32 }}
+          style={{ flexDirection: "row", justifyContent: "space-around", paddingHorizontal: 12, marginBottom: 32 }}
         >
           {quickActions.map((item, index) => (
             <Animated.View key={item.label} entering={FadeInUp.delay(200 + index * 50)}>
@@ -232,17 +273,38 @@ export default function HomeScreen() {
               >
                 <View
                   style={{
-                    width: 64, height: 64, borderRadius: 16,
-                    alignItems: "center", justifyContent: "center", marginBottom: 8,
+                    width: 56, height: 56, borderRadius: 16,
+                    alignItems: "center", justifyContent: "center", marginBottom: 6,
                     backgroundColor: `${item.color}20`,
                   }}
                 >
-                  <Ionicons name={item.icon as keyof typeof Ionicons.glyphMap} size={28} color={item.color} />
+                  <Ionicons name={item.icon as keyof typeof Ionicons.glyphMap} size={24} color={item.color} />
                 </View>
-                <Text style={{ color: theme.textSecondary, fontSize: 12, fontWeight: "500" }}>{item.label}</Text>
+                <Text style={{ color: theme.textSecondary, fontSize: 11, fontWeight: "500" }}>{item.label}</Text>
               </TouchableOpacity>
             </Animated.View>
           ))}
+          {/* Songs Quick Action */}
+          <Animated.View entering={FadeInUp.delay(400)}>
+            <TouchableOpacity
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push("/songs");
+              }}
+              style={{ alignItems: "center" }}
+            >
+              <View
+                style={{
+                  width: 56, height: 56, borderRadius: 16,
+                  alignItems: "center", justifyContent: "center", marginBottom: 6,
+                  backgroundColor: `${theme.secondary}20`,
+                }}
+              >
+                <Ionicons name="musical-notes" size={24} color={theme.secondary} />
+              </View>
+              <Text style={{ color: theme.textSecondary, fontSize: 11, fontWeight: "500" }}>Music</Text>
+            </TouchableOpacity>
+          </Animated.View>
         </Animated.View>
 
         {/* Now Playing Carousel */}

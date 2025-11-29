@@ -184,6 +184,96 @@ function RootLayoutContent() {
               contentStyle: { backgroundColor: theme.background },
             }} 
           />
+          <Stack.Screen 
+            name="voicecall/[id]" 
+            options={{ 
+              headerShown: false, 
+              presentation: "fullScreenModal",
+              animation: "fade",
+              animationDuration: 200,
+              contentStyle: { backgroundColor: "#020617" },
+            }} 
+          />
+          <Stack.Screen 
+            name="videocall/[id]" 
+            options={{ 
+              headerShown: false, 
+              presentation: "fullScreenModal",
+              animation: "fade",
+              animationDuration: 200,
+              contentStyle: { backgroundColor: "#000000" },
+            }} 
+          />
+          <Stack.Screen 
+            name="settings/language" 
+            options={{ 
+              headerShown: false, 
+              presentation: "card",
+              animation: "slide_from_right",
+              animationDuration: 200,
+              contentStyle: { backgroundColor: theme.background },
+            }} 
+          />
+          <Stack.Screen 
+            name="settings/subscription" 
+            options={{ 
+              headerShown: false, 
+              presentation: "card",
+              animation: "slide_from_right",
+              animationDuration: 200,
+              contentStyle: { backgroundColor: theme.background },
+            }} 
+          />
+          <Stack.Screen 
+            name="settings/privacy" 
+            options={{ 
+              headerShown: false, 
+              presentation: "card",
+              animation: "slide_from_right",
+              animationDuration: 200,
+              contentStyle: { backgroundColor: theme.background },
+            }} 
+          />
+          <Stack.Screen 
+            name="settings/help" 
+            options={{ 
+              headerShown: false, 
+              presentation: "card",
+              animation: "slide_from_right",
+              animationDuration: 200,
+              contentStyle: { backgroundColor: theme.background },
+            }} 
+          />
+          <Stack.Screen 
+            name="settings/about" 
+            options={{ 
+              headerShown: false, 
+              presentation: "card",
+              animation: "slide_from_right",
+              animationDuration: 200,
+              contentStyle: { backgroundColor: theme.background },
+            }} 
+          />
+          <Stack.Screen 
+            name="songs/index" 
+            options={{ 
+              headerShown: false, 
+              presentation: "card",
+              animation: "slide_from_right",
+              animationDuration: 200,
+              contentStyle: { backgroundColor: theme.background },
+            }} 
+          />
+          <Stack.Screen 
+            name="songs/player/[id]" 
+            options={{ 
+              headerShown: false, 
+              presentation: "fullScreenModal",
+              animation: "slide_from_bottom",
+              animationDuration: 300,
+              contentStyle: { backgroundColor: "#020617" },
+            }} 
+          />
         </Stack>
       </Animated.View>
     </View>

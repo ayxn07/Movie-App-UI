@@ -5,9 +5,10 @@ import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Dimensions,
+  Keyboard,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -23,6 +24,7 @@ import Animated, {
   FadeInRight,
   FadeInUp,
 } from "react-native-reanimated";
+import EmojiPicker from "rn-emoji-keyboard";
 
 import { Colors } from "@/constants/data";
 import { ChatMessage, useApp, useTheme } from "@/context";
@@ -173,14 +175,52 @@ export default function ChatScreen() {
   const friendId = params.id as string;
   const { friends, getMessagesForFriend, sendMessage, showToast } = useApp();
   const scrollViewRef = useRef<ScrollView>(null);
+  const inputRef = useRef<TextInput>(null);
 
   const [inputText, setInputText] = useState("");
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [showImagePreview, setShowImagePreview] = useState(false);
   const [showAttachMenu, setShowAttachMenu] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
 
   const friend = friends.find((f) => f.id === friendId);
   const messages = getMessagesForFriend(friendId);
+
+  // Handle keyboard visibility
+  useEffect(() => {
+    const showSubscription = Keyboard.addListener("keyboardDidShow", () => {
+      setKeyboardVisible(true);
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+    });
+    const hideSubscription = Keyboard.addListener("keyboardDidHide", () => {
+      setKeyboardVisible(false);
+    });
+
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
+    };
+  }, []);
+
+  // Handle emoji selection
+  const handleEmojiSelect = (emoji: { emoji: string }) => {
+    setInputText((prev) => prev + emoji.emoji);
+  };
+
+  const toggleEmojiPicker = () => {
+    if (showEmojiPicker) {
+      setShowEmojiPicker(false);
+      inputRef.current?.focus();
+    } else {
+      Keyboard.dismiss();
+      setShowEmojiPicker(true);
+    }
+    setShowAttachMenu(false);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  };
 
   const handleSend = () => {
     if (!inputText.trim()) return;
@@ -188,6 +228,7 @@ export default function ChatScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     sendMessage(friendId, inputText.trim(), "text");
     setInputText("");
+    setShowEmojiPicker(false);
     
     // Scroll to bottom
     setTimeout(() => {
@@ -329,10 +370,22 @@ export default function ChatScreen() {
             </Text>
           </View>
 
-          <TouchableOpacity style={{ padding: 8 }}>
+          <TouchableOpacity 
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.push(`/videocall/${friendId}`);
+            }}
+            style={{ padding: 8 }}
+          >
             <Ionicons name="videocam-outline" size={24} color={theme.primary} />
           </TouchableOpacity>
-          <TouchableOpacity style={{ padding: 8 }}>
+          <TouchableOpacity 
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.push(`/voicecall/${friendId}`);
+            }}
+            style={{ padding: 8 }}
+          >
             <Ionicons name="call-outline" size={22} color={theme.primary} />
           </TouchableOpacity>
         </View>
@@ -383,7 +436,7 @@ export default function ChatScreen() {
         style={{
           paddingHorizontal: 20,
           paddingVertical: 12,
-          paddingBottom: 32,
+          paddingBottom: keyboardVisible ? 12 : 32,
           backgroundColor: isDark ? "rgba(2, 6, 23, 0.95)" : "rgba(255, 255, 255, 0.95)",
           borderTopWidth: 1,
           borderTopColor: theme.border,
@@ -395,6 +448,7 @@ export default function ChatScreen() {
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
               setShowAttachMenu(!showAttachMenu);
+              setShowEmojiPicker(false);
             }}
             style={{
               width: 44, height: 44, borderRadius: 22,
@@ -420,11 +474,13 @@ export default function ChatScreen() {
             maxHeight: 120,
           }}>
             <TextInput
+              ref={inputRef}
               value={inputText}
               onChangeText={setInputText}
               placeholder="Type a message..."
               placeholderTextColor={theme.textMuted}
               multiline
+              onFocus={() => setShowEmojiPicker(false)}
               style={{
                 flex: 1,
                 fontSize: 15,
@@ -433,8 +489,15 @@ export default function ChatScreen() {
                 paddingVertical: 4,
               }}
             />
-            <TouchableOpacity style={{ padding: 4 }}>
-              <Ionicons name="happy-outline" size={22} color={theme.textSecondary} />
+            <TouchableOpacity 
+              onPress={toggleEmojiPicker}
+              style={{ padding: 4 }}
+            >
+              <Ionicons 
+                name={showEmojiPicker ? "close-circle" : "happy-outline"} 
+                size={22} 
+                color={showEmojiPicker ? theme.primary : theme.textSecondary} 
+              />
             </TouchableOpacity>
           </View>
 
@@ -508,6 +571,35 @@ export default function ChatScreen() {
           </Animated.View>
         )}
       </Animated.View>
+
+      {/* Emoji Picker */}
+      <EmojiPicker
+        onEmojiSelected={handleEmojiSelect}
+        open={showEmojiPicker}
+        onClose={() => setShowEmojiPicker(false)}
+        theme={{
+          backdrop: isDark ? "#020617" : "#f8fafc",
+          knob: isDark ? theme.primary : Colors.primary,
+          container: isDark ? "#1e293b" : "#ffffff",
+          header: theme.text,
+          skinTonesContainer: isDark ? "#1e293b" : "#ffffff",
+          category: {
+            icon: theme.textSecondary,
+            iconActive: theme.primary,
+            container: isDark ? "#1e293b" : "#ffffff",
+            containerActive: isDark ? "rgba(139, 92, 246, 0.2)" : "rgba(139, 92, 246, 0.1)",
+          },
+          search: {
+            text: theme.text,
+            placeholder: theme.textMuted,
+            icon: theme.textSecondary,
+            background: isDark ? "#0f172a" : "#f1f5f9",
+          },
+          emoji: {
+            selected: isDark ? "rgba(139, 92, 246, 0.3)" : "rgba(139, 92, 246, 0.2)",
+          },
+        }}
+      />
 
       {/* Image Preview Modal */}
       <ImagePreviewModal
