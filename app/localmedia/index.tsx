@@ -1023,7 +1023,17 @@ export default function LocalMediaScreen() {
   // Request media library permissions on mount
   useEffect(() => {
     (async () => {
-      await MediaLibrary.requestPermissionsAsync();
+      try {
+        // Request permissions without specifying media type to avoid the AUDIO permission issue
+        // This will request standard media library access
+        const { status } = await MediaLibrary.requestPermissionsAsync();
+        if (status !== "granted") {
+          console.log("Media library permission not granted");
+        }
+      } catch (error) {
+        // Handle permission request errors gracefully
+        console.warn("Error requesting media library permissions:", error);
+      }
     })();
   }, []);
 
@@ -1040,10 +1050,10 @@ export default function LocalMediaScreen() {
       if (permission.status !== "granted") {
         Alert.alert(
           "Permission Required",
-          "Please grant access to your media library to scan for media files.",
+          "Please grant access to your media library to scan for media files. You may need to enable permissions in your device settings or create a development build for full functionality.",
           [
             { text: "Cancel", style: "cancel" },
-            { text: "Settings", onPress: () => {} },
+            { text: "OK", onPress: () => {} },
           ]
         );
         return;
@@ -1051,60 +1061,77 @@ export default function LocalMediaScreen() {
 
       showToast("Scanning for media files...", "info");
 
-      // Get video files
-      const videoAssets = await MediaLibrary.getAssetsAsync({
-        mediaType: MediaLibrary.MediaType.video,
-        first: 100,
-        sortBy: [[MediaLibrary.SortBy.modificationTime, false]],
-      });
-
-      // Get audio files
-      const audioAssets = await MediaLibrary.getAssetsAsync({
-        mediaType: MediaLibrary.MediaType.audio,
-        first: 100,
-        sortBy: [[MediaLibrary.SortBy.modificationTime, false]],
-      });
-
       const newMediaItems: LocalMedia[] = [];
 
-      // Process video files
-      for (const asset of videoAssets.assets) {
-        const assetInfo = await MediaLibrary.getAssetInfoAsync(asset);
-        newMediaItems.push({
-          id: asset.id,
-          name: asset.filename,
-          type: "video",
-          uri: assetInfo.localUri || asset.uri,
-          size: formatFileSize(assetInfo.fileSize || 0),
-          duration: formatDuration(asset.duration),
-          thumbnail: asset.uri,
-          addedAt: new Date(asset.modificationTime),
+      // Get video files - wrapped in try/catch for granular error handling
+      try {
+        const videoAssets = await MediaLibrary.getAssetsAsync({
+          mediaType: MediaLibrary.MediaType.video,
+          first: 100,
+          sortBy: [[MediaLibrary.SortBy.modificationTime, false]],
         });
+
+        // Process video files
+        for (const asset of videoAssets.assets) {
+          try {
+            const assetInfo = await MediaLibrary.getAssetInfoAsync(asset);
+            newMediaItems.push({
+              id: asset.id,
+              name: asset.filename,
+              type: "video",
+              uri: assetInfo.localUri || asset.uri,
+              size: formatFileSize(assetInfo.fileSize || 0),
+              duration: formatDuration(asset.duration),
+              thumbnail: asset.uri,
+              addedAt: new Date(asset.modificationTime),
+            });
+          } catch (assetError) {
+            console.warn("Error getting video asset info:", assetError);
+          }
+        }
+      } catch (videoError) {
+        console.warn("Error getting video assets:", videoError);
       }
 
-      // Process audio files
-      for (const asset of audioAssets.assets) {
-        const assetInfo = await MediaLibrary.getAssetInfoAsync(asset);
-        newMediaItems.push({
-          id: asset.id,
-          name: asset.filename,
-          type: "audio",
-          uri: assetInfo.localUri || asset.uri,
-          size: formatFileSize(assetInfo.fileSize || 0),
-          duration: formatDuration(asset.duration),
-          addedAt: new Date(asset.modificationTime),
+      // Get audio files - wrapped in try/catch for granular error handling
+      try {
+        const audioAssets = await MediaLibrary.getAssetsAsync({
+          mediaType: MediaLibrary.MediaType.audio,
+          first: 100,
+          sortBy: [[MediaLibrary.SortBy.modificationTime, false]],
         });
+
+        // Process audio files
+        for (const asset of audioAssets.assets) {
+          try {
+            const assetInfo = await MediaLibrary.getAssetInfoAsync(asset);
+            newMediaItems.push({
+              id: asset.id,
+              name: asset.filename,
+              type: "audio",
+              uri: assetInfo.localUri || asset.uri,
+              size: formatFileSize(assetInfo.fileSize || 0),
+              duration: formatDuration(asset.duration),
+              addedAt: new Date(asset.modificationTime),
+            });
+          } catch (assetError) {
+            console.warn("Error getting audio asset info:", assetError);
+          }
+        }
+      } catch (audioError) {
+        console.warn("Error getting audio assets:", audioError);
+        // Note: This is expected in Expo Go due to limited media library access
       }
 
       if (newMediaItems.length > 0) {
         setLocalMedia(newMediaItems);
         showToast(`Found ${newMediaItems.length} media files!`, "success");
       } else {
-        showToast("No media files found in your library", "info");
+        showToast("No media files found. Note: Full access requires a development build.", "info");
       }
     } catch (error) {
       console.error("Error scanning downloads:", error);
-      showToast("Failed to scan media files", "error");
+      showToast("Failed to scan media files. Try using a development build for full access.", "error");
     }
   }, [showToast]);
 
