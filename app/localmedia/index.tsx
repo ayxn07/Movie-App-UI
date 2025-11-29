@@ -3,13 +3,13 @@ import { Image } from "expo-image";
 import * as DocumentPicker from "expo-document-picker";
 import * as Haptics from "expo-haptics";
 import * as ImagePicker from "expo-image-picker";
+import * as MediaLibrary from "expo-media-library";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import {
   Alert,
-  Dimensions,
   RefreshControl,
   ScrollView,
   Text,
@@ -28,8 +28,6 @@ import Animated, {
 import { Colors } from "@/constants/data";
 import { useApp, useTheme } from "@/context";
 
-const { width } = Dimensions.get("window");
-
 // Helper function to format duration
 const formatDuration = (durationInSeconds: number | null | undefined): string => {
   if (!durationInSeconds || durationInSeconds <= 0) return "Unknown";
@@ -41,6 +39,9 @@ const formatDuration = (durationInSeconds: number | null | undefined): string =>
 // Helper function to format file size
 const formatFileSize = (sizeInBytes: number | null | undefined): string => {
   if (!sizeInBytes || sizeInBytes <= 0) return "Unknown";
+  if (sizeInBytes < 1024 * 1024) {
+    return `${Math.round(sizeInBytes / 1024)} KB`;
+  }
   return `${Math.round(sizeInBytes / 1024 / 1024)} MB`;
 };
 
@@ -54,51 +55,9 @@ interface LocalMedia {
   duration?: string;
   thumbnail?: string;
   addedAt: Date;
+  isFromDevice?: boolean;
 }
 
-// Sample local media data (simulated)
-const SAMPLE_LOCAL_MEDIA: LocalMedia[] = [
-  {
-    id: "local1",
-    name: "My Vacation Video.mp4",
-    type: "video",
-    uri: "file://local/vacation.mp4",
-    size: "245 MB",
-    duration: "12:34",
-    thumbnail: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400",
-    addedAt: new Date(Date.now() - 1000 * 60 * 60 * 24),
-  },
-  {
-    id: "local2",
-    name: "Birthday Party.mp4",
-    type: "video",
-    uri: "file://local/birthday.mp4",
-    size: "512 MB",
-    duration: "25:10",
-    thumbnail: "https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=400",
-    addedAt: new Date(Date.now() - 1000 * 60 * 60 * 48),
-  },
-  {
-    id: "local3",
-    name: "Favorite Song.mp3",
-    type: "audio",
-    uri: "file://local/song.mp3",
-    size: "8.5 MB",
-    duration: "3:45",
-    thumbnail: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400",
-    addedAt: new Date(Date.now() - 1000 * 60 * 60 * 72),
-  },
-  {
-    id: "local4",
-    name: "Podcast Episode.mp3",
-    type: "audio",
-    uri: "file://local/podcast.mp3",
-    size: "45 MB",
-    duration: "48:22",
-    thumbnail: "https://images.unsplash.com/photo-1478737270239-2f02b77fc618?w=400",
-    addedAt: new Date(Date.now() - 1000 * 60 * 60 * 96),
-  },
-];
 
 // Media Item Component
 const MediaItem = ({
@@ -278,7 +237,7 @@ const EmptyState = ({ onUpload }: { onUpload: () => void }) => {
           marginBottom: 24,
         }}
       >
-        <Ionicons name="cloud-upload-outline" size={48} color={Colors.primary} />
+        <Ionicons name="folder-open-outline" size={48} color={Colors.primary} />
       </View>
       <Text
         style={{
@@ -300,7 +259,7 @@ const EmptyState = ({ onUpload }: { onUpload: () => void }) => {
           marginBottom: 24,
         }}
       >
-        Upload videos and music from your device to watch and listen offline
+        Scan your device to find videos and audio files, or upload new ones
       </Text>
       <TouchableOpacity onPress={onUpload}>
         <LinearGradient
@@ -314,9 +273,9 @@ const EmptyState = ({ onUpload }: { onUpload: () => void }) => {
             gap: 8,
           }}
         >
-          <Ionicons name="add" size={22} color="white" />
+          <Ionicons name="scan" size={22} color="white" />
           <Text style={{ color: "white", fontWeight: "700", fontSize: 16 }}>
-            Upload Media
+            Scan Device
           </Text>
         </LinearGradient>
       </TouchableOpacity>
@@ -330,11 +289,13 @@ const UploadModal = ({
   onClose,
   onUploadVideo,
   onUploadAudio,
+  onScanDevice,
 }: {
   visible: boolean;
   onClose: () => void;
   onUploadVideo: () => void;
   onUploadAudio: () => void;
+  onScanDevice: () => void;
 }) => {
   const { theme, isDark } = useTheme();
 
@@ -374,8 +335,48 @@ const UploadModal = ({
               textAlign: "center",
             }}
           >
-            Upload Media
+            Add Media
           </Text>
+
+          {/* Scan Device Downloads Option */}
+          <TouchableOpacity
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              onScanDevice();
+            }}
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              backgroundColor: isDark ? "rgba(30, 41, 59, 0.6)" : theme.card,
+              borderRadius: 16,
+              padding: 20,
+              marginBottom: 12,
+              borderWidth: isDark ? 0 : 1,
+              borderColor: theme.border,
+            }}
+          >
+            <View
+              style={{
+                width: 56,
+                height: 56,
+                borderRadius: 16,
+                backgroundColor: `${Colors.success}20`,
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Ionicons name="folder-open" size={28} color={Colors.success} />
+            </View>
+            <View style={{ flex: 1, marginLeft: 16 }}>
+              <Text style={{ color: theme.text, fontWeight: "700", fontSize: 17 }}>
+                Scan Device Media
+              </Text>
+              <Text style={{ color: theme.textSecondary, fontSize: 13, marginTop: 4 }}>
+                Find videos & audio from Downloads
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={22} color={theme.textMuted} />
+          </TouchableOpacity>
 
           {/* Video Upload Option */}
           <TouchableOpacity
@@ -506,24 +507,117 @@ export default function LocalMediaScreen() {
   const router = useRouter();
   const { showToast } = useApp();
 
-  const [localMedia, setLocalMedia] = useState<LocalMedia[]>(SAMPLE_LOCAL_MEDIA);
+  const [localMedia, setLocalMedia] = useState<LocalMedia[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [activeFilter, setActiveFilter] = useState<"all" | "video" | "audio">("all");
+  const [isScanning, setIsScanning] = useState(false);
 
   const filteredMedia = localMedia.filter((media) => {
     if (activeFilter === "all") return true;
     return media.type === activeFilter;
   });
 
-  const onRefresh = useCallback(() => {
-    setRefreshing(true);
-    // Simulate refresh
-    setTimeout(() => {
-      setRefreshing(false);
-      showToast("Library refreshed", "info");
-    }, 1000);
+  // Request permission on mount
+  useEffect(() => {
+    (async () => {
+      await MediaLibrary.requestPermissionsAsync();
+    })();
+  }, []);
+
+  // Scan device for media files
+  const handleScanDevice = useCallback(async () => {
+    setShowUploadModal(false);
+    setIsScanning(true);
+    
+    try {
+      const { status } = await MediaLibrary.requestPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert(
+          "Permission Required",
+          "Please grant access to your media library to scan for files.",
+          [{ text: "OK" }]
+        );
+        setIsScanning(false);
+        return;
+      }
+
+      // Fetch video assets
+      const videoAssets = await MediaLibrary.getAssetsAsync({
+        mediaType: MediaLibrary.MediaType.video,
+        first: 100,
+        sortBy: MediaLibrary.SortBy.creationTime,
+      });
+
+      // Fetch audio assets
+      const audioAssets = await MediaLibrary.getAssetsAsync({
+        mediaType: MediaLibrary.MediaType.audio,
+        first: 100,
+        sortBy: MediaLibrary.SortBy.creationTime,
+      });
+
+      const newMedia: LocalMedia[] = [];
+
+      // Process video assets
+      for (const asset of videoAssets.assets) {
+        const assetInfo = await MediaLibrary.getAssetInfoAsync(asset);
+        // Only include assets with valid localUri for playback
+        if (assetInfo.localUri) {
+          newMedia.push({
+            id: asset.id,
+            name: asset.filename,
+            type: "video",
+            uri: assetInfo.localUri,
+            size: "Unknown",
+            duration: formatDuration(asset.duration),
+            thumbnail: asset.uri,
+            addedAt: new Date(asset.creationTime),
+            isFromDevice: true,
+          });
+        }
+      }
+
+      // Process audio assets
+      for (const asset of audioAssets.assets) {
+        const assetInfo = await MediaLibrary.getAssetInfoAsync(asset);
+        // Only include assets with valid localUri for playback
+        if (assetInfo.localUri) {
+          newMedia.push({
+            id: asset.id,
+            name: asset.filename,
+            type: "audio",
+            uri: assetInfo.localUri,
+            size: "Unknown",
+            duration: formatDuration(asset.duration),
+            addedAt: new Date(asset.creationTime),
+            isFromDevice: true,
+          });
+        }
+      }
+
+      // Merge with existing media (avoid duplicates)
+      setLocalMedia((prev) => {
+        const existingIds = new Set(prev.filter((m) => !m.isFromDevice).map((m) => m.id));
+        const newIds = new Set(newMedia.map((m) => m.id));
+        const filteredPrev = prev.filter((m) => !m.isFromDevice || newIds.has(m.id));
+        const filteredNew = newMedia.filter((m) => !existingIds.has(m.id));
+        return [...filteredPrev, ...filteredNew];
+      });
+
+      showToast(`Found ${newMedia.length} media files!`, "success");
+    } catch (error) {
+      console.error("Error scanning device:", error);
+      showToast("Failed to scan device", "error");
+    } finally {
+      setIsScanning(false);
+    }
   }, [showToast]);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await handleScanDevice();
+    setRefreshing(false);
+  }, [handleScanDevice]);
 
   const handleUploadVideo = async () => {
     setShowUploadModal(false);
@@ -550,7 +644,7 @@ export default function LocalMediaScreen() {
         setLocalMedia((prev) => [newMedia, ...prev]);
         showToast("Video added successfully!", "success");
       }
-    } catch (error) {
+    } catch {
       showToast("Failed to upload video", "error");
     }
   };
@@ -577,7 +671,7 @@ export default function LocalMediaScreen() {
         setLocalMedia((prev) => [newMedia, ...prev]);
         showToast("Audio added successfully!", "success");
       }
-    } catch (error) {
+    } catch {
       showToast("Failed to upload audio", "error");
     }
   };
@@ -589,12 +683,11 @@ export default function LocalMediaScreen() {
 
   const handlePlayMedia = (media: LocalMedia) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    const encodedUri = encodeURIComponent(media.uri);
     if (media.type === "video") {
-      showToast(`Playing: ${media.name}`, "info");
-      // In a real app, navigate to video player with the local URI
+      router.push(`/localvideoplayer/${encodedUri}?name=${encodeURIComponent(media.name)}`);
     } else {
-      showToast(`Playing: ${media.name}`, "info");
-      // In a real app, navigate to audio player with the local URI
+      router.push(`/localaudioplayer/${encodedUri}?name=${encodeURIComponent(media.name)}`);
     }
   };
 
@@ -793,8 +886,51 @@ export default function LocalMediaScreen() {
 
         {/* Media List */}
         <View style={{ paddingHorizontal: 20 }}>
-          {filteredMedia.length === 0 ? (
-            <EmptyState onUpload={() => setShowUploadModal(true)} />
+          {isScanning ? (
+            <Animated.View
+              entering={FadeIn.delay(200)}
+              style={{
+                alignItems: "center",
+                paddingVertical: 60,
+                paddingHorizontal: 40,
+              }}
+            >
+              <View
+                style={{
+                  width: 80,
+                  height: 80,
+                  borderRadius: 40,
+                  backgroundColor: `${Colors.primary}20`,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  marginBottom: 24,
+                }}
+              >
+                <Ionicons name="scan" size={40} color={Colors.primary} />
+              </View>
+              <Text
+                style={{
+                  color: theme.text,
+                  fontSize: 18,
+                  fontWeight: "700",
+                  marginBottom: 8,
+                  textAlign: "center",
+                }}
+              >
+                Scanning Device...
+              </Text>
+              <Text
+                style={{
+                  color: theme.textSecondary,
+                  fontSize: 14,
+                  textAlign: "center",
+                }}
+              >
+                Looking for media files
+              </Text>
+            </Animated.View>
+          ) : filteredMedia.length === 0 ? (
+            <EmptyState onUpload={handleScanDevice} />
           ) : (
             filteredMedia.map((media, index) => (
               <MediaItem
@@ -815,6 +951,7 @@ export default function LocalMediaScreen() {
         onClose={() => setShowUploadModal(false)}
         onUploadVideo={handleUploadVideo}
         onUploadAudio={handleUploadAudio}
+        onScanDevice={handleScanDevice}
       />
     </View>
   );
