@@ -137,7 +137,7 @@ const AudioPlayerModal = ({
         loadedSound.unloadAsync();
       }
     };
-  }, [visible, media, onPlaybackStatusUpdate]);
+  }, [visible, media?.uri, onPlaybackStatusUpdate]);
 
   const handlePlayPause = async () => {
     if (!sound) return;
@@ -509,7 +509,7 @@ const AudioPlayerModal = ({
               }}
             >
               <Ionicons
-                name={repeatMode === "one" ? "repeat" : "repeat"}
+                name={repeatMode === "off" ? "repeat-outline" : "repeat"}
                 size={24}
                 color={repeatMode !== "off" ? Colors.primary : "rgba(255,255,255,0.6)"}
               />

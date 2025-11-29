@@ -462,7 +462,7 @@ const DownloadInfoModal = ({
               About Downloading
             </Text>
             <Text style={{ color: theme.textSecondary, fontSize: 13, lineHeight: 18 }}>
-              Due to YouTube&apos;s terms of service, direct downloads are not supported in-app.
+              Due to YouTube{"'"}s terms of service, direct downloads are not supported in-app.
               You can use external tools like y2mate.com, savefrom.net, or the official YouTube
               Premium for offline viewing.
             </Text>
@@ -808,7 +808,7 @@ export default function YouTubeSearchScreen() {
               // Results
               <>
                 <Text style={{ color: theme.textSecondary, fontSize: 14, marginBottom: 16 }}>
-                  {searchResults.length} results for &ldquo;{searchQuery}&rdquo;
+                  {searchResults.length} results for {"\""}{searchQuery}{"\""}
                 </Text>
                 {searchResults.map((video, index) => (
                   <VideoItem
