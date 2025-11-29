@@ -479,6 +479,55 @@ export default function SongsScreen() {
           </View>
         </Animated.View>
 
+        {/* Quick Access Section */}
+        <Animated.View entering={FadeIn.delay(80)} style={{ paddingHorizontal: 20, marginBottom: 24 }}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ gap: 12 }}
+          >
+            {[
+              { icon: "heart", label: "Liked Songs", color: Colors.secondary, route: "/likedsongs" },
+              { icon: "albums", label: "Albums", color: Colors.primary, route: "/albums" },
+              { icon: "mic", label: "Podcasts", color: Colors.accent, route: "/podcasts" },
+              { icon: "sparkles", label: "AI Mix", color: "#8b5cf6", route: "/recommendations" },
+              { icon: "compass", label: "Discover", color: "#06b6d4", route: "/discover" },
+            ].map((item, index) => (
+              <TouchableOpacity
+                key={item.label}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  router.push(item.route as any);
+                }}
+                style={{
+                  width: 100,
+                  backgroundColor: isDark ? "rgba(30, 41, 59, 0.6)" : theme.card,
+                  borderRadius: 16,
+                  padding: 14,
+                  alignItems: "center",
+                }}
+              >
+                <View
+                  style={{
+                    width: 44,
+                    height: 44,
+                    borderRadius: 22,
+                    backgroundColor: `${item.color}20`,
+                    alignItems: "center",
+                    justifyContent: "center",
+                    marginBottom: 8,
+                  }}
+                >
+                  <Ionicons name={item.icon as any} size={22} color={item.color} />
+                </View>
+                <Text style={{ color: theme.text, fontSize: 12, fontWeight: "600", textAlign: "center" }}>
+                  {item.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </Animated.View>
+
         {/* Genre Pills */}
         <Animated.View entering={FadeIn.delay(100)}>
           <ScrollView

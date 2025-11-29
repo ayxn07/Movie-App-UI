@@ -404,6 +404,36 @@ function RootLayoutContent() {
               contentStyle: { backgroundColor: theme.background },
             }} 
           />
+          <Stack.Screen 
+            name="podcasts/index" 
+            options={{ 
+              headerShown: false, 
+              presentation: "card",
+              animation: "slide_from_right",
+              animationDuration: 200,
+              contentStyle: { backgroundColor: theme.background },
+            }} 
+          />
+          <Stack.Screen 
+            name="activityfeed/index" 
+            options={{ 
+              headerShown: false, 
+              presentation: "card",
+              animation: "slide_from_right",
+              animationDuration: 200,
+              contentStyle: { backgroundColor: theme.background },
+            }} 
+          />
+          <Stack.Screen 
+            name="auth/index" 
+            options={{ 
+              headerShown: false, 
+              presentation: "fullScreenModal",
+              animation: "fade",
+              animationDuration: 300,
+              contentStyle: { backgroundColor: theme.background },
+            }} 
+          />
         </Stack>
       </Animated.View>
     </View>
