@@ -24,8 +24,6 @@ import Animated, {
 import { Colors } from "@/constants/data";
 import { useApp, useTheme } from "@/context";
 
-const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
-
 // Sample suggested friends data
 const SUGGESTED_FRIENDS = [
   {
@@ -86,26 +84,24 @@ const SuggestedFriendCard = ({
 
   return (
     <Animated.View entering={FadeInRight.delay(index * 80).springify()}>
-      <AnimatedTouchable
-        style={[
-          animatedStyle,
-          {
+      <Animated.View style={animatedStyle}>
+        <TouchableOpacity
+          style={{
             backgroundColor: isDark ? "rgba(30, 41, 59, 0.6)" : theme.card,
             borderRadius: 20,
             padding: 16,
             marginBottom: 12,
             borderWidth: isDark ? 0 : 1,
             borderColor: theme.border,
-          },
-        ]}
-        onPressIn={() => {
-          scale.value = withSpring(0.98);
-        }}
-        onPressOut={() => {
-          scale.value = withSpring(1);
-        }}
-        activeOpacity={1}
-      >
+          }}
+          onPressIn={() => {
+            scale.value = withSpring(0.98);
+          }}
+          onPressOut={() => {
+            scale.value = withSpring(1);
+          }}
+          activeOpacity={1}
+        >
         <View style={{ flexDirection: "row", alignItems: "center" }}>
           <Image
             source={{ uri: friend.avatar }}
@@ -179,7 +175,8 @@ const SuggestedFriendCard = ({
             </LinearGradient>
           </TouchableOpacity>
         </View>
-      </AnimatedTouchable>
+      </TouchableOpacity>
+      </Animated.View>
     </Animated.View>
   );
 };
