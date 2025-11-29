@@ -196,25 +196,70 @@ export default function HomeScreen() {
             </View>
           </Animated.View>
 
-          {/* Search Bar */}
+          {/* Search Bar - Enhanced Design */}
           <Animated.View entering={FadeInDown.delay(100).springify()}>
             <TouchableOpacity
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 setShowSearchModal(true);
               }}
+              activeOpacity={0.9}
               style={{
-                marginTop: 20, flexDirection: "row", alignItems: "center",
-                backgroundColor: isDark ? "rgba(30, 41, 59, 0.6)" : "rgba(241, 245, 249, 0.9)",
-                borderRadius: 16, paddingHorizontal: 16, paddingVertical: 16,
-                borderWidth: isDark ? 0 : 1, borderColor: theme.border,
+                marginTop: 20,
+                borderRadius: 20,
+                overflow: "hidden",
               }}
             >
-              <Ionicons name="search" size={20} color={theme.textSecondary} />
-              <Text style={{ color: theme.textMuted, marginLeft: 12, flex: 1 }}>Search movies, series...</Text>
-              <View style={{ backgroundColor: theme.primary, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12 }}>
-                <Ionicons name="options" size={16} color="white" />
-              </View>
+              <LinearGradient
+                colors={isDark 
+                  ? ["rgba(30, 41, 59, 0.8)", "rgba(15, 23, 42, 0.9)"] 
+                  : ["rgba(255, 255, 255, 0.95)", "rgba(241, 245, 249, 0.95)"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  paddingHorizontal: 18,
+                  paddingVertical: 16,
+                  borderWidth: 1,
+                  borderColor: isDark ? "rgba(139, 92, 246, 0.2)" : theme.border,
+                  borderRadius: 20,
+                }}
+              >
+                <View
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: 12,
+                    backgroundColor: `${theme.primary}15`,
+                    alignItems: "center",
+                    justifyContent: "center",
+                    marginRight: 14,
+                  }}
+                >
+                  <Ionicons name="search" size={20} color={theme.primary} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ color: theme.textMuted, fontSize: 15, fontWeight: "500" }}>
+                    Search movies, series...
+                  </Text>
+                  <Text style={{ color: theme.textMuted, fontSize: 12, marginTop: 2, opacity: 0.7 }}>
+                    Discover thousands of titles
+                  </Text>
+                </View>
+                <LinearGradient
+                  colors={[Colors.primary, Colors.primaryDark]}
+                  style={{
+                    paddingHorizontal: 14,
+                    paddingVertical: 8,
+                    borderRadius: 12,
+                    flexDirection: "row",
+                    alignItems: "center",
+                  }}
+                >
+                  <Ionicons name="mic" size={16} color="white" />
+                </LinearGradient>
+              </LinearGradient>
             </TouchableOpacity>
           </Animated.View>
         </Animated.View>
