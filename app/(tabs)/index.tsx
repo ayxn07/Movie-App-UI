@@ -440,6 +440,68 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </Animated.View>
 
+        {/* Discover & Social Features */}
+        <Animated.View entering={FadeInDown.delay(480).springify()} style={{ paddingHorizontal: 20, marginBottom: 32 }}>
+          <View style={{ flexDirection: "row", gap: 12 }}>
+            <TouchableOpacity
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push("/discover");
+              }}
+              style={{ flex: 1 }}
+              activeOpacity={0.9}
+            >
+              <LinearGradient
+                colors={["#06b6d4", "#0891b2"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={{
+                  borderRadius: 20,
+                  padding: 16,
+                  height: 120,
+                  justifyContent: "space-between",
+                }}
+              >
+                <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: "rgba(255,255,255,0.2)", alignItems: "center", justifyContent: "center" }}>
+                  <Ionicons name="compass" size={24} color="white" />
+                </View>
+                <View>
+                  <Text style={{ color: "white", fontSize: 16, fontWeight: "800" }}>Discover</Text>
+                  <Text style={{ color: "rgba(255,255,255,0.8)", fontSize: 12 }}>Mixed content feed</Text>
+                </View>
+              </LinearGradient>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push("/watchparty");
+              }}
+              style={{ flex: 1 }}
+              activeOpacity={0.9}
+            >
+              <LinearGradient
+                colors={["#8b5cf6", "#6366f1"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={{
+                  borderRadius: 20,
+                  padding: 16,
+                  height: 120,
+                  justifyContent: "space-between",
+                }}
+              >
+                <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: "rgba(255,255,255,0.2)", alignItems: "center", justifyContent: "center" }}>
+                  <Ionicons name="people" size={24} color="white" />
+                </View>
+                <View>
+                  <Text style={{ color: "white", fontSize: 16, fontWeight: "800" }}>Watch Party</Text>
+                  <Text style={{ color: "rgba(255,255,255,0.8)", fontSize: 12 }}>Watch together</Text>
+                </View>
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
+        </Animated.View>
+
         {/* Categories */}
         <Animated.View entering={FadeInDown.delay(500).springify()} style={{ paddingHorizontal: 20, marginBottom: 40 }}>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 16 }}>

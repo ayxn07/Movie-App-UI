@@ -285,6 +285,51 @@ export default function ProfileScreen() {
               <Text className="text-xs mt-1" style={{ color: theme.textSecondary }}>Streaming</Text>
             </TouchableOpacity>
           </View>
+          {/* Third row with more features */}
+          <View className="flex-row justify-between gap-3 mt-3">
+            <TouchableOpacity
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push("/discover");
+              }}
+              className="flex-1 rounded-2xl p-4 items-center"
+              style={{ backgroundColor: theme.card }}
+            >
+              <View className="w-12 h-12 rounded-full bg-cyan-500/20 items-center justify-center mb-2">
+                <Ionicons name="compass" size={24} color="#06b6d4" />
+              </View>
+              <Text className="font-bold text-sm" style={{ color: theme.text }}>Discover</Text>
+              <Text className="text-xs mt-1" style={{ color: theme.textSecondary }}>Explore</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push("/activityfeed");
+              }}
+              className="flex-1 rounded-2xl p-4 items-center"
+              style={{ backgroundColor: theme.card }}
+            >
+              <View className="w-12 h-12 rounded-full bg-violet-500/20 items-center justify-center mb-2">
+                <Ionicons name="people" size={24} color="#8b5cf6" />
+              </View>
+              <Text className="font-bold text-sm" style={{ color: theme.text }}>Activity</Text>
+              <Text className="text-xs mt-1" style={{ color: theme.textSecondary }}>Friends</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push("/recommendations");
+              }}
+              className="flex-1 rounded-2xl p-4 items-center"
+              style={{ backgroundColor: theme.card }}
+            >
+              <View className="w-12 h-12 rounded-full bg-amber-500/20 items-center justify-center mb-2">
+                <Ionicons name="sparkles" size={24} color="#f59e0b" />
+              </View>
+              <Text className="font-bold text-sm" style={{ color: theme.text }}>AI Mix</Text>
+              <Text className="text-xs mt-1" style={{ color: theme.textSecondary }}>For You</Text>
+            </TouchableOpacity>
+          </View>
         </Animated.View>
         <SubscriptionBanner />
 
