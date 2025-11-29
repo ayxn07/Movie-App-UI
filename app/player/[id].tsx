@@ -28,9 +28,8 @@ import Animated, {
 
 import { ALL_MOVIES, Colors, MOVIE_CAST_DATA } from "@/constants/data";
 
-// Sample video URLs for demo purposes
+// Sample video URLs for demo purposes - in production, use actual movie streaming URLs
 const SAMPLE_VIDEO_URLS: Record<number, string> = {
-  // Using Big Buck Bunny as a sample video for all movies
   1: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
   2: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
   3: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",

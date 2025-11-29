@@ -40,10 +40,13 @@ const formatDuration = (durationInSeconds: number | null | undefined): string =>
   return `${minutes}:${seconds.toString().padStart(2, "0")}`;
 };
 
-// Helper function to format file size
+// Helper function to format file size with dynamic units
 const formatFileSize = (sizeInBytes: number | null | undefined): string => {
   if (!sizeInBytes || sizeInBytes <= 0) return "Unknown";
-  return `${Math.round(sizeInBytes / 1024 / 1024)} MB`;
+  if (sizeInBytes < 1024) return `${sizeInBytes} B`;
+  if (sizeInBytes < 1024 * 1024) return `${Math.round(sizeInBytes / 1024)} KB`;
+  if (sizeInBytes < 1024 * 1024 * 1024) return `${Math.round(sizeInBytes / 1024 / 1024)} MB`;
+  return `${(sizeInBytes / 1024 / 1024 / 1024).toFixed(1)} GB`;
 };
 
 // Local media types

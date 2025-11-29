@@ -35,7 +35,7 @@ import { useApp, useTheme } from "@/context";
 const { width, height } = Dimensions.get("window");
 
 // Sample song data with lyrics and audio URLs
-// Using free sample audio from the internet for demo purposes
+// Demo audio from SoundHelix - in production, use actual music streaming URLs
 const SONGS = [
   {
     id: "1",
@@ -45,7 +45,7 @@ const SONGS = [
     duration: 200, // seconds
     cover: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800",
     colors: ["#1a1a2e", "#16213e", "#0f3460"],
-    // Sample audio URL - in production, this would be the actual audio file
+    // Demo audio URL - replace with actual streaming URL in production
     audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
     lyrics: [
       { time: 0, text: "♪ Instrumental ♪" },
