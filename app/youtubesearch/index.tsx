@@ -175,18 +175,22 @@ const DownloadModal = ({
   const [selectedQuality, setSelectedQuality] = useState("720p");
   const [selectedFormat, setSelectedFormat] = useState(video?.isMusic ? "audio" : "video");
 
-  const qualities = video?.isMusic
-    ? [
-        { id: "320kbps", label: "320 kbps", size: "~8 MB", badge: "BEST" },
-        { id: "256kbps", label: "256 kbps", size: "~6 MB", badge: null },
-        { id: "128kbps", label: "128 kbps", size: "~3 MB", badge: null },
-      ]
-    : [
-        { id: "1080p", label: "Full HD (1080p)", size: "~150 MB", badge: "BEST" },
-        { id: "720p", label: "HD (720p)", size: "~80 MB", badge: "RECOMMENDED" },
-        { id: "480p", label: "SD (480p)", size: "~40 MB", badge: null },
-        { id: "360p", label: "Low (360p)", size: "~20 MB", badge: null },
-      ];
+  // Define audio and video qualities separately
+  const audioQualities = [
+    { id: "320kbps", label: "320 kbps", size: "~8 MB", badge: "BEST" as const },
+    { id: "256kbps", label: "256 kbps", size: "~6 MB", badge: null },
+    { id: "128kbps", label: "128 kbps", size: "~3 MB", badge: null },
+  ];
+
+  const videoQualities = [
+    { id: "1080p", label: "Full HD (1080p)", size: "~150 MB", badge: "BEST" as const },
+    { id: "720p", label: "HD (720p)", size: "~80 MB", badge: "RECOMMENDED" as const },
+    { id: "480p", label: "SD (480p)", size: "~40 MB", badge: null },
+    { id: "360p", label: "Low (360p)", size: "~20 MB", badge: null },
+  ];
+
+  // Select qualities based on current format
+  const displayQualities = selectedFormat === "audio" ? audioQualities : videoQualities;
 
   if (!video) return null;
 
@@ -342,15 +346,7 @@ const DownloadModal = ({
               marginBottom: 24,
             }}
           >
-            {(selectedFormat === "audio"
-              ? qualities.slice(0, 3).map((q) => ({
-                  id: q.id.includes("kbps") ? q.id : "320kbps",
-                  label: q.id.includes("kbps") ? q.label : "320 kbps",
-                  size: q.id.includes("kbps") ? q.size : "~8 MB",
-                  badge: q.badge,
-                }))
-              : qualities
-            ).map((option, index) => (
+            {displayQualities.map((option, index) => (
               <TouchableOpacity
                 key={option.id}
                 onPress={() => {
@@ -361,7 +357,7 @@ const DownloadModal = ({
                   flexDirection: "row",
                   alignItems: "center",
                   padding: 16,
-                  borderBottomWidth: index < qualities.length - 1 ? 1 : 0,
+                  borderBottomWidth: index < displayQualities.length - 1 ? 1 : 0,
                   borderBottomColor: theme.border,
                   backgroundColor:
                     selectedQuality === option.id ? `${theme.primary}10` : "transparent",

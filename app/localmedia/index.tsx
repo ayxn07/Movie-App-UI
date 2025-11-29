@@ -360,16 +360,18 @@ const AudioPlayerModal = ({
                 }}
               />
             </View>
-            {/* Progress Thumb */}
+            {/* Progress Thumb - positioned relative to progress bar */}
+            {/* Padding: 30px on each side = 60px total. Thumb width: 16px, half = 8px offset */}
             <View
               style={{
                 position: "absolute",
-                left: 30 + (screenWidth - 60) * progress - 8,
+                left: `${progress * 100}%`,
                 top: -3,
                 width: 16,
                 height: 16,
                 borderRadius: 8,
                 backgroundColor: "white",
+                marginLeft: -8,
                 shadowColor: Colors.primary,
                 shadowOffset: { width: 0, height: 0 },
                 shadowOpacity: 0.6,
@@ -468,17 +470,49 @@ const AudioPlayerModal = ({
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 setRepeatMode(repeatMode === "off" ? "all" : repeatMode === "all" ? "one" : "off");
               }}
-              style={{ padding: 8 }}
+              style={{ padding: 8, position: "relative" }}
             >
               <Ionicons
-                name={repeatMode === "one" ? "repeat" : "repeat"}
+                name="repeat"
                 size={24}
                 color={repeatMode !== "off" ? Colors.primary : "rgba(255,255,255,0.6)"}
               />
               {repeatMode === "one" && (
-                <Text style={{ position: "absolute", bottom: 4, right: 4, color: Colors.primary, fontSize: 10, fontWeight: "800" }}>
-                  1
-                </Text>
+                <View
+                  style={{
+                    position: "absolute",
+                    bottom: 6,
+                    right: 6,
+                    backgroundColor: Colors.primary,
+                    width: 14,
+                    height: 14,
+                    borderRadius: 7,
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <Text style={{ color: "white", fontSize: 9, fontWeight: "800" }}>1</Text>
+                </View>
+              )}
+              {repeatMode === "all" && (
+                <View
+                  style={{
+                    position: "absolute",
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    alignItems: "center",
+                  }}
+                >
+                  <View
+                    style={{
+                      width: 6,
+                      height: 6,
+                      borderRadius: 3,
+                      backgroundColor: Colors.primary,
+                    }}
+                  />
+                </View>
               )}
             </TouchableOpacity>
           </View>
