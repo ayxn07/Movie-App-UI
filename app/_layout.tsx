@@ -15,6 +15,8 @@ import "./global.css";
 LogBox.ignoreLogs([
   "SafeAreaView has been deprecated",
   "Please use 'react-native-safe-area-context' instead",
+  "[expo-av]: Expo AV has been deprecated",
+  "Due to changes in Androids permission requirements",
 ]);
 
 function RootLayoutContent() {
@@ -296,6 +298,16 @@ function RootLayoutContent() {
           />
           <Stack.Screen 
             name="localmedia/index" 
+            options={{ 
+              headerShown: false, 
+              presentation: "card",
+              animation: "slide_from_right",
+              animationDuration: 200,
+              contentStyle: { backgroundColor: theme.background },
+            }} 
+          />
+          <Stack.Screen 
+            name="youtubesearch/index" 
             options={{ 
               headerShown: false, 
               presentation: "card",
