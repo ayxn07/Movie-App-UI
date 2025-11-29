@@ -10,7 +10,6 @@ import Animated, {
   FadeIn,
   FadeInDown,
   FadeInRight,
-  FadeInUp,
   useAnimatedStyle,
   useSharedValue,
   withSpring,
@@ -18,8 +17,6 @@ import Animated, {
 
 import { ALL_MOVIES, Colors } from "@/constants/data";
 import { Friend, useApp, useTheme } from "@/context";
-
-const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 
 // Friend Card Component
 const FriendCard = ({
@@ -43,26 +40,24 @@ const FriendCard = ({
 
   return (
     <Animated.View entering={FadeInRight.delay(index * 80).springify()}>
-      <AnimatedTouchable
-        style={[
-          animatedStyle,
-          {
+      <Animated.View style={animatedStyle}>
+        <TouchableOpacity
+          style={{
             backgroundColor: isDark ? "rgba(30, 41, 59, 0.6)" : theme.card,
             borderRadius: 20,
             padding: 16,
             marginBottom: 16,
             borderWidth: isDark ? 0 : 1,
             borderColor: theme.border,
-          },
-        ]}
-        onPressIn={() => { scale.value = withSpring(0.98); }}
-        onPressOut={() => { scale.value = withSpring(1); }}
-        onPress={() => {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-          onPress();
-        }}
-        activeOpacity={1}
-      >
+          }}
+          onPressIn={() => { scale.value = withSpring(0.98); }}
+          onPressOut={() => { scale.value = withSpring(1); }}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            onPress();
+          }}
+          activeOpacity={1}
+        >
         {/* Friend Info */}
         <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 16 }}>
           <View style={{ position: "relative" }}>
@@ -137,7 +132,8 @@ const FriendCard = ({
             )}
           </View>
         </View>
-      </AnimatedTouchable>
+        </TouchableOpacity>
+      </Animated.View>
     </Animated.View>
   );
 };
@@ -304,43 +300,6 @@ export default function FriendsScreen() {
         )}
       </ScrollView>
 
-      {/* Floating Add Friend Button */}
-      <Animated.View
-        entering={FadeInUp.delay(400).springify()}
-        style={{
-          position: "absolute",
-          bottom: 100,
-          right: 20,
-        }}
-      >
-        <TouchableOpacity
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-            router.push("/addfriend");
-          }}
-          activeOpacity={0.9}
-        >
-          <LinearGradient
-            colors={[Colors.primary, Colors.primaryDark]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={{
-              width: 64,
-              height: 64,
-              borderRadius: 32,
-              alignItems: "center",
-              justifyContent: "center",
-              shadowColor: Colors.primary,
-              shadowOffset: { width: 0, height: 6 },
-              shadowOpacity: 0.5,
-              shadowRadius: 12,
-              elevation: 8,
-            }}
-          >
-            <Ionicons name="person-add" size={28} color="white" />
-          </LinearGradient>
-        </TouchableOpacity>
-      </Animated.View>
     </View>
   );
 }
