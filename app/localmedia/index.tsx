@@ -396,15 +396,15 @@ const AudioPlayerModal = ({
                       <Ionicons name="musical-notes" size={64} color={Colors.primary} />
                     </View>
                     
-                    {/* Animated bars for visualizer effect */}
+                    {/* Animated bars for visualizer effect - pre-computed heights */}
                     {isPlaying && (
                       <View style={{ flexDirection: "row", marginTop: 20, gap: 4 }}>
-                        {[...Array(7)].map((_, i) => (
+                        {[35, 45, 30, 50, 40, 38, 42].map((height, i) => (
                           <Animated.View
                             key={i}
                             style={{
                               width: 6,
-                              height: 30 + Math.random() * 20,
+                              height: height,
                               backgroundColor: Colors.primary,
                               borderRadius: 3,
                               opacity: 0.7,

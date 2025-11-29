@@ -360,16 +360,17 @@ export default function YouTubeSearchScreen() {
   const [recentSearches, setRecentSearches] = useState(INITIAL_RECENT_SEARCHES);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
 
-  const handleSearch = useCallback(async () => {
-    if (!searchQuery.trim()) return;
+  // Execute search with a specific query string
+  const executeSearch = useCallback(async (query: string) => {
+    if (!query.trim()) return;
     
     Keyboard.dismiss();
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setIsSearching(true);
     
     // Add to recent searches
-    if (!recentSearches.includes(searchQuery)) {
-      setRecentSearches((prev) => [searchQuery, ...prev.slice(0, 4)]);
+    if (!recentSearches.includes(query)) {
+      setRecentSearches((prev) => [query, ...prev.slice(0, 4)]);
     }
 
     // Simulate API call - In production, use YouTube Data API
@@ -378,19 +379,28 @@ export default function YouTubeSearchScreen() {
       const results = TRENDING_VIDEOS.map((video, index) => ({
         ...video,
         id: `search_${index}`,
-        title: `${searchQuery} - ${video.title}`,
+        title: `${query} - ${video.title}`,
       }));
       setSearchResults(results);
       setIsSearching(false);
     }, 1000);
-  }, [searchQuery, recentSearches]);
+  }, [recentSearches]);
+
+  // Handle search from input field
+  const handleSearch = useCallback(async () => {
+    executeSearch(searchQuery);
+  }, [searchQuery, executeSearch]);
+
+  // Helper function to build YouTube search URL
+  const buildYouTubeSearchUrl = useCallback((query: string) => {
+    return `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
+  }, []);
 
   const handleVideoPress = useCallback((video: YouTubeVideo) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     showToast(`Opening: ${video.title}`, "info");
-    // In production, this would open YouTube or an in-app player
-    Linking.openURL(`https://www.youtube.com/results?search_query=${encodeURIComponent(video.title)}`);
-  }, [showToast]);
+    Linking.openURL(buildYouTubeSearchUrl(video.title));
+  }, [showToast, buildYouTubeSearchUrl]);
 
   const handleDownload = useCallback((video: YouTubeVideo) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -400,8 +410,8 @@ export default function YouTubeSearchScreen() {
     );
     // Note: Direct downloading from YouTube violates their ToS
     // This would need a proper backend implementation with proper licensing
-    Linking.openURL(`https://www.youtube.com/results?search_query=${encodeURIComponent(video.title)}`);
-  }, [showToast]);
+    Linking.openURL(buildYouTubeSearchUrl(video.title));
+  }, [showToast, buildYouTubeSearchUrl]);
 
   const handleCategoryPress = useCallback((categoryId: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -625,7 +635,7 @@ export default function YouTubeSearchScreen() {
                 key={index}
                 onPress={() => {
                   setSearchQuery(search);
-                  handleSearch();
+                  executeSearch(search);
                 }}
                 style={{
                   flexDirection: "row",
