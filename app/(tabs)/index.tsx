@@ -203,18 +203,60 @@ export default function HomeScreen() {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 setShowSearchModal(true);
               }}
-              style={{
-                marginTop: 20, flexDirection: "row", alignItems: "center",
-                backgroundColor: isDark ? "rgba(30, 41, 59, 0.6)" : "rgba(241, 245, 249, 0.9)",
-                borderRadius: 16, paddingHorizontal: 16, paddingVertical: 16,
-                borderWidth: isDark ? 0 : 1, borderColor: theme.border,
-              }}
+              activeOpacity={0.9}
             >
-              <Ionicons name="search" size={20} color={theme.textSecondary} />
-              <Text style={{ color: theme.textMuted, marginLeft: 12, flex: 1 }}>Search movies, series...</Text>
-              <View style={{ backgroundColor: theme.primary, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12 }}>
-                <Ionicons name="options" size={16} color="white" />
-              </View>
+              <LinearGradient
+                colors={isDark 
+                  ? ["rgba(30, 41, 59, 0.9)", "rgba(30, 41, 59, 0.7)"]
+                  : ["rgba(255, 255, 255, 0.95)", "rgba(241, 245, 249, 0.9)"]
+                }
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={{
+                  marginTop: 20, 
+                  flexDirection: "row", 
+                  alignItems: "center",
+                  borderRadius: 20, 
+                  paddingHorizontal: 20, 
+                  paddingVertical: 16,
+                  borderWidth: 1, 
+                  borderColor: isDark ? "rgba(139, 92, 246, 0.3)" : theme.border,
+                  shadowColor: Colors.primary,
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: isDark ? 0.2 : 0.1,
+                  shadowRadius: 12,
+                  elevation: 4,
+                }}
+              >
+                <View style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 12,
+                  backgroundColor: `${theme.primary}20`,
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}>
+                  <Ionicons name="search" size={20} color={theme.primary} />
+                </View>
+                <View style={{ flex: 1, marginLeft: 14 }}>
+                  <Text style={{ color: theme.text, fontWeight: "600", fontSize: 15 }}>Search movies, series...</Text>
+                  <Text style={{ color: theme.textMuted, fontSize: 12, marginTop: 2 }}>Discover your next favorite</Text>
+                </View>
+                <LinearGradient
+                  colors={[Colors.primary, Colors.primaryDark]}
+                  style={{ 
+                    paddingHorizontal: 14, 
+                    paddingVertical: 10, 
+                    borderRadius: 12,
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: 6,
+                  }}
+                >
+                  <Ionicons name="mic" size={16} color="white" />
+                  <Ionicons name="options" size={16} color="white" />
+                </LinearGradient>
+              </LinearGradient>
             </TouchableOpacity>
           </Animated.View>
         </Animated.View>
@@ -316,6 +358,46 @@ export default function HomeScreen() {
             ))}
           </ScrollView>
         </View>
+
+        {/* Music Section */}
+        <Animated.View entering={FadeInDown.delay(450).springify()} style={{ paddingHorizontal: 20, marginBottom: 32 }}>
+          <TouchableOpacity
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.push("/songs");
+            }}
+            activeOpacity={0.9}
+          >
+            <LinearGradient
+              colors={["#ec4899", "#8b5cf6", "#6366f1"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={{
+                borderRadius: 24,
+                padding: 24,
+                flexDirection: "row",
+                alignItems: "center",
+              }}
+            >
+              <View style={{
+                width: 64, height: 64, borderRadius: 20,
+                backgroundColor: "rgba(255, 255, 255, 0.2)",
+                alignItems: "center", justifyContent: "center",
+              }}>
+                <Ionicons name="musical-notes" size={32} color="white" />
+              </View>
+              <View style={{ flex: 1, marginLeft: 16 }}>
+                <Text style={{ color: "white", fontSize: 20, fontWeight: "800", marginBottom: 4 }}>
+                  Soundtracks & Music
+                </Text>
+                <Text style={{ color: "rgba(255, 255, 255, 0.8)", fontSize: 14 }}>
+                  Explore movie soundtracks, trending songs & more
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={24} color="white" />
+            </LinearGradient>
+          </TouchableOpacity>
+        </Animated.View>
 
         {/* Categories */}
         <Animated.View entering={FadeInDown.delay(500).springify()} style={{ paddingHorizontal: 20, marginBottom: 40 }}>
