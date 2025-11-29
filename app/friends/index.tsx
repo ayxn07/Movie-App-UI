@@ -1,5 +1,4 @@
 import { Ionicons } from "@expo/vector-icons";
-import { FlashList } from "@shopify/flash-list";
 import { Image } from "expo-image";
 import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
@@ -11,6 +10,7 @@ import Animated, {
   FadeIn,
   FadeInDown,
   FadeInRight,
+  FadeInUp,
   useAnimatedStyle,
   useSharedValue,
   withSpring,
@@ -189,13 +189,23 @@ export default function FriendsScreen() {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
               router.push("/addfriend");
             }}
-            style={{
-              width: 44, height: 44, borderRadius: 22,
-              backgroundColor: theme.primary,
-              alignItems: "center", justifyContent: "center",
-            }}
           >
-            <Ionicons name="person-add" size={20} color="white" />
+            <LinearGradient
+              colors={[Colors.primary, Colors.primaryDark]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={{
+                width: 44, height: 44, borderRadius: 22,
+                alignItems: "center", justifyContent: "center",
+                shadowColor: Colors.primary,
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.4,
+                shadowRadius: 8,
+                elevation: 6,
+              }}
+            >
+              <Ionicons name="person-add" size={20} color="white" />
+            </LinearGradient>
           </TouchableOpacity>
         </View>
 
@@ -293,6 +303,44 @@ export default function FriendsScreen() {
           </Animated.View>
         )}
       </ScrollView>
+
+      {/* Floating Add Friend Button */}
+      <Animated.View
+        entering={FadeInUp.delay(400).springify()}
+        style={{
+          position: "absolute",
+          bottom: 100,
+          right: 20,
+        }}
+      >
+        <TouchableOpacity
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            router.push("/addfriend");
+          }}
+          activeOpacity={0.9}
+        >
+          <LinearGradient
+            colors={[Colors.primary, Colors.primaryDark]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={{
+              width: 64,
+              height: 64,
+              borderRadius: 32,
+              alignItems: "center",
+              justifyContent: "center",
+              shadowColor: Colors.primary,
+              shadowOffset: { width: 0, height: 6 },
+              shadowOpacity: 0.5,
+              shadowRadius: 12,
+              elevation: 8,
+            }}
+          >
+            <Ionicons name="person-add" size={28} color="white" />
+          </LinearGradient>
+        </TouchableOpacity>
+      </Animated.View>
     </View>
   );
 }

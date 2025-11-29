@@ -297,7 +297,7 @@ export default function ChatScreen() {
     <KeyboardAvoidingView
       style={{ flex: 1, backgroundColor: theme.background }}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 25}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
     >
       <StatusBar style={isDark ? "light" : "dark"} />
 
@@ -385,10 +385,12 @@ export default function ChatScreen() {
       <ScrollView
         ref={scrollViewRef}
         style={{ flex: 1, paddingHorizontal: 20 }}
-        contentContainerStyle={{ paddingTop: 20, paddingBottom: 20 }}
+        contentContainerStyle={{ paddingTop: 20, paddingBottom: 20, flexGrow: 1 }}
         showsVerticalScrollIndicator={false}
         onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: false })}
         keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="interactive"
+        automaticallyAdjustKeyboardInsets={true}
       >
         {messages.length > 0 ? (
           messages.map((message, index) => (

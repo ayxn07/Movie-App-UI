@@ -205,58 +205,92 @@ export default function HomeScreen() {
               }}
               activeOpacity={0.9}
             >
-              <LinearGradient
-                colors={isDark 
-                  ? ["rgba(30, 41, 59, 0.9)", "rgba(30, 41, 59, 0.7)"]
-                  : ["rgba(255, 255, 255, 0.95)", "rgba(241, 245, 249, 0.9)"]
-                }
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={{
-                  marginTop: 20, 
-                  flexDirection: "row", 
-                  alignItems: "center",
-                  borderRadius: 20, 
-                  paddingHorizontal: 20, 
-                  paddingVertical: 16,
-                  borderWidth: 1, 
-                  borderColor: isDark ? "rgba(139, 92, 246, 0.3)" : theme.border,
-                  shadowColor: Colors.primary,
-                  shadowOffset: { width: 0, height: 4 },
-                  shadowOpacity: isDark ? 0.2 : 0.1,
-                  shadowRadius: 12,
-                  elevation: 4,
-                }}
-              >
+              <View style={{
+                marginTop: 20,
+                borderRadius: 24,
+                overflow: "hidden",
+              }}>
+                {/* Outer glow effect */}
                 <View style={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: 12,
-                  backgroundColor: `${theme.primary}20`,
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}>
-                  <Ionicons name="search" size={20} color={theme.primary} />
-                </View>
-                <View style={{ flex: 1, marginLeft: 14 }}>
-                  <Text style={{ color: theme.text, fontWeight: "600", fontSize: 15 }}>Search movies, series...</Text>
-                  <Text style={{ color: theme.textMuted, fontSize: 12, marginTop: 2 }}>Discover your next favorite</Text>
-                </View>
+                  position: "absolute",
+                  top: -2,
+                  left: -2,
+                  right: -2,
+                  bottom: -2,
+                  borderRadius: 26,
+                  backgroundColor: isDark ? "rgba(139, 92, 246, 0.15)" : "transparent",
+                }} />
                 <LinearGradient
-                  colors={[Colors.primary, Colors.primaryDark]}
-                  style={{ 
-                    paddingHorizontal: 14, 
-                    paddingVertical: 10, 
-                    borderRadius: 12,
-                    flexDirection: "row",
+                  colors={isDark 
+                    ? ["rgba(30, 41, 59, 0.95)", "rgba(15, 23, 42, 0.9)"]
+                    : ["rgba(255, 255, 255, 0.98)", "rgba(248, 250, 252, 0.95)"]
+                  }
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={{
+                    flexDirection: "row", 
                     alignItems: "center",
-                    gap: 6,
+                    borderRadius: 24, 
+                    paddingHorizontal: 18, 
+                    paddingVertical: 14,
+                    borderWidth: 1.5, 
+                    borderColor: isDark ? "rgba(139, 92, 246, 0.4)" : "rgba(139, 92, 246, 0.2)",
+                    shadowColor: Colors.primary,
+                    shadowOffset: { width: 0, height: 8 },
+                    shadowOpacity: isDark ? 0.35 : 0.15,
+                    shadowRadius: 16,
+                    elevation: 8,
                   }}
                 >
-                  <Ionicons name="mic" size={16} color="white" />
-                  <Ionicons name="options" size={16} color="white" />
+                  {/* Search Icon Container with Animated Gradient */}
+                  <LinearGradient
+                    colors={[`${Colors.primary}30`, `${Colors.secondary}20`]}
+                    style={{
+                      width: 44,
+                      height: 44,
+                      borderRadius: 14,
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Ionicons name="search" size={22} color={theme.primary} />
+                  </LinearGradient>
+                  <View style={{ flex: 1, marginLeft: 14 }}>
+                    <Text style={{ color: theme.text, fontWeight: "700", fontSize: 16 }}>Search movies, series...</Text>
+                    <Text style={{ color: theme.textMuted, fontSize: 13, marginTop: 3 }}>Discover your next favorite</Text>
+                  </View>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                    <TouchableOpacity
+                      onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        // Voice search functionality can be added here
+                      }}
+                      style={{
+                        width: 40,
+                        height: 40,
+                        borderRadius: 12,
+                        backgroundColor: `${Colors.secondary}20`,
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <Ionicons name="mic" size={18} color={Colors.secondary} />
+                    </TouchableOpacity>
+                    <LinearGradient
+                      colors={[Colors.primary, Colors.primaryDark]}
+                      style={{ 
+                        width: 40,
+                        height: 40,
+                        borderRadius: 12,
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <Ionicons name="options" size={18} color="white" />
+                    </LinearGradient>
+                  </View>
                 </LinearGradient>
-              </LinearGradient>
+              </View>
             </TouchableOpacity>
           </Animated.View>
         </Animated.View>
