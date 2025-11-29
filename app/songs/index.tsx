@@ -150,11 +150,13 @@ const NowPlayingMini = ({
   isPlaying,
   onPlayPause,
   onNext,
+  onOpenPlayer,
 }: {
   song: (typeof TRENDING_SONGS)[0];
   isPlaying: boolean;
   onPlayPause: () => void;
   onNext: () => void;
+  onOpenPlayer: () => void;
 }) => {
   const { theme, isDark } = useTheme();
   const progress = useSharedValue(0);
@@ -185,45 +187,56 @@ const NowPlayingMini = ({
         right: 20,
       }}
     >
-      <View style={{
-        backgroundColor: isDark ? "rgba(30, 41, 59, 0.98)" : "rgba(255, 255, 255, 0.98)",
-        borderRadius: 20,
-        padding: 12,
-        flexDirection: "row",
-        alignItems: "center",
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.3,
-        shadowRadius: 16,
-        elevation: 8,
-      }}>
-        <Image
-          source={{ uri: song.cover }}
-          style={{ width: 48, height: 48, borderRadius: 12 }}
-          contentFit="cover"
-        />
-        <View style={{ flex: 1, marginLeft: 12 }}>
-          <Text style={{ color: theme.text, fontWeight: "600", fontSize: 14 }} numberOfLines={1}>
-            {song.title}
-          </Text>
-          <Text style={{ color: theme.textSecondary, fontSize: 12 }} numberOfLines={1}>
-            {song.artist}
-          </Text>
-        </View>
-        <TouchableOpacity
-          onPress={onPlayPause}
-          style={{ marginRight: 8 }}
-        >
-          <Ionicons
-            name={isPlaying ? "pause" : "play"}
-            size={28}
-            color={theme.primary}
+      <TouchableOpacity
+        onPress={onOpenPlayer}
+        activeOpacity={0.95}
+      >
+        <View style={{
+          backgroundColor: isDark ? "rgba(30, 41, 59, 0.98)" : "rgba(255, 255, 255, 0.98)",
+          borderRadius: 20,
+          padding: 12,
+          flexDirection: "row",
+          alignItems: "center",
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: 8 },
+          shadowOpacity: 0.3,
+          shadowRadius: 16,
+          elevation: 8,
+        }}>
+          <Image
+            source={{ uri: song.cover }}
+            style={{ width: 48, height: 48, borderRadius: 12 }}
+            contentFit="cover"
           />
-        </TouchableOpacity>
-        <TouchableOpacity onPress={onNext}>
-          <Ionicons name="play-forward" size={24} color={theme.textSecondary} />
-        </TouchableOpacity>
-      </View>
+          <View style={{ flex: 1, marginLeft: 12 }}>
+            <Text style={{ color: theme.text, fontWeight: "600", fontSize: 14 }} numberOfLines={1}>
+              {song.title}
+            </Text>
+            <Text style={{ color: theme.textSecondary, fontSize: 12 }} numberOfLines={1}>
+              {song.artist}
+            </Text>
+          </View>
+          <TouchableOpacity
+            onPress={(e) => {
+              e.stopPropagation();
+              onPlayPause();
+            }}
+            style={{ marginRight: 8 }}
+          >
+            <Ionicons
+              name={isPlaying ? "pause" : "play"}
+              size={28}
+              color={theme.primary}
+            />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={(e) => {
+            e.stopPropagation();
+            onNext();
+          }}>
+            <Ionicons name="play-forward" size={24} color={theme.textSecondary} />
+          </TouchableOpacity>
+        </View>
+      </TouchableOpacity>
       {/* Progress Bar */}
       <View style={{
         height: 3,
@@ -249,11 +262,13 @@ const SongItem = ({
   index,
   onPlay,
   isPlaying,
+  onOpenPlayer,
 }: {
   song: (typeof TRENDING_SONGS)[0];
   index: number;
   onPlay: () => void;
   isPlaying: boolean;
+  onOpenPlayer: () => void;
 }) => {
   const { theme, isDark } = useTheme();
 
@@ -263,6 +278,10 @@ const SongItem = ({
         onPress={() => {
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
           onPlay();
+        }}
+        onLongPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+          onOpenPlayer();
         }}
         style={{
           flexDirection: "row",
@@ -391,6 +410,11 @@ export default function SongsScreen() {
     setIsPlaying(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     showToast(`Now playing: ${TRENDING_SONGS[index].title}`, "info");
+  };
+
+  const handleOpenMusicPlayer = (index: number) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    router.push(`/musicplayer/${TRENDING_SONGS[index].id}`);
   };
 
   const handlePlayPause = () => {
@@ -574,6 +598,7 @@ export default function SongsScreen() {
                 index={index}
                 onPlay={() => handlePlaySong(index)}
                 isPlaying={currentSongIndex === index && isPlaying}
+                onOpenPlayer={() => handleOpenMusicPlayer(index)}
               />
             ))}
           </View>
@@ -666,6 +691,7 @@ export default function SongsScreen() {
           isPlaying={isPlaying}
           onPlayPause={handlePlayPause}
           onNext={handleNext}
+          onOpenPlayer={() => handleOpenMusicPlayer(currentSongIndex)}
         />
       )}
     </View>

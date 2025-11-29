@@ -6,27 +6,36 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import {
+  Dimensions,
   Keyboard,
   Modal,
+  ScrollView,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
 import Animated, {
+  Easing,
   FadeIn,
   FadeInDown,
   FadeInRight,
+  FadeInUp,
   SlideInDown,
   SlideOutDown,
   useAnimatedStyle,
   useSharedValue,
+  withRepeat,
+  withSequence,
   withSpring,
+  withTiming,
 } from "react-native-reanimated";
 
-import { ALL_MOVIES, Colors, GENRES } from "@/constants/data";
+import { ALL_MOVIES, Colors, GENRES, TRENDING, SERIES } from "@/constants/data";
 import { ThemeColors, useTheme } from "@/context";
 import { Genre, Movie } from "@/types";
+
+const { width } = Dimensions.get("window");
 
 // Route constants for navigation
 const ROUTES = {
@@ -38,17 +47,267 @@ interface SearchModalProps {
   onClose: () => void;
 }
 
+// Voice Search Animation Component
+const VoiceSearchIndicator = ({ isListening }: { isListening: boolean }) => {
+  const scale1 = useSharedValue(1);
+  const scale2 = useSharedValue(1);
+  const scale3 = useSharedValue(1);
+
+  useEffect(() => {
+    if (isListening) {
+      scale1.value = withRepeat(
+        withSequence(
+          withTiming(1.3, { duration: 300 }),
+          withTiming(1, { duration: 300 })
+        ),
+        -1,
+        false
+      );
+      scale2.value = withRepeat(
+        withSequence(
+          withTiming(1, { duration: 150 }),
+          withTiming(1.4, { duration: 300 }),
+          withTiming(1, { duration: 150 })
+        ),
+        -1,
+        false
+      );
+      scale3.value = withRepeat(
+        withSequence(
+          withTiming(1, { duration: 300 }),
+          withTiming(1.5, { duration: 300 }),
+          withTiming(1, { duration: 300 })
+        ),
+        -1,
+        false
+      );
+    } else {
+      scale1.value = withTiming(1, { duration: 200 });
+      scale2.value = withTiming(1, { duration: 200 });
+      scale3.value = withTiming(1, { duration: 200 });
+    }
+  }, [isListening, scale1, scale2, scale3]);
+
+  const style1 = useAnimatedStyle(() => ({
+    transform: [{ scale: scale1.value }],
+    opacity: 0.6 / scale1.value,
+  }));
+  const style2 = useAnimatedStyle(() => ({
+    transform: [{ scale: scale2.value }],
+    opacity: 0.4 / scale2.value,
+  }));
+  const style3 = useAnimatedStyle(() => ({
+    transform: [{ scale: scale3.value }],
+    opacity: 0.2 / scale3.value,
+  }));
+
+  return (
+    <View style={{ alignItems: "center", justifyContent: "center", height: 200 }}>
+      <Animated.View
+        style={[
+          {
+            position: "absolute",
+            width: 120,
+            height: 120,
+            borderRadius: 60,
+            backgroundColor: Colors.primary,
+          },
+          style3,
+        ]}
+      />
+      <Animated.View
+        style={[
+          {
+            position: "absolute",
+            width: 90,
+            height: 90,
+            borderRadius: 45,
+            backgroundColor: Colors.primary,
+          },
+          style2,
+        ]}
+      />
+      <Animated.View
+        style={[
+          {
+            position: "absolute",
+            width: 60,
+            height: 60,
+            borderRadius: 30,
+            backgroundColor: Colors.primary,
+          },
+          style1,
+        ]}
+      />
+      <View
+        style={{
+          width: 70,
+          height: 70,
+          borderRadius: 35,
+          backgroundColor: Colors.primary,
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <Ionicons name="mic" size={32} color="white" />
+      </View>
+    </View>
+  );
+};
+
+// Trending Search Card Component
+const TrendingSearchCard = ({
+  movie,
+  index,
+  onPress,
+}: {
+  movie: Movie;
+  index: number;
+  onPress: () => void;
+}) => {
+  const { theme, isDark } = useTheme();
+
+  return (
+    <Animated.View
+      entering={FadeInRight.delay(index * 60).springify()}
+      style={{ marginRight: 12 }}
+    >
+      <TouchableOpacity
+        onPress={onPress}
+        activeOpacity={0.9}
+        style={{ width: 140 }}
+      >
+        <View
+          style={{
+            borderRadius: 16,
+            overflow: "hidden",
+            backgroundColor: isDark ? "rgba(30, 41, 59, 0.6)" : theme.card,
+          }}
+        >
+          <Image
+            source={{ uri: movie.image }}
+            style={{ width: 140, height: 100 }}
+            contentFit="cover"
+          />
+          <LinearGradient
+            colors={["transparent", "rgba(0,0,0,0.8)"]}
+            style={{
+              position: "absolute",
+              bottom: 0,
+              left: 0,
+              right: 0,
+              height: 60,
+            }}
+          />
+          <View
+            style={{
+              position: "absolute",
+              top: 8,
+              left: 8,
+              backgroundColor: Colors.primary,
+              paddingHorizontal: 8,
+              paddingVertical: 4,
+              borderRadius: 8,
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 4,
+            }}
+          >
+            <Ionicons name="trending-up" size={12} color="white" />
+            <Text style={{ color: "white", fontSize: 10, fontWeight: "700" }}>
+              #{index + 1}
+            </Text>
+          </View>
+          <View style={{ padding: 10 }}>
+            <Text
+              style={{
+                color: theme.text,
+                fontWeight: "700",
+                fontSize: 13,
+              }}
+              numberOfLines={1}
+            >
+              {movie.title}
+            </Text>
+            <Text
+              style={{ color: theme.textSecondary, fontSize: 11, marginTop: 2 }}
+            >
+              {movie.genre} • {movie.year}
+            </Text>
+          </View>
+        </View>
+      </TouchableOpacity>
+    </Animated.View>
+  );
+};
+
+// Quick Category Card Component
+const QuickCategoryCard = ({
+  icon,
+  title,
+  color,
+  index,
+  onPress,
+}: {
+  icon: string;
+  title: string;
+  color: string;
+  index: number;
+  onPress: () => void;
+}) => {
+  const { theme, isDark } = useTheme();
+
+  return (
+    <Animated.View
+      entering={FadeInUp.delay(index * 50).springify()}
+      style={{ width: (width - 60) / 2, marginBottom: 12 }}
+    >
+      <TouchableOpacity
+        onPress={onPress}
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          backgroundColor: isDark ? "rgba(30, 41, 59, 0.6)" : theme.card,
+          borderRadius: 16,
+          padding: 14,
+          borderWidth: isDark ? 0 : 1,
+          borderColor: theme.border,
+        }}
+      >
+        <View
+          style={{
+            width: 44,
+            height: 44,
+            borderRadius: 12,
+            backgroundColor: `${color}20`,
+            alignItems: "center",
+            justifyContent: "center",
+            marginRight: 12,
+          }}
+        >
+          <Ionicons name={icon as any} size={22} color={color} />
+        </View>
+        <Text style={{ color: theme.text, fontWeight: "600", fontSize: 14 }}>
+          {title}
+        </Text>
+      </TouchableOpacity>
+    </Animated.View>
+  );
+};
+
 // Search Result Item
 const SearchResultItem = ({
   movie,
   index,
   theme,
   onPress,
+  isDark,
 }: {
   movie: Movie;
   index: number;
   theme: ThemeColors;
   onPress: () => void;
+  isDark: boolean;
 }) => {
   const scale = useSharedValue(1);
 
@@ -81,7 +340,9 @@ const SearchResultItem = ({
               flexDirection: "row",
               borderRadius: 20,
               overflow: "hidden",
-              backgroundColor: theme.card,
+              backgroundColor: isDark ? "rgba(30, 41, 59, 0.8)" : theme.card,
+              borderWidth: isDark ? 0 : 1,
+              borderColor: theme.border,
             }}
           >
             <View style={{ width: 100, height: 140 }}>
@@ -212,7 +473,15 @@ const GenreFilterChip = ({
 );
 
 // Recent Searches
-const RECENT_SEARCHES = ["Dune", "Batman", "Interstellar", "Marvel"];
+const RECENT_SEARCHES = ["Dune", "Batman", "Interstellar", "Marvel", "Thriller"];
+
+// Quick categories
+const QUICK_CATEGORIES = [
+  { icon: "flame", title: "Trending", color: Colors.primary },
+  { icon: "star", title: "Top Rated", color: Colors.star },
+  { icon: "tv", title: "TV Series", color: Colors.secondary },
+  { icon: "musical-notes", title: "Music", color: Colors.accent },
+];
 
 export const SearchModal: React.FC<SearchModalProps> = ({ visible, onClose }) => {
   const { theme, isDark } = useTheme();
@@ -222,6 +491,8 @@ export const SearchModal: React.FC<SearchModalProps> = ({ visible, onClose }) =>
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
   const [showFilters, setShowFilters] = useState(false);
+  const [isVoiceSearching, setIsVoiceSearching] = useState(false);
+  const [recentSearches, setRecentSearches] = useState(RECENT_SEARCHES);
 
   // Focus input when modal opens
   useEffect(() => {
@@ -233,6 +504,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({ visible, onClose }) =>
       setSearchQuery("");
       setSelectedGenres([]);
       setShowFilters(false);
+      setIsVoiceSearching(false);
     }
   }, [visible]);
 
@@ -274,11 +546,44 @@ export const SearchModal: React.FC<SearchModalProps> = ({ visible, onClose }) =>
     setSearchQuery(term);
   }, []);
 
+  const clearRecentSearch = useCallback((term: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setRecentSearches((prev) => prev.filter((t) => t !== term));
+  }, []);
+
+  const handleVoiceSearch = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setIsVoiceSearching(true);
+    // Simulate voice search
+    setTimeout(() => {
+      setIsVoiceSearching(false);
+      setSearchQuery("Batman");
+    }, 3000);
+  }, []);
+
+  const handleCategoryPress = useCallback(
+    (category: string) => {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      Keyboard.dismiss();
+      onClose();
+      if (category === "Trending") {
+        router.push("/seeall/trending");
+      } else if (category === "Top Rated") {
+        router.push("/seeall/top10");
+      } else if (category === "TV Series") {
+        router.push("/category/series");
+      } else if (category === "Music") {
+        router.push("/songs");
+      }
+    },
+    [onClose, router]
+  );
+
   return (
     <Modal visible={visible} transparent animationType="none" onRequestClose={onClose}>
-      <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.5)" }}>
+      <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.6)" }}>
         <TouchableOpacity
-          style={{ height: 60 }}
+          style={{ height: 50 }}
           activeOpacity={1}
           onPress={() => {
             Keyboard.dismiss();
@@ -295,6 +600,24 @@ export const SearchModal: React.FC<SearchModalProps> = ({ visible, onClose }) =>
             borderTopRightRadius: 32,
           }}
         >
+          {/* Background Gradient */}
+          <LinearGradient
+            colors={
+              isDark
+                ? ["rgba(30, 27, 75, 0.3)", "transparent"]
+                : ["rgba(139, 92, 246, 0.05)", "transparent"]
+            }
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              right: 0,
+              height: 200,
+              borderTopLeftRadius: 32,
+              borderTopRightRadius: 32,
+            }}
+          />
+
           {/* Header with Search */}
           <View style={{ padding: 20 }}>
             {/* Handle Bar */}
@@ -305,75 +628,167 @@ export const SearchModal: React.FC<SearchModalProps> = ({ visible, onClose }) =>
                 height: 4,
                 borderRadius: 2,
                 backgroundColor: theme.textMuted,
-                marginBottom: 16,
+                marginBottom: 20,
               }}
             />
 
-            {/* Search Input */}
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                borderRadius: 16,
-                paddingHorizontal: 16,
-                paddingVertical: 14,
-                backgroundColor: isDark ? "rgba(30, 41, 59, 0.8)" : "rgba(241, 245, 249, 0.9)",
-              }}
-            >
-              <Ionicons name="search" size={20} color={theme.textSecondary} />
-              <TextInput
-                ref={inputRef}
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-                placeholder="Search movies, series, actors..."
-                placeholderTextColor={theme.textMuted}
-                style={{ flex: 1, marginLeft: 12, fontSize: 16, color: theme.text }}
-                returnKeyType="search"
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
-              {searchQuery.length > 0 && (
-                <TouchableOpacity
-                  onPress={() => setSearchQuery("")}
-                  style={{ marginRight: 8 }}
-                >
-                  <Ionicons name="close-circle" size={20} color={theme.textSecondary} />
-                </TouchableOpacity>
-              )}
-              <TouchableOpacity
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  setShowFilters(!showFilters);
-                }}
+            {/* Title */}
+            <Animated.View entering={FadeInDown.delay(100)}>
+              <Text
                 style={{
-                  backgroundColor: showFilters ? theme.primary : "transparent",
-                  paddingHorizontal: 12,
-                  paddingVertical: 6,
-                  borderRadius: 12,
+                  color: theme.text,
+                  fontSize: 26,
+                  fontWeight: "900",
+                  marginBottom: 16,
                 }}
               >
-                <Ionicons
-                  name="options"
-                  size={18}
-                  color={showFilters ? "white" : theme.textSecondary}
+                Discover
+              </Text>
+            </Animated.View>
+
+            {/* Search Input */}
+            <Animated.View entering={FadeInDown.delay(150)}>
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  borderRadius: 20,
+                  paddingHorizontal: 18,
+                  paddingVertical: 16,
+                  backgroundColor: isDark
+                    ? "rgba(30, 41, 59, 0.9)"
+                    : "rgba(241, 245, 249, 0.95)",
+                  borderWidth: 1,
+                  borderColor: isDark
+                    ? "rgba(139, 92, 246, 0.3)"
+                    : "rgba(139, 92, 246, 0.15)",
+                  shadowColor: Colors.primary,
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: 0.1,
+                  shadowRadius: 8,
+                  elevation: 4,
+                }}
+              >
+                <View
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: 12,
+                    backgroundColor: `${Colors.primary}20`,
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <Ionicons name="search" size={20} color={Colors.primary} />
+                </View>
+                <TextInput
+                  ref={inputRef}
+                  value={searchQuery}
+                  onChangeText={setSearchQuery}
+                  placeholder="Search movies, series, actors..."
+                  placeholderTextColor={theme.textMuted}
+                  style={{
+                    flex: 1,
+                    marginLeft: 14,
+                    fontSize: 16,
+                    color: theme.text,
+                    fontWeight: "500",
+                  }}
+                  returnKeyType="search"
+                  autoCapitalize="none"
+                  autoCorrect={false}
                 />
-              </TouchableOpacity>
-            </View>
+                {searchQuery.length > 0 && (
+                  <TouchableOpacity
+                    onPress={() => setSearchQuery("")}
+                    style={{ marginRight: 12 }}
+                  >
+                    <Ionicons name="close-circle" size={22} color={theme.textSecondary} />
+                  </TouchableOpacity>
+                )}
+                <TouchableOpacity
+                  onPress={handleVoiceSearch}
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: 12,
+                    backgroundColor: `${Colors.secondary}20`,
+                    alignItems: "center",
+                    justifyContent: "center",
+                    marginRight: 8,
+                  }}
+                >
+                  <Ionicons name="mic" size={18} color={Colors.secondary} />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    setShowFilters(!showFilters);
+                  }}
+                >
+                  <LinearGradient
+                    colors={
+                      showFilters
+                        ? [Colors.primary, Colors.primaryDark]
+                        : ["transparent", "transparent"]
+                    }
+                    style={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: 12,
+                      alignItems: "center",
+                      justifyContent: "center",
+                      backgroundColor: showFilters ? undefined : `${Colors.primary}10`,
+                    }}
+                  >
+                    <Ionicons
+                      name="options"
+                      size={18}
+                      color={showFilters ? "white" : Colors.primary}
+                    />
+                  </LinearGradient>
+                </TouchableOpacity>
+              </View>
+            </Animated.View>
 
             {/* Genre Filters */}
             {showFilters && (
-              <Animated.View entering={FadeInDown.springify()} style={{ marginTop: 16 }}>
-                <Text
+              <Animated.View entering={FadeInDown.springify()} style={{ marginTop: 20 }}>
+                <View
                   style={{
-                    fontSize: 14,
-                    fontWeight: "600",
-                    color: theme.textSecondary,
-                    marginBottom: 12,
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    marginBottom: 14,
                   }}
                 >
-                  Filter by Genre
-                </Text>
-                <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
+                  <Text
+                    style={{
+                      fontSize: 15,
+                      fontWeight: "700",
+                      color: theme.text,
+                    }}
+                  >
+                    Filter by Genre
+                  </Text>
+                  {selectedGenres.length > 0 && (
+                    <TouchableOpacity
+                      onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        setSelectedGenres([]);
+                      }}
+                    >
+                      <Text style={{ color: Colors.primary, fontWeight: "600", fontSize: 13 }}>
+                        Clear all
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={{ paddingRight: 20 }}
+                >
                   {GENRES.map((genre) => (
                     <GenreFilterChip
                       key={genre.name}
@@ -383,159 +798,347 @@ export const SearchModal: React.FC<SearchModalProps> = ({ visible, onClose }) =>
                       theme={theme}
                     />
                   ))}
-                </View>
-                {selectedGenres.length > 0 && (
-                  <TouchableOpacity
-                    onPress={() => {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                      setSelectedGenres([]);
-                    }}
-                    style={{ marginTop: 8 }}
-                  >
-                    <Text style={{ color: theme.primary, fontWeight: "600", fontSize: 13 }}>
-                      Clear filters
-                    </Text>
-                  </TouchableOpacity>
-                )}
+                </ScrollView>
               </Animated.View>
             )}
           </View>
 
           {/* Content */}
-          <View style={{ flex: 1, paddingHorizontal: 20 }}>
-            {/* Recent Searches (when no query) */}
-            {!searchQuery && selectedGenres.length === 0 && (
-              <Animated.View entering={FadeIn}>
+          <ScrollView
+            style={{ flex: 1 }}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ paddingBottom: 100 }}
+            keyboardShouldPersistTaps="handled"
+          >
+            {/* Voice Search Animation */}
+            {isVoiceSearching ? (
+              <Animated.View entering={FadeIn} style={{ paddingHorizontal: 20 }}>
+                <VoiceSearchIndicator isListening={isVoiceSearching} />
                 <Text
                   style={{
-                    fontSize: 16,
-                    fontWeight: "700",
                     color: theme.text,
-                    marginBottom: 16,
+                    fontSize: 18,
+                    fontWeight: "700",
+                    textAlign: "center",
+                    marginTop: 20,
                   }}
                 >
-                  Recent Searches
+                  Listening...
                 </Text>
-                {RECENT_SEARCHES.map((term, index) => (
-                  <Animated.View
-                    key={term}
-                    entering={FadeInRight.delay(index * 50)}
+                <Text
+                  style={{
+                    color: theme.textSecondary,
+                    fontSize: 14,
+                    textAlign: "center",
+                    marginTop: 8,
+                  }}
+                >
+                  Say the name of a movie or series
+                </Text>
+              </Animated.View>
+            ) : !searchQuery && selectedGenres.length === 0 ? (
+              /* Default Content when no search */
+              <View style={{ paddingHorizontal: 20 }}>
+                {/* Quick Categories */}
+                <Animated.View entering={FadeInUp.delay(200)}>
+                  <Text
+                    style={{
+                      fontSize: 18,
+                      fontWeight: "800",
+                      color: theme.text,
+                      marginBottom: 16,
+                    }}
                   >
-                    <TouchableOpacity
-                      onPress={() => handleRecentSearch(term)}
+                    Quick Access
+                  </Text>
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      flexWrap: "wrap",
+                      justifyContent: "space-between",
+                    }}
+                  >
+                    {QUICK_CATEGORIES.map((cat, index) => (
+                      <QuickCategoryCard
+                        key={cat.title}
+                        icon={cat.icon}
+                        title={cat.title}
+                        color={cat.color}
+                        index={index}
+                        onPress={() => handleCategoryPress(cat.title)}
+                      />
+                    ))}
+                  </View>
+                </Animated.View>
+
+                {/* Trending Now Section */}
+                <Animated.View entering={FadeInUp.delay(300)} style={{ marginTop: 24 }}>
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      marginBottom: 16,
+                    }}
+                  >
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                      <Ionicons name="trending-up" size={20} color={Colors.primary} />
+                      <Text
+                        style={{
+                          fontSize: 18,
+                          fontWeight: "800",
+                          color: theme.text,
+                        }}
+                      >
+                        Trending Now
+                      </Text>
+                    </View>
+                  </View>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={{ paddingRight: 20 }}
+                  >
+                    {TRENDING.slice(0, 5).map((movie, index) => (
+                      <TrendingSearchCard
+                        key={movie.id}
+                        movie={movie}
+                        index={index}
+                        onPress={() => handleMoviePress(movie.id)}
+                      />
+                    ))}
+                  </ScrollView>
+                </Animated.View>
+
+                {/* Recent Searches */}
+                {recentSearches.length > 0 && (
+                  <Animated.View entering={FadeInUp.delay(400)} style={{ marginTop: 28 }}>
+                    <View
                       style={{
                         flexDirection: "row",
                         alignItems: "center",
-                        paddingVertical: 12,
-                        borderBottomWidth: 1,
-                        borderBottomColor: theme.border,
+                        justifyContent: "space-between",
+                        marginBottom: 16,
                       }}
                     >
-                      <Ionicons name="time-outline" size={20} color={theme.textMuted} />
-                      <Text style={{ flex: 1, marginLeft: 12, fontSize: 15, color: theme.text }}>
-                        {term}
+                      <Text
+                        style={{
+                          fontSize: 18,
+                          fontWeight: "800",
+                          color: theme.text,
+                        }}
+                      >
+                        Recent Searches
                       </Text>
-                      <Ionicons name="arrow-forward" size={18} color={theme.textMuted} />
-                    </TouchableOpacity>
-                  </Animated.View>
-                ))}
-
-                <Text
-                  style={{
-                    fontSize: 16,
-                    fontWeight: "700",
-                    color: theme.text,
-                    marginTop: 24,
-                    marginBottom: 16,
-                  }}
-                >
-                  Popular Genres
-                </Text>
-                <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
-                  {GENRES.map((genre, index) => (
-                    <Animated.View
-                      key={genre.name}
-                      entering={FadeInDown.delay(index * 50)}
-                    >
                       <TouchableOpacity
                         onPress={() => {
                           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                          onClose();
-                          router.push({
-                            pathname: ROUTES.EXPLORE,
-                          });
+                          setRecentSearches([]);
                         }}
-                        style={{ marginRight: 10, marginBottom: 10 }}
                       >
-                        <LinearGradient
-                          colors={genre.colors}
+                        <Text style={{ color: Colors.primary, fontWeight: "600", fontSize: 13 }}>
+                          Clear all
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                    {recentSearches.map((term, index) => (
+                      <Animated.View key={term} entering={FadeInRight.delay(index * 50)}>
+                        <View
                           style={{
-                            paddingHorizontal: 16,
-                            paddingVertical: 10,
-                            borderRadius: 16,
                             flexDirection: "row",
                             alignItems: "center",
-                            gap: 6,
+                            paddingVertical: 14,
+                            borderBottomWidth: 1,
+                            borderBottomColor: theme.border,
                           }}
                         >
-                          <Ionicons name={genre.icon as any} size={16} color="white" />
-                          <Text style={{ color: "white", fontWeight: "600", fontSize: 13 }}>
-                            {genre.name}
-                          </Text>
-                        </LinearGradient>
-                      </TouchableOpacity>
-                    </Animated.View>
-                  ))}
-                </View>
-              </Animated.View>
-            )}
+                          <TouchableOpacity
+                            onPress={() => handleRecentSearch(term)}
+                            style={{ flex: 1, flexDirection: "row", alignItems: "center" }}
+                          >
+                            <View
+                              style={{
+                                width: 36,
+                                height: 36,
+                                borderRadius: 10,
+                                backgroundColor: isDark
+                                  ? "rgba(30, 41, 59, 0.6)"
+                                  : theme.card,
+                                alignItems: "center",
+                                justifyContent: "center",
+                              }}
+                            >
+                              <Ionicons name="time-outline" size={18} color={theme.textMuted} />
+                            </View>
+                            <Text
+                              style={{
+                                flex: 1,
+                                marginLeft: 14,
+                                fontSize: 15,
+                                color: theme.text,
+                                fontWeight: "500",
+                              }}
+                            >
+                              {term}
+                            </Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            onPress={() => clearRecentSearch(term)}
+                            style={{ padding: 8 }}
+                          >
+                            <Ionicons name="close" size={18} color={theme.textMuted} />
+                          </TouchableOpacity>
+                        </View>
+                      </Animated.View>
+                    ))}
+                  </Animated.View>
+                )}
 
-            {/* Search Results */}
-            {(searchQuery || selectedGenres.length > 0) && (
-              <>
-                <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 16 }}>
-                  <Text style={{ fontSize: 14, color: theme.textSecondary }}>
+                {/* Browse by Genre */}
+                <Animated.View entering={FadeInUp.delay(500)} style={{ marginTop: 28 }}>
+                  <Text
+                    style={{
+                      fontSize: 18,
+                      fontWeight: "800",
+                      color: theme.text,
+                      marginBottom: 16,
+                    }}
+                  >
+                    Browse by Genre
+                  </Text>
+                  <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
+                    {GENRES.map((genre, index) => (
+                      <Animated.View key={genre.name} entering={FadeInDown.delay(index * 40)}>
+                        <TouchableOpacity
+                          onPress={() => {
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                            onClose();
+                            router.push(`/genre/${genre.name}`);
+                          }}
+                          style={{ marginRight: 10, marginBottom: 10 }}
+                        >
+                          <LinearGradient
+                            colors={genre.colors}
+                            style={{
+                              paddingHorizontal: 18,
+                              paddingVertical: 12,
+                              borderRadius: 16,
+                              flexDirection: "row",
+                              alignItems: "center",
+                              gap: 8,
+                            }}
+                          >
+                            <Ionicons name={genre.icon as any} size={16} color="white" />
+                            <Text style={{ color: "white", fontWeight: "700", fontSize: 14 }}>
+                              {genre.name}
+                            </Text>
+                          </LinearGradient>
+                        </TouchableOpacity>
+                      </Animated.View>
+                    ))}
+                  </View>
+                </Animated.View>
+              </View>
+            ) : (
+              /* Search Results */
+              <View style={{ paddingHorizontal: 20 }}>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginBottom: 16,
+                  }}
+                >
+                  <Text style={{ fontSize: 15, color: theme.textSecondary, fontWeight: "600" }}>
                     {filteredMovies.length} results found
                   </Text>
-                </View>
-                <FlashList
-                  data={filteredMovies}
-                  showsVerticalScrollIndicator={false}
-                  contentContainerStyle={{ paddingBottom: 100 }}
-                  renderItem={({ item, index }) => (
-                    <SearchResultItem
-                      movie={item}
-                      index={index}
-                      theme={theme}
-                      onPress={() => handleMoviePress(item.id)}
-                    />
-                  )}
-                  keyExtractor={(item) => item.id.toString()}
-                  estimatedItemSize={152}
-                  ListEmptyComponent={
-                    <View style={{ alignItems: "center", paddingVertical: 60 }}>
-                      <Ionicons name="search-outline" size={48} color={theme.textMuted} />
-                      <Text
-                        style={{ fontSize: 16, marginTop: 16, color: theme.textSecondary }}
-                      >
-                        No results found
-                      </Text>
-                      <Text
-                        style={{
-                          fontSize: 14,
-                          marginTop: 8,
-                          color: theme.textMuted,
-                          textAlign: "center",
-                        }}
-                      >
-                        Try a different search term or filter
-                      </Text>
+                  {selectedGenres.length > 0 && (
+                    <View style={{ flexDirection: "row", gap: 6 }}>
+                      {selectedGenres.map((genre) => (
+                        <View
+                          key={genre}
+                          style={{
+                            backgroundColor: `${Colors.primary}20`,
+                            paddingHorizontal: 10,
+                            paddingVertical: 4,
+                            borderRadius: 8,
+                          }}
+                        >
+                          <Text
+                            style={{
+                              color: Colors.primary,
+                              fontSize: 11,
+                              fontWeight: "600",
+                            }}
+                          >
+                            {genre}
+                          </Text>
+                        </View>
+                      ))}
                     </View>
-                  }
-                />
-              </>
+                  )}
+                </View>
+                {filteredMovies.length > 0 ? (
+                  <FlashList
+                    data={filteredMovies}
+                    showsVerticalScrollIndicator={false}
+                    renderItem={({ item, index }) => (
+                      <SearchResultItem
+                        movie={item}
+                        index={index}
+                        theme={theme}
+                        onPress={() => handleMoviePress(item.id)}
+                        isDark={isDark}
+                      />
+                    )}
+                    keyExtractor={(item) => item.id.toString()}
+                    estimatedItemSize={152}
+                  />
+                ) : (
+                  <Animated.View
+                    entering={FadeIn}
+                    style={{ alignItems: "center", paddingVertical: 60 }}
+                  >
+                    <View
+                      style={{
+                        width: 80,
+                        height: 80,
+                        borderRadius: 40,
+                        backgroundColor: `${Colors.primary}20`,
+                        alignItems: "center",
+                        justifyContent: "center",
+                        marginBottom: 20,
+                      }}
+                    >
+                      <Ionicons name="search-outline" size={40} color={Colors.primary} />
+                    </View>
+                    <Text
+                      style={{
+                        fontSize: 20,
+                        fontWeight: "700",
+                        color: theme.text,
+                        marginBottom: 8,
+                      }}
+                    >
+                      No results found
+                    </Text>
+                    <Text
+                      style={{
+                        fontSize: 14,
+                        color: theme.textSecondary,
+                        textAlign: "center",
+                        paddingHorizontal: 40,
+                        lineHeight: 20,
+                      }}
+                    >
+                      Try a different search term or adjust your filters
+                    </Text>
+                  </Animated.View>
+                )}
+              </View>
             )}
-          </View>
+          </ScrollView>
         </Animated.View>
       </View>
     </Modal>

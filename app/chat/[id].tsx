@@ -208,6 +208,8 @@ export default function ChatScreen() {
 
   const handleEmojiSelected = (emoji: { emoji: string }) => {
     setInputText((prev) => prev + emoji.emoji);
+    // Don't close the picker automatically to allow selecting multiple emojis
+    // User can tap outside or press the button again to close
   };
 
   const friend = friends.find((f) => f.id === friendId);

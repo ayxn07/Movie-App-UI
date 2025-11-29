@@ -1,0 +1,807 @@
+import { Ionicons } from "@expo/vector-icons";
+import { Image } from "expo-image";
+import * as DocumentPicker from "expo-document-picker";
+import * as Haptics from "expo-haptics";
+import * as ImagePicker from "expo-image-picker";
+import { LinearGradient } from "expo-linear-gradient";
+import { useRouter } from "expo-router";
+import { StatusBar } from "expo-status-bar";
+import React, { useState, useCallback } from "react";
+import {
+  Alert,
+  Dimensions,
+  RefreshControl,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+  Modal,
+} from "react-native";
+import Animated, {
+  FadeIn,
+  FadeInDown,
+  FadeInRight,
+  FadeInUp,
+  SlideInDown,
+} from "react-native-reanimated";
+
+import { Colors } from "@/constants/data";
+import { useApp, useTheme } from "@/context";
+
+const { width } = Dimensions.get("window");
+
+// Local media types
+interface LocalMedia {
+  id: string;
+  name: string;
+  type: "video" | "audio";
+  uri: string;
+  size: string;
+  duration?: string;
+  thumbnail?: string;
+  addedAt: Date;
+}
+
+// Sample local media data (simulated)
+const SAMPLE_LOCAL_MEDIA: LocalMedia[] = [
+  {
+    id: "local1",
+    name: "My Vacation Video.mp4",
+    type: "video",
+    uri: "file://local/vacation.mp4",
+    size: "245 MB",
+    duration: "12:34",
+    thumbnail: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400",
+    addedAt: new Date(Date.now() - 1000 * 60 * 60 * 24),
+  },
+  {
+    id: "local2",
+    name: "Birthday Party.mp4",
+    type: "video",
+    uri: "file://local/birthday.mp4",
+    size: "512 MB",
+    duration: "25:10",
+    thumbnail: "https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=400",
+    addedAt: new Date(Date.now() - 1000 * 60 * 60 * 48),
+  },
+  {
+    id: "local3",
+    name: "Favorite Song.mp3",
+    type: "audio",
+    uri: "file://local/song.mp3",
+    size: "8.5 MB",
+    duration: "3:45",
+    thumbnail: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400",
+    addedAt: new Date(Date.now() - 1000 * 60 * 60 * 72),
+  },
+  {
+    id: "local4",
+    name: "Podcast Episode.mp3",
+    type: "audio",
+    uri: "file://local/podcast.mp3",
+    size: "45 MB",
+    duration: "48:22",
+    thumbnail: "https://images.unsplash.com/photo-1478737270239-2f02b77fc618?w=400",
+    addedAt: new Date(Date.now() - 1000 * 60 * 60 * 96),
+  },
+];
+
+// Media Item Component
+const MediaItem = ({
+  media,
+  index,
+  onPress,
+  onDelete,
+}: {
+  media: LocalMedia;
+  index: number;
+  onPress: () => void;
+  onDelete: () => void;
+}) => {
+  const { theme, isDark } = useTheme();
+
+  return (
+    <Animated.View entering={FadeInRight.delay(index * 80).springify()}>
+      <TouchableOpacity
+        onPress={onPress}
+        onLongPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+          Alert.alert(
+            "Delete Media",
+            `Are you sure you want to delete "${media.name}"?`,
+            [
+              { text: "Cancel", style: "cancel" },
+              { text: "Delete", style: "destructive", onPress: onDelete },
+            ]
+          );
+        }}
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          backgroundColor: isDark ? "rgba(30, 41, 59, 0.6)" : theme.card,
+          borderRadius: 16,
+          padding: 12,
+          marginBottom: 12,
+          borderWidth: isDark ? 0 : 1,
+          borderColor: theme.border,
+        }}
+      >
+        {/* Thumbnail */}
+        <View
+          style={{
+            width: 70,
+            height: 70,
+            borderRadius: 12,
+            overflow: "hidden",
+            backgroundColor: isDark ? "#1e293b" : "#e2e8f0",
+          }}
+        >
+          {media.thumbnail ? (
+            <Image
+              source={{ uri: media.thumbnail }}
+              style={{ width: "100%", height: "100%" }}
+              contentFit="cover"
+            />
+          ) : (
+            <View
+              style={{
+                flex: 1,
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Ionicons
+                name={media.type === "video" ? "videocam" : "musical-notes"}
+                size={28}
+                color={theme.textMuted}
+              />
+            </View>
+          )}
+          {/* Play icon overlay */}
+          <View
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: "rgba(0,0,0,0.3)",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Ionicons name="play-circle" size={32} color="white" />
+          </View>
+        </View>
+
+        {/* Info */}
+        <View style={{ flex: 1, marginLeft: 14 }}>
+          <Text
+            style={{ color: theme.text, fontWeight: "700", fontSize: 15 }}
+            numberOfLines={1}
+          >
+            {media.name}
+          </Text>
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              marginTop: 6,
+              gap: 12,
+            }}
+          >
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                backgroundColor:
+                  media.type === "video"
+                    ? `${Colors.primary}20`
+                    : `${Colors.secondary}20`,
+                paddingHorizontal: 8,
+                paddingVertical: 4,
+                borderRadius: 6,
+              }}
+            >
+              <Ionicons
+                name={media.type === "video" ? "videocam" : "musical-notes"}
+                size={12}
+                color={media.type === "video" ? Colors.primary : Colors.secondary}
+              />
+              <Text
+                style={{
+                  color: media.type === "video" ? Colors.primary : Colors.secondary,
+                  fontSize: 11,
+                  fontWeight: "600",
+                  marginLeft: 4,
+                }}
+              >
+                {media.type.toUpperCase()}
+              </Text>
+            </View>
+            <Text style={{ color: theme.textSecondary, fontSize: 12 }}>
+              {media.duration}
+            </Text>
+            <Text style={{ color: theme.textMuted, fontSize: 12 }}>{media.size}</Text>
+          </View>
+        </View>
+
+        {/* More options */}
+        <TouchableOpacity
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          }}
+          style={{ padding: 8 }}
+        >
+          <Ionicons name="ellipsis-vertical" size={20} color={theme.textMuted} />
+        </TouchableOpacity>
+      </TouchableOpacity>
+    </Animated.View>
+  );
+};
+
+// Empty State Component
+const EmptyState = ({ onUpload }: { onUpload: () => void }) => {
+  const { theme } = useTheme();
+
+  return (
+    <Animated.View
+      entering={FadeIn.delay(200)}
+      style={{
+        alignItems: "center",
+        paddingVertical: 60,
+        paddingHorizontal: 40,
+      }}
+    >
+      <View
+        style={{
+          width: 100,
+          height: 100,
+          borderRadius: 50,
+          backgroundColor: `${Colors.primary}20`,
+          alignItems: "center",
+          justifyContent: "center",
+          marginBottom: 24,
+        }}
+      >
+        <Ionicons name="cloud-upload-outline" size={48} color={Colors.primary} />
+      </View>
+      <Text
+        style={{
+          color: theme.text,
+          fontSize: 22,
+          fontWeight: "800",
+          marginBottom: 8,
+          textAlign: "center",
+        }}
+      >
+        No Local Media
+      </Text>
+      <Text
+        style={{
+          color: theme.textSecondary,
+          fontSize: 15,
+          textAlign: "center",
+          lineHeight: 22,
+          marginBottom: 24,
+        }}
+      >
+        Upload videos and music from your device to watch and listen offline
+      </Text>
+      <TouchableOpacity onPress={onUpload}>
+        <LinearGradient
+          colors={[Colors.primary, Colors.primaryDark]}
+          style={{
+            paddingHorizontal: 32,
+            paddingVertical: 16,
+            borderRadius: 16,
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 8,
+          }}
+        >
+          <Ionicons name="add" size={22} color="white" />
+          <Text style={{ color: "white", fontWeight: "700", fontSize: 16 }}>
+            Upload Media
+          </Text>
+        </LinearGradient>
+      </TouchableOpacity>
+    </Animated.View>
+  );
+};
+
+// Upload Modal Component
+const UploadModal = ({
+  visible,
+  onClose,
+  onUploadVideo,
+  onUploadAudio,
+}: {
+  visible: boolean;
+  onClose: () => void;
+  onUploadVideo: () => void;
+  onUploadAudio: () => void;
+}) => {
+  const { theme, isDark } = useTheme();
+
+  return (
+    <Modal visible={visible} transparent animationType="none" onRequestClose={onClose}>
+      <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.5)" }}>
+        <TouchableOpacity style={{ flex: 1 }} activeOpacity={1} onPress={onClose} />
+        <Animated.View
+          entering={SlideInDown.springify().damping(20)}
+          style={{
+            backgroundColor: theme.background,
+            borderTopLeftRadius: 32,
+            borderTopRightRadius: 32,
+            paddingTop: 20,
+            paddingBottom: 40,
+            paddingHorizontal: 20,
+          }}
+        >
+          {/* Handle Bar */}
+          <View
+            style={{
+              alignSelf: "center",
+              width: 40,
+              height: 4,
+              borderRadius: 2,
+              backgroundColor: theme.textMuted,
+              marginBottom: 24,
+            }}
+          />
+
+          <Text
+            style={{
+              color: theme.text,
+              fontSize: 22,
+              fontWeight: "800",
+              marginBottom: 24,
+              textAlign: "center",
+            }}
+          >
+            Upload Media
+          </Text>
+
+          {/* Video Upload Option */}
+          <TouchableOpacity
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              onUploadVideo();
+            }}
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              backgroundColor: isDark ? "rgba(30, 41, 59, 0.6)" : theme.card,
+              borderRadius: 16,
+              padding: 20,
+              marginBottom: 12,
+              borderWidth: isDark ? 0 : 1,
+              borderColor: theme.border,
+            }}
+          >
+            <View
+              style={{
+                width: 56,
+                height: 56,
+                borderRadius: 16,
+                backgroundColor: `${Colors.primary}20`,
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Ionicons name="videocam" size={28} color={Colors.primary} />
+            </View>
+            <View style={{ flex: 1, marginLeft: 16 }}>
+              <Text style={{ color: theme.text, fontWeight: "700", fontSize: 17 }}>
+                Upload Video
+              </Text>
+              <Text style={{ color: theme.textSecondary, fontSize: 13, marginTop: 4 }}>
+                MP4, MOV, AVI formats supported
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={22} color={theme.textMuted} />
+          </TouchableOpacity>
+
+          {/* Audio Upload Option */}
+          <TouchableOpacity
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              onUploadAudio();
+            }}
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              backgroundColor: isDark ? "rgba(30, 41, 59, 0.6)" : theme.card,
+              borderRadius: 16,
+              padding: 20,
+              marginBottom: 12,
+              borderWidth: isDark ? 0 : 1,
+              borderColor: theme.border,
+            }}
+          >
+            <View
+              style={{
+                width: 56,
+                height: 56,
+                borderRadius: 16,
+                backgroundColor: `${Colors.secondary}20`,
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Ionicons name="musical-notes" size={28} color={Colors.secondary} />
+            </View>
+            <View style={{ flex: 1, marginLeft: 16 }}>
+              <Text style={{ color: theme.text, fontWeight: "700", fontSize: 17 }}>
+                Upload Audio
+              </Text>
+              <Text style={{ color: theme.textSecondary, fontSize: 13, marginTop: 4 }}>
+                MP3, WAV, AAC formats supported
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={22} color={theme.textMuted} />
+          </TouchableOpacity>
+
+          {/* From Gallery Option */}
+          <TouchableOpacity
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              onUploadVideo();
+            }}
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              backgroundColor: isDark ? "rgba(30, 41, 59, 0.6)" : theme.card,
+              borderRadius: 16,
+              padding: 20,
+              borderWidth: isDark ? 0 : 1,
+              borderColor: theme.border,
+            }}
+          >
+            <View
+              style={{
+                width: 56,
+                height: 56,
+                borderRadius: 16,
+                backgroundColor: `${Colors.accent}20`,
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Ionicons name="images" size={28} color={Colors.accent} />
+            </View>
+            <View style={{ flex: 1, marginLeft: 16 }}>
+              <Text style={{ color: theme.text, fontWeight: "700", fontSize: 17 }}>
+                From Gallery
+              </Text>
+              <Text style={{ color: theme.textSecondary, fontSize: 13, marginTop: 4 }}>
+                Select from your photo library
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={22} color={theme.textMuted} />
+          </TouchableOpacity>
+        </Animated.View>
+      </View>
+    </Modal>
+  );
+};
+
+export default function LocalMediaScreen() {
+  const { theme, isDark } = useTheme();
+  const router = useRouter();
+  const { showToast } = useApp();
+
+  const [localMedia, setLocalMedia] = useState<LocalMedia[]>(SAMPLE_LOCAL_MEDIA);
+  const [refreshing, setRefreshing] = useState(false);
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [activeFilter, setActiveFilter] = useState<"all" | "video" | "audio">("all");
+
+  const filteredMedia = localMedia.filter((media) => {
+    if (activeFilter === "all") return true;
+    return media.type === activeFilter;
+  });
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    // Simulate refresh
+    setTimeout(() => {
+      setRefreshing(false);
+      showToast("Library refreshed", "info");
+    }, 1000);
+  }, [showToast]);
+
+  const handleUploadVideo = async () => {
+    setShowUploadModal(false);
+
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Videos,
+        allowsEditing: false,
+        quality: 1,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        const asset = result.assets[0];
+        const newMedia: LocalMedia = {
+          id: `local_${Date.now()}`,
+          name: asset.fileName || "Video.mp4",
+          type: "video",
+          uri: asset.uri,
+          size: asset.fileSize ? `${Math.round(asset.fileSize / 1024 / 1024)} MB` : "Unknown",
+          duration: asset.duration ? `${Math.floor(asset.duration / 60)}:${Math.floor(asset.duration % 60).toString().padStart(2, "0")}` : "Unknown",
+          thumbnail: asset.uri,
+          addedAt: new Date(),
+        };
+        setLocalMedia((prev) => [newMedia, ...prev]);
+        showToast("Video added successfully!", "success");
+      }
+    } catch (error) {
+      showToast("Failed to upload video", "error");
+    }
+  };
+
+  const handleUploadAudio = async () => {
+    setShowUploadModal(false);
+
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: "audio/*",
+        copyToCacheDirectory: true,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        const asset = result.assets[0];
+        const newMedia: LocalMedia = {
+          id: `local_${Date.now()}`,
+          name: asset.name || "Audio.mp3",
+          type: "audio",
+          uri: asset.uri,
+          size: asset.size ? `${Math.round(asset.size / 1024 / 1024)} MB` : "Unknown",
+          addedAt: new Date(),
+        };
+        setLocalMedia((prev) => [newMedia, ...prev]);
+        showToast("Audio added successfully!", "success");
+      }
+    } catch (error) {
+      showToast("Failed to upload audio", "error");
+    }
+  };
+
+  const handleDeleteMedia = (mediaId: string) => {
+    setLocalMedia((prev) => prev.filter((m) => m.id !== mediaId));
+    showToast("Media deleted", "info");
+  };
+
+  const handlePlayMedia = (media: LocalMedia) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    if (media.type === "video") {
+      showToast(`Playing: ${media.name}`, "info");
+      // In a real app, navigate to video player with the local URI
+    } else {
+      showToast(`Playing: ${media.name}`, "info");
+      // In a real app, navigate to audio player with the local URI
+    }
+  };
+
+  const videoCount = localMedia.filter((m) => m.type === "video").length;
+  const audioCount = localMedia.filter((m) => m.type === "audio").length;
+
+  return (
+    <View style={{ flex: 1, backgroundColor: theme.background }}>
+      <StatusBar style={isDark ? "light" : "dark"} />
+
+      <LinearGradient
+        colors={
+          isDark
+            ? ["#1e1b4b", "#0f172a", "#020617"]
+            : ["#f8fafc", "#f1f5f9", "#e2e8f0"]
+        }
+        style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}
+      />
+
+      <ScrollView
+        style={{ flex: 1 }}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 100 }}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
+        {/* Header */}
+        <Animated.View
+          entering={FadeInDown.springify()}
+          style={{ paddingHorizontal: 20, paddingTop: 56, paddingBottom: 16 }}
+        >
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              marginBottom: 20,
+            }}
+          >
+            <TouchableOpacity
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.back();
+              }}
+              style={{
+                width: 44,
+                height: 44,
+                borderRadius: 22,
+                backgroundColor: isDark
+                  ? "rgba(30, 41, 59, 0.8)"
+                  : "rgba(226, 232, 240, 0.8)",
+                alignItems: "center",
+                justifyContent: "center",
+                marginRight: 16,
+              }}
+            >
+              <Ionicons name="arrow-back" size={24} color={theme.text} />
+            </TouchableOpacity>
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: theme.text, fontSize: 28, fontWeight: "900" }}>
+                My Library
+              </Text>
+              <Text
+                style={{ color: theme.textSecondary, fontSize: 14, marginTop: 2 }}
+              >
+                Your local media collection
+              </Text>
+            </View>
+            <TouchableOpacity
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setShowUploadModal(true);
+              }}
+              style={{
+                width: 44,
+                height: 44,
+                borderRadius: 22,
+                backgroundColor: Colors.primary,
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Ionicons name="add" size={26} color="white" />
+            </TouchableOpacity>
+          </View>
+
+          {/* Stats Cards */}
+          <View style={{ flexDirection: "row", gap: 12, marginBottom: 20 }}>
+            <Animated.View
+              entering={FadeInUp.delay(100)}
+              style={{
+                flex: 1,
+                backgroundColor: isDark ? "rgba(30, 41, 59, 0.6)" : theme.card,
+                borderRadius: 16,
+                padding: 16,
+                borderWidth: isDark ? 0 : 1,
+                borderColor: theme.border,
+              }}
+            >
+              <View
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: 12,
+                  backgroundColor: `${Colors.primary}20`,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  marginBottom: 12,
+                }}
+              >
+                <Ionicons name="videocam" size={22} color={Colors.primary} />
+              </View>
+              <Text style={{ color: theme.text, fontSize: 24, fontWeight: "900" }}>
+                {videoCount}
+              </Text>
+              <Text style={{ color: theme.textSecondary, fontSize: 13 }}>
+                Videos
+              </Text>
+            </Animated.View>
+
+            <Animated.View
+              entering={FadeInUp.delay(150)}
+              style={{
+                flex: 1,
+                backgroundColor: isDark ? "rgba(30, 41, 59, 0.6)" : theme.card,
+                borderRadius: 16,
+                padding: 16,
+                borderWidth: isDark ? 0 : 1,
+                borderColor: theme.border,
+              }}
+            >
+              <View
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: 12,
+                  backgroundColor: `${Colors.secondary}20`,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  marginBottom: 12,
+                }}
+              >
+                <Ionicons name="musical-notes" size={22} color={Colors.secondary} />
+              </View>
+              <Text style={{ color: theme.text, fontSize: 24, fontWeight: "900" }}>
+                {audioCount}
+              </Text>
+              <Text style={{ color: theme.textSecondary, fontSize: 13 }}>
+                Audio Files
+              </Text>
+            </Animated.View>
+          </View>
+
+          {/* Filter Pills */}
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ gap: 10 }}
+          >
+            {(["all", "video", "audio"] as const).map((filter) => (
+              <TouchableOpacity
+                key={filter}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setActiveFilter(filter);
+                }}
+                style={{
+                  backgroundColor:
+                    activeFilter === filter
+                      ? Colors.primary
+                      : isDark
+                      ? "rgba(30, 41, 59, 0.6)"
+                      : theme.card,
+                  paddingHorizontal: 20,
+                  paddingVertical: 12,
+                  borderRadius: 20,
+                }}
+              >
+                <Text
+                  style={{
+                    color: activeFilter === filter ? "white" : theme.text,
+                    fontWeight: "600",
+                    fontSize: 14,
+                  }}
+                >
+                  {filter === "all"
+                    ? "All Media"
+                    : filter === "video"
+                    ? "Videos"
+                    : "Audio"}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </Animated.View>
+
+        {/* Media List */}
+        <View style={{ paddingHorizontal: 20 }}>
+          {filteredMedia.length === 0 ? (
+            <EmptyState onUpload={() => setShowUploadModal(true)} />
+          ) : (
+            filteredMedia.map((media, index) => (
+              <MediaItem
+                key={media.id}
+                media={media}
+                index={index}
+                onPress={() => handlePlayMedia(media)}
+                onDelete={() => handleDeleteMedia(media.id)}
+              />
+            ))
+          )}
+        </View>
+      </ScrollView>
+
+      {/* Upload Modal */}
+      <UploadModal
+        visible={showUploadModal}
+        onClose={() => setShowUploadModal(false)}
+        onUploadVideo={handleUploadVideo}
+        onUploadAudio={handleUploadAudio}
+      />
+    </View>
+  );
+}

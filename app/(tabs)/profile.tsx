@@ -196,7 +196,7 @@ export default function ProfileScreen() {
           <Text className="text-sm font-bold uppercase mb-4" style={{ color: theme.textSecondary }}>
             Quick Access
           </Text>
-          <View className="flex-row justify-between gap-3">
+          <View className="flex-row justify-between gap-3 mb-3">
             <TouchableOpacity
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -238,6 +238,51 @@ export default function ProfileScreen() {
               </View>
               <Text className="font-bold text-sm" style={{ color: theme.text }}>Downloads</Text>
               <Text className="text-xs mt-1" style={{ color: theme.textSecondary }}>Offline</Text>
+            </TouchableOpacity>
+          </View>
+          {/* Second row with Local Media and Music */}
+          <View className="flex-row justify-between gap-3">
+            <TouchableOpacity
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push("/localmedia");
+              }}
+              className="flex-1 rounded-2xl p-4 items-center"
+              style={{ backgroundColor: theme.card }}
+            >
+              <View className="w-12 h-12 rounded-full bg-orange-500/20 items-center justify-center mb-2">
+                <Ionicons name="folder" size={24} color="#f97316" />
+              </View>
+              <Text className="font-bold text-sm" style={{ color: theme.text }}>My Library</Text>
+              <Text className="text-xs mt-1" style={{ color: theme.textSecondary }}>Local Files</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push("/songs");
+              }}
+              className="flex-1 rounded-2xl p-4 items-center"
+              style={{ backgroundColor: theme.card }}
+            >
+              <View className="w-12 h-12 rounded-full bg-pink-500/20 items-center justify-center mb-2">
+                <Ionicons name="musical-notes" size={24} color="#ec4899" />
+              </View>
+              <Text className="font-bold text-sm" style={{ color: theme.text }}>Music</Text>
+              <Text className="text-xs mt-1" style={{ color: theme.textSecondary }}>Soundtracks</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push("/category/live");
+              }}
+              className="flex-1 rounded-2xl p-4 items-center"
+              style={{ backgroundColor: theme.card }}
+            >
+              <View className="w-12 h-12 rounded-full bg-red-500/20 items-center justify-center mb-2">
+                <Ionicons name="radio" size={24} color="#ef4444" />
+              </View>
+              <Text className="font-bold text-sm" style={{ color: theme.text }}>Live TV</Text>
+              <Text className="text-xs mt-1" style={{ color: theme.textSecondary }}>Streaming</Text>
             </TouchableOpacity>
           </View>
         </Animated.View>

@@ -499,7 +499,7 @@ export default function MovieDetailScreen() {
             style={{
               flexDirection: "row",
               justifyContent: "space-around",
-              marginBottom: 24,
+              marginBottom: 12,
               paddingVertical: 16,
               backgroundColor: isDark ? "rgba(30, 41, 59, 0.6)" : "rgba(241, 245, 249, 0.9)",
               borderRadius: 20,
@@ -527,6 +527,37 @@ export default function MovieDetailScreen() {
             <ActionButton icon="chatbubble-outline" label="Reviews" onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
               router.push(`/reviews/${movie.id}`);
+            }} theme={theme} isDark={isDark} />
+          </Animated.View>
+
+          {/* Extra Features */}
+          <Animated.View
+            entering={FadeInUp.delay(175).springify()}
+            style={{
+              flexDirection: "row",
+              justifyContent: "space-around",
+              marginBottom: 24,
+              paddingVertical: 16,
+              backgroundColor: isDark ? "rgba(30, 41, 59, 0.6)" : "rgba(241, 245, 249, 0.9)",
+              borderRadius: 20,
+            }}
+          >
+            <ActionButton icon="people" label="Watch Party" onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              // Watch Party feature placeholder
+              router.push("/friends");
+            }} theme={theme} isDark={isDark} />
+            <ActionButton icon="moon" label="Sleep Timer" onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              // Sleep timer functionality
+            }} theme={theme} isDark={isDark} />
+            <ActionButton icon="tv" label="Cast" onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              // Cast to TV
+            }} theme={theme} isDark={isDark} />
+            <ActionButton icon="headset" label="Audio Only" onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              // Audio only mode
             }} theme={theme} isDark={isDark} />
           </Animated.View>
 
