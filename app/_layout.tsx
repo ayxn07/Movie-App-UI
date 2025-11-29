@@ -11,10 +11,12 @@ import Animated, {
 import { ThemeProvider, AppProvider, useTheme } from "@/context";
 import "./global.css";
 
-// Suppress SafeAreaView deprecation warnings emitted by some libraries
+// Suppress deprecation warnings emitted by libraries that are still being migrated
 LogBox.ignoreLogs([
   "SafeAreaView has been deprecated",
   "Please use 'react-native-safe-area-context' instead",
+  "[expo-av]: Expo AV has been deprecated",
+  "Due to changes in Androids permission requirements",
 ]);
 
 function RootLayoutContent() {
