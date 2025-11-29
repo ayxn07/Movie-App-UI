@@ -419,9 +419,16 @@ export default function YouTubeSearchScreen() {
     
     if (!selectedVideo) return;
 
-    // Request permissions
-    const { status } = await MediaLibrary.requestPermissionsAsync();
-    if (status !== "granted") {
+    // Request permissions with granular options to avoid audio permission issues on Android 13+
+    let permissionResult;
+    try {
+      permissionResult = await MediaLibrary.requestPermissionsAsync(false, ["video", "photo"]);
+    } catch {
+      // Fallback to basic permission request if granular fails
+      permissionResult = await MediaLibrary.requestPermissionsAsync();
+    }
+    
+    if (permissionResult.status !== "granted") {
       Alert.alert(
         "Permission Required",
         "Please grant access to save downloaded files.",

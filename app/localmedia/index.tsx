@@ -1596,8 +1596,9 @@ export default function LocalMediaScreen() {
           first: 100,
           sortBy: [[MediaLibrary.SortBy.modificationTime, false]],
         });
-      } catch (audioError) {
-        console.log("Audio access not available:", audioError);
+      } catch {
+        // Audio access may not be available on Android 13+ without specific permission
+        // This is expected behavior when audio permission is not granted
       }
 
       const newMediaItems: LocalMedia[] = [];
