@@ -1,30 +1,30 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Image } from "expo-image";
 import * as Haptics from "expo-haptics";
+import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useState } from "react";
 import {
-    Dimensions,
-    Modal,
-    ScrollView,
-    Text,
-    TouchableOpacity,
-    View,
+  Dimensions,
+  Modal,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import Animated, {
-    FadeIn,
-    FadeInDown,
-    FadeInUp,
-    SlideInRight,
-    useAnimatedStyle,
-    useSharedValue,
-    withSpring,
+  FadeIn,
+  FadeInDown,
+  FadeInUp,
+  SlideInRight,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
 } from "react-native-reanimated";
 
 import { ALL_MOVIES, Colors, MOVIE_CAST_DATA, type CastMember } from "@/constants/data";
-import { ThemeColors, useApp, useTheme } from "@/context";
+import { ThemeColors, useTheme } from "@/context";
 import { Share } from "react-native";
 
 const { height } = Dimensions.get("window");

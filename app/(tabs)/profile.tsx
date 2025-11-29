@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Image } from "expo-image";
 import * as Haptics from "expo-haptics";
+import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -158,7 +158,7 @@ export default function ProfileScreen() {
                 contentFit="cover"
               />
             </View>
-            <TouchableOpacity 
+            <TouchableOpacity
               className="absolute bottom-0 right-0 w-9 h-9 rounded-full bg-violet-600 items-center justify-center border-4"
               style={{ borderColor: theme.background }}
             >

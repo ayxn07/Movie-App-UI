@@ -1,37 +1,37 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Image } from "expo-image";
 import * as Haptics from "expo-haptics";
+import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useState } from "react";
 import { Modal, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
 import Animated, {
-    Extrapolation,
-    FadeIn,
-    FadeInDown,
-    FadeInUp,
-    interpolate,
-    useAnimatedScrollHandler,
-    useAnimatedStyle,
-    useSharedValue,
+  Extrapolation,
+  FadeIn,
+  FadeInDown,
+  FadeInUp,
+  interpolate,
+  useAnimatedScrollHandler,
+  useAnimatedStyle,
+  useSharedValue,
 } from "react-native-reanimated";
 
 import {
-    GenreButton,
-    MovieCard,
-    NowPlayingCarousel,
-    SectionHeader,
-    TopRatedCard,
+  GenreButton,
+  MovieCard,
+  NowPlayingCarousel,
+  SectionHeader,
+  TopRatedCard,
 } from "@/components";
 import {
-    ALL_MOVIES,
-    Colors,
-    FEATURED_MOVIE,
-    GENRES,
-    MOVIES,
-    TOP_RATED,
-    TRENDING,
+  ALL_MOVIES,
+  Colors,
+  FEATURED_MOVIE,
+  GENRES,
+  MOVIES,
+  TOP_RATED,
+  TRENDING,
 } from "@/constants/data";
 import { useTheme } from "@/context";
 import { ContentType, Movie } from "@/types";
@@ -154,34 +154,34 @@ export default function HomeScreen() {
               <Text style={{ color: theme.text, fontSize: 30, fontWeight: "900", marginTop: 4 }}>MoviesHub</Text>
             </View>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                   router.push("/friends");
                 }}
-                style={{ 
-                  width: 44, height: 44, borderRadius: 22, 
+                style={{
+                  width: 44, height: 44, borderRadius: 22,
                   backgroundColor: isDark ? "rgba(30, 41, 59, 0.8)" : "rgba(226, 232, 240, 0.8)",
-                  alignItems: "center", justifyContent: "center" 
+                  alignItems: "center", justifyContent: "center"
                 }}
               >
                 <Ionicons name="people-outline" size={22} color={theme.text} />
               </TouchableOpacity>
-              <TouchableOpacity 
+              <TouchableOpacity
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                   router.push("/notifications");
                 }}
-                style={{ 
-                  width: 44, height: 44, borderRadius: 22, 
+                style={{
+                  width: 44, height: 44, borderRadius: 22,
                   backgroundColor: isDark ? "rgba(30, 41, 59, 0.8)" : "rgba(226, 232, 240, 0.8)",
-                  alignItems: "center", justifyContent: "center" 
+                  alignItems: "center", justifyContent: "center"
                 }}
               >
                 <Ionicons name="notifications-outline" size={22} color={theme.text} />
                 <View style={{ position: "absolute", top: 8, right: 8, width: 10, height: 10, backgroundColor: theme.danger, borderRadius: 5 }} />
               </TouchableOpacity>
-              <TouchableOpacity 
+              <TouchableOpacity
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                   router.push("/(tabs)/profile");
@@ -198,12 +198,12 @@ export default function HomeScreen() {
 
           {/* Search Bar */}
           <Animated.View entering={FadeInDown.delay(100).springify()}>
-            <TouchableOpacity 
+            <TouchableOpacity
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 setShowSearchModal(true);
               }}
-              style={{ 
+              style={{
                 marginTop: 20, flexDirection: "row", alignItems: "center",
                 backgroundColor: isDark ? "rgba(30, 41, 59, 0.6)" : "rgba(241, 245, 249, 0.9)",
                 borderRadius: 16, paddingHorizontal: 16, paddingVertical: 16,
@@ -226,13 +226,13 @@ export default function HomeScreen() {
         >
           {quickActions.map((item, index) => (
             <Animated.View key={item.label} entering={FadeInUp.delay(200 + index * 50)}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 onPress={() => handleQuickAction(item.type)}
                 style={{ alignItems: "center" }}
               >
                 <View
-                  style={{ 
-                    width: 64, height: 64, borderRadius: 16, 
+                  style={{
+                    width: 64, height: 64, borderRadius: 16,
                     alignItems: "center", justifyContent: "center", marginBottom: 8,
                     backgroundColor: `${item.color}20`,
                   }}
@@ -250,10 +250,10 @@ export default function HomeScreen() {
 
         {/* Popular This Week */}
         <View style={{ marginBottom: 32 }}>
-          <SectionHeader 
-            title="Popular This Week" 
-            icon="trending-up" 
-            delay={300} 
+          <SectionHeader
+            title="Popular This Week"
+            icon="trending-up"
+            delay={300}
             onSeeAllPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
               router.push("/seeall/popular");
@@ -273,9 +273,9 @@ export default function HomeScreen() {
 
         {/* Top 10 */}
         <View style={{ marginBottom: 32 }}>
-          <SectionHeader 
-            title="Top 10 This Week" 
-            icon="trophy" 
+          <SectionHeader
+            title="Top 10 This Week"
+            icon="trophy"
             delay={350}
             onSeeAllPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -296,9 +296,9 @@ export default function HomeScreen() {
 
         {/* Trending Now */}
         <View style={{ marginBottom: 32 }}>
-          <SectionHeader 
-            title="Trending Now" 
-            icon="flame" 
+          <SectionHeader
+            title="Trending Now"
+            icon="flame"
             delay={400}
             onSeeAllPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -336,14 +336,14 @@ export default function HomeScreen() {
             <Ionicons name="play-circle" size={22} color={theme.primary} />
             <Text style={{ color: theme.text, fontSize: 20, fontWeight: "900" }}>Continue Watching</Text>
           </View>
-          
+
           {/* First Continue Watching Item */}
-          <TouchableOpacity 
+          <TouchableOpacity
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
               router.push("/movie/1");
             }}
-            style={{ 
+            style={{
               backgroundColor: isDark ? "rgba(30, 41, 59, 0.6)" : theme.card,
               borderRadius: 24, overflow: "hidden",
               borderWidth: isDark ? 0 : 1, borderColor: theme.border,
@@ -373,12 +373,12 @@ export default function HomeScreen() {
           </TouchableOpacity>
 
           {/* Second Continue Watching Item */}
-          <TouchableOpacity 
+          <TouchableOpacity
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
               router.push("/movie/2");
             }}
-            style={{ 
+            style={{
               backgroundColor: isDark ? "rgba(30, 41, 59, 0.6)" : theme.card,
               borderRadius: 24, overflow: "hidden",
               borderWidth: isDark ? 0 : 1, borderColor: theme.border,
@@ -408,12 +408,12 @@ export default function HomeScreen() {
           </TouchableOpacity>
 
           {/* Third Continue Watching Item */}
-          <TouchableOpacity 
+          <TouchableOpacity
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
               router.push("/movie/6");
             }}
-            style={{ 
+            style={{
               backgroundColor: isDark ? "rgba(30, 41, 59, 0.6)" : theme.card,
               borderRadius: 24, overflow: "hidden",
               borderWidth: isDark ? 0 : 1, borderColor: theme.border,

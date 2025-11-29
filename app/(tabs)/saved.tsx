@@ -1,21 +1,21 @@
 import { Ionicons } from "@expo/vector-icons";
 import { FlashList } from "@shopify/flash-list";
-import { Image } from "expo-image";
 import * as Haptics from "expo-haptics";
+import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React from "react";
 import { Dimensions, Text, TouchableOpacity, View } from "react-native";
 import Animated, {
-    FadeIn,
-    FadeInDown,
-    FadeInRight,
-    Layout,
-    SlideOutRight,
-    useAnimatedStyle,
-    useSharedValue,
-    withSpring,
+  FadeIn,
+  FadeInDown,
+  FadeInRight,
+  Layout,
+  SlideOutRight,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
 } from "react-native-reanimated";
 
 import { Colors } from "@/constants/data";
@@ -204,7 +204,7 @@ export default function SavedScreen() {
             <Text className="text-center px-10" style={{ color: theme.textSecondary }}>
               Start adding movies to your list by tapping the bookmark icon
             </Text>
-            <TouchableOpacity 
+            <TouchableOpacity
               className="mt-6"
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
