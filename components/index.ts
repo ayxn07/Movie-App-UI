@@ -7,4 +7,3 @@ export { SearchModal } from "./SearchModal";
 export { SectionHeader } from "./SectionHeader";
 export { Toast } from "./Toast";
 export { TopRatedCard } from "./TopRatedCard";
-
