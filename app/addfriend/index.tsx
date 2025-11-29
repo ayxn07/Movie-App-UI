@@ -143,6 +143,13 @@ const SuggestedFriendCard = ({
               onAdd();
             }}
             disabled={isAdded}
+            style={{
+              shadowColor: isAdded ? Colors.success : Colors.primary,
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.3,
+              shadowRadius: 8,
+              elevation: 4,
+            }}
           >
             <LinearGradient
               colors={
@@ -150,22 +157,24 @@ const SuggestedFriendCard = ({
                   ? [Colors.success, "#059669"]
                   : [Colors.primary, Colors.primaryDark]
               }
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
               style={{
-                paddingHorizontal: 20,
-                paddingVertical: 10,
-                borderRadius: 12,
+                paddingHorizontal: 24,
+                paddingVertical: 12,
+                borderRadius: 16,
                 flexDirection: "row",
                 alignItems: "center",
-                gap: 6,
+                gap: 8,
               }}
             >
               <Ionicons
-                name={isAdded ? "checkmark" : "person-add"}
-                size={16}
+                name={isAdded ? "checkmark-circle" : "person-add"}
+                size={18}
                 color="white"
               />
-              <Text style={{ color: "white", fontWeight: "700", fontSize: 13 }}>
-                {isAdded ? "Added" : "Add"}
+              <Text style={{ color: "white", fontWeight: "800", fontSize: 14 }}>
+                {isAdded ? "Added" : "Add Friend"}
               </Text>
             </LinearGradient>
           </TouchableOpacity>
