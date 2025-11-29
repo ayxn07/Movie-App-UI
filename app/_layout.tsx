@@ -284,6 +284,26 @@ function RootLayoutContent() {
               contentStyle: { backgroundColor: theme.background },
             }} 
           />
+          <Stack.Screen 
+            name="musicplayer/[id]" 
+            options={{ 
+              headerShown: false, 
+              presentation: "fullScreenModal",
+              animation: "slide_from_bottom",
+              animationDuration: 250,
+              contentStyle: { backgroundColor: "#0a0a0a" },
+            }} 
+          />
+          <Stack.Screen 
+            name="localmedia/index" 
+            options={{ 
+              headerShown: false, 
+              presentation: "card",
+              animation: "slide_from_right",
+              animationDuration: 200,
+              contentStyle: { backgroundColor: theme.background },
+            }} 
+          />
         </Stack>
       </Animated.View>
     </View>
